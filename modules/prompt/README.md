@@ -19,7 +19,7 @@ description: extras 的 prompt 模块——原 prompt-middleware（ctx.promptMid
 | `registerPromptMiddlewareProvider(ctx, provider)` | 消费插件的硬 import 注册入口；内部仍通过 `ctx.inject(['promptMiddleware'], ...)` 软依赖 |
 | `agent/pre-step` driver | 解析直接 user prompt，运行 provider，向 accepted enter batch 追加 relates 上下文 |
 | Typert Remote `promptMiddleware` | `list` / `setDisabled`：Settings → Plugins → Prompt Middleware 配置面（provider 开关） |
-| client 半 | 暂缺：原 `settings.plugins.tab` slot（id `prompt-middleware`）随 C 改造（extras server-only）下线，待上游 A 路径落地后随 extras `dsh.client` 回归——见 `workunits/plugin-publish/release-plan.md` §目标态 |
+| client 半 | `settings.plugins.tab` slot（id `prompt-middleware`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
 
 ## provider 形状
 

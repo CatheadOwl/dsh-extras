@@ -17,3 +17,5 @@
       name: './modules/routes/lib/index.js'
     - id: subagent-at
       name: './modules/subagent/lib/index.js'
+    - id: extras-client
+      name: './modules/client/lib/index.js'

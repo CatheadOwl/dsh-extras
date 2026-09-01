@@ -183,5 +183,5 @@ dsh plugin add d:\Document\Projects\dsh\dsh-plugin-dev\extras   # 装的是 extr
   host 重启后由 GUI 页面加载时重推（不开 GUI 的 headless 运行没有开关状态，全部 gate 照常跑）。
   多标签页同时打开时后写者胜（每次拨开关推整表；无跨标签页实时同步）。W8 时代的裸 id 数组
   （全关语义）在读取时自动迁移为两维全关。
-- Web 配置页（Settings → Plugins → Gates）随 C 改造（extras server-only，根 `dsh.client` 移除）暂缺；开关在 A 路径落地、extras `dsh.client` 回归前由 profile patch / localStorage 直改承载。
+- Web 配置页（Settings → Plugins → Gates）经 extras 的嵌套 client 锚点包装载（见 `modules/client/README.md`）；修改后需重建（`pnpm run build:client`）并重启 host 才会被加载。
 - 触发时机语义与成本纪律的机制底账：开发仓库 `explorer/hook-points/README.md`（事件三模式 / 轮末检查点 / 成本四维度）。

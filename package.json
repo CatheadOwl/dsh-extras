@@ -18,6 +18,7 @@
     "cordis.patch.yml",
     "modules/*/lib/**/*.js",
     "modules/*/lib/**/*.d.ts",
+    "modules/*/package.json",
     "modules/*/README.md",
     "modules/*/gates.yml",
     "modules/*/docs/**/*.md",
@@ -43,7 +44,9 @@
     "build:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/routes/tsconfig.json",
     "check-types:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/routes/tsconfig.json",
     "test:routes": "cd modules/routes && node --test --test-isolation=none test/breadcrumb-description.test.mjs test/description-contract.test.mjs test/description.test.mjs test/navigation.test.mjs test/routes.test.mjs",
-    "test:subagent": "cd modules/subagent && node --test --test-isolation=none test/plugin.test.mjs"
+    "test:subagent": "cd modules/subagent && node --test --test-isolation=none test/plugin.test.mjs",
+    "build:client": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/client/tsconfig.json && cd modules/client && ..\\..\\..\\..\\deepseek-harness\\node_modules\\.bin\\tsdown.cmd",
+    "check-types:client": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/client/tsconfig.check.json"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
