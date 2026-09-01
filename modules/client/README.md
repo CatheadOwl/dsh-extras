@@ -7,7 +7,7 @@ description: extras 的 client 锚点包——嵌套 manifest（自有 package.j
 宿主 client-modules 的不变量是「一个声明 `dsh.client` 的包恰好一个 active Loader
 source」。extras 根若有五行 server 行又声明 `dsh.client`，五行全部经
 `nearestPackage` 归属到根 manifest → 五个 source → 组合错误（事故全案见
-`workunits/plugin-publish/20260901-extras-web-boot-client-source-conflict.md`）。
+`handbooks/Gremlins/20260901-2312-dsh-client-source-attribution/incident-web-boot-conflict.md`）。
 
 解法：本目录持有**自己的嵌套 package.json**（`@catheadowl/dsh-extras-client`，
 `private`、不单独发布，随 extras tarball 走）：
