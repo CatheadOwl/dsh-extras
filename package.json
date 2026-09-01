@@ -1,0 +1,83 @@
+{
+  "name": "@catheadowl/dsh-extras",
+  "description": "Curated extras for dsh: one npm package, several independent plugin modules (gates today; md / prompt / routes / subagent migrate in). Each module is a separate composition row with its own fiber and Config; `dsh plugin add @catheadowl/dsh-extras` installs them all, per-row `disabled` turns one off.",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./register": {
+      "types": "./modules/gates/lib/register.d.ts",
+      "default": "./modules/gates/lib/register.js"
+    },
+    "./client": "./modules/gates/lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "modules/*/lib/**/*.js",
+    "modules/*/lib/**/*.d.ts",
+    "modules/*/README.md",
+    "modules/*/gates.yml",
+    "modules/*/docs/**/*.md",
+    "modules/*/child-runtime/**"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/gates/tsconfig.json",
+    "build:gates:client": "cd modules/gates && ..\\..\\..\\..\\deepseek-harness\\node_modules\\.bin\\tsdown.cmd",
+    "check-types:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/gates/tsconfig.json",
+    "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
+    "test:gates:composition": "cd modules/gates && node --test --test-isolation=none test/composition.test.mjs",
+    "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run build:gates:client && pnpm run test:gates"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-api-session-controller": "*",
+    "@deepseek-ai/dsh-api-workspace-controller": "*",
+    "@deepseek-ai/dsh-client-connection": "*",
+    "@deepseek-ai/dsh-client-locale": "*",
+    "@deepseek-ai/dsh-client-ui-primitives": "*",
+    "@deepseek-ai/dsh-client-ui-renderer": "*",
+    "@deepseek-ai/dsh-client-ui-session": "*",
+    "@deepseek-ai/dsh-client-ui-settings": "*",
+    "@deepseek-ai/dsh-client-ui-settings-plugins": "*",
+    "@deepseek-ai/dsh-client-ui-slots": "*",
+    "@deepseek-ai/dsh-client-ui-workspace": "*",
+    "@deepseek-ai/dsh-commands": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-session-persistence-jsonl": "*",
+    "@deepseek-ai/dsh-session-projection": "*",
+    "@deepseek-ai/dsh-skill": "*",
+    "@deepseek-ai/dsh-subagent": "*",
+    "@deepseek-ai/dsh-token-meter": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/dsh-typert-protocol": "*",
+    "@deepseek-ai/schemastery": "*",
+    "react": "*"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.2.0",
+    "typescript": "^5.9.0"
+  }
+}

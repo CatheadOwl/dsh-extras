@@ -1,0 +1,3 @@
+gates:
+  - id: fixture-check
+    module: check-mod.mjs

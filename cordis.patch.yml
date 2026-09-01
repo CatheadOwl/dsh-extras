@@ -1,0 +1,7 @@
+# @catheadowl/dsh-extras — one row per module, added by `- insert:`.
+# Row names are relative specifiers anchored at this file's directory.
+- insert:
+    - id: gates
+      name: './modules/gates/lib/index.js'
+      config:
+        maxConsecutiveBlocks: 3

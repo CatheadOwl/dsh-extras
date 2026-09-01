@@ -1,0 +1,4 @@
+gates:
+  - id: bad-vocab
+    module: check-mod.mjs
+    level: Blocking

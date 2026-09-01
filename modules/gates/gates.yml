@@ -1,0 +1,36 @@
+gates:
+  - id: register-face-boundary
+    module: scripts/verify-register-face.mjs
+    description: The gates package exposes its loader root and stable register face without implementation exports.
+    rationale: >-
+      Consumers depend on @catheadowl/dsh-extras/register. Keeping the root entry limited to
+      the dsh loader contract prevents service, controller, runner, and dirty-state modules
+      from becoming accidental public API.
+    level: blocking
+    relevant: ['package.json', 'src/', 'docs/']
+  - id: register-docs-fresh
+    module: scripts/register-reference.mjs
+    description: The register-face API reference matches src/register.ts.
+    rationale: >-
+      The generated API table is the machine-checked inventory of the plugin consumer face.
+      A stale table teaches consumers the wrong import, type, or fixer contract.
+    level: blocking
+    relevant: ['src/register.ts', 'src/types.ts', 'docs/register.md']
+  - id: docs-nav
+    module: scripts/verify-docs-nav.mjs
+    description: Every active gates document is reachable from the documentation entry.
+    rationale: >-
+      docs/README.md is the reader entry point. An unlinked page is hidden even when its
+      content is current, so navigation integrity is part of documentation correctness.
+    level: blocking
+    relevant: ['README.md', 'docs/']
+  - id: publish-readiness
+    module: scripts/verify-publish-readiness.mjs
+    description: The package stays independently publishable (peer-only host deps, registry ranges, self-contained docs).
+    rationale: >-
+      gates ships without bundling the dsh host: host packages are peerDependencies provided
+      at runtime, and every other dependency must resolve from a public registry. Docs must
+      not link into the surrounding dev repository because published readers cannot reach it.
+    level: blocking
+    relevant: ['package.json', 'src/', 'README.md', 'docs/', 'eval/']
+
