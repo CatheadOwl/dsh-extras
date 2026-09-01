@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "rootDir": "src",
+    "outDir": "lib",
+    "declaration": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "typeRoots": ["../../../../deepseek-harness/node_modules/@types"],
+    "paths": {
+      "@deepseek-ai/cordis": ["../../../../deepseek-harness/vendor/cordis/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-agent": ["../../../../deepseek-harness/packages/core/agent/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-llm": ["../../../../deepseek-harness/packages/llm/llm/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-jobs": ["../../../../deepseek-harness/packages/jobs/jobs/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-scope": ["../../../../deepseek-harness/packages/core/scope/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-sdk-client": ["../../../../deepseek-harness/packages/sdk/client/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-session": ["../../../../deepseek-harness/packages/core/session/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-subagent": ["../../../../deepseek-harness/packages/subagent/subagent/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-subprocess": ["../../../../deepseek-harness/packages/subprocess/subprocess/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-tools": ["../../../../deepseek-harness/packages/core/tools/lib/types/index.d.ts"],
+      "@deepseek-ai/schemastery": ["../../../../deepseek-harness/vendor/schemastery/lib/types/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

@@ -56,6 +56,7 @@
     "build:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/routes/tsconfig.json",
     "check-types:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/routes/tsconfig.json",
     "test:routes": "cd modules/routes && node --test --test-isolation=none test/breadcrumb-description.test.mjs test/description-contract.test.mjs test/description.test.mjs test/navigation.test.mjs test/routes.test.mjs",
+    "test:subagent": "cd modules/subagent && node --test --test-isolation=none test/plugin.test.mjs",
     "check-types:client": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/client/tsconfig.check.json"
   },
   "peerDependencies": {
@@ -73,12 +74,15 @@
     "@deepseek-ai/dsh-client-ui-slots": "*",
     "@deepseek-ai/dsh-client-ui-workspace": "*",
     "@deepseek-ai/dsh-commands": "*",
+    "@deepseek-ai/dsh-jobs": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/dsh-session-persistence-jsonl": "*",
     "@deepseek-ai/dsh-session-projection": "*",
+    "@deepseek-ai/dsh-sdk-client": "*",
     "@deepseek-ai/dsh-skill": "*",
     "@deepseek-ai/dsh-subagent": "*",
+    "@deepseek-ai/dsh-subprocess": "*",
     "@deepseek-ai/dsh-token-meter": "*",
     "@deepseek-ai/dsh-tools": "*",
     "@deepseek-ai/dsh-typert-protocol": "*",

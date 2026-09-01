@@ -24,7 +24,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 | `modules/md` | 原 md-links + md-rename + md-links-gates（`md_rename` 工具 + `doc-link` gate + 内置链接事务库） | 已迁入 |
 | `modules/prompt` | 原 prompt-middleware + prompt-parse + workspace-tree（prompt 注入服务 + 内置 parse/tree 库） | 已迁入 |
 | `modules/routes` | 原 any_routes（通用 Markdown 路由视图工具 any_routes + breadcrumb relates provider） | 已迁入 |
-| `modules/subagent` | subagent-at | 迁入中 |
+| `modules/subagent` | 原 subagent-at（`subagent_at` 工具 + `dsh-sdk-at` provider；行 id `subagent-at`——宿主 dsh-base 已占用 `subagent`） | 已迁入* |
 
 各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
 随源码从原包整体迁入）。
@@ -36,7 +36,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
   的导出集合不变（coggit 等消费方只改包名）；
 - `@catheadowl/dsh-extras/client`——Web 客户端面（gates 的 Settings Tab）。
 
-## 构建与验证（开发态）
+## 构建与验证（开发态）`r`n`r`n> *subagent 模块源码重建被上游缝缺口挂起（SDK client 收走任意子运行时启动面,见`r`n> `docs/upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`）,沿用缝前构建的 lib;`r`n> 其余四模块 tsc 重建正常。
 
 ```powershell
 # 从本目录（dsh-plugin-dev/extras）
