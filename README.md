@@ -27,10 +27,8 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 | `modules/subagent` | 原 subagent-at（`subagent_at` 工具 + `dsh-sdk-at` provider；行 id `subagent-at`——宿主 dsh-base 已占用 `subagent`） | 已迁入* |
 
 各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
-随源码从原包整体迁入）。
-
-模块 UI 开发指南（何时写 client 半边、锚点机制、tab 形态与拆分出口）：
-[docs/client-ui.md](docs/client-ui.md)。
+随源码从原包整体迁入）。client 面的挂载机制与「表面 UI / 实际 source 归属」的
+教训见 [Gremlins 20260901-2312](../../handbooks/Gremlins/20260901-2312-dsh-client-source-attribution.md)。
 
 ## API 面
 
