@@ -34,7 +34,10 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 - `@catheadowl/dsh-extras/register`——gates 的插件消费面（`registerGate` +
   `GateDefinition`/`GateViolation` 类型），保持原 `@catheadowl/dsh-gates/register`
   的导出集合不变（coggit 等消费方只改包名）；
-- `@catheadowl/dsh-extras/client`——Web 客户端面（gates 的 Settings Tab）。
+- `@catheadowl/dsh-extras/gate-check`——md 模块 gates.yml 回退面。
+- Web 客户端面暂缺（C 改造：extras server-only，根 `dsh.client` 已移除）——
+  gates/prompt 两 Settings Tab 待上游 A 路径落地后回归，见
+  `workunits/plugin-publish/release-plan.md` §目标态。
 
 ## 构建与验证（开发态）`r`n`r`n> *subagent 模块源码重建被上游缝缺口挂起（SDK client 收走任意子运行时启动面,见`r`n> `docs/upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`）,沿用缝前构建的 lib;`r`n> 其余四模块 tsc 重建正常。
 
