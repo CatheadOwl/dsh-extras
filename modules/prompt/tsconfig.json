@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023", "DOM"],
+    "jsx": "react-jsx",
+    "rootDir": "src",
+    "outDir": "lib",
+    "declaration": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "react"],
+    "typeRoots": ["../../../../deepseek-harness/node_modules/@types", "node_modules/@types"],
+    "paths": {
+      "@deepseek-ai/cordis": ["../../../../deepseek-harness/vendor/cordis/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-agent": ["../../../../deepseek-harness/packages/core/agent/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-llm": ["../../../../deepseek-harness/packages/llm/llm/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-session": ["../../../../deepseek-harness/packages/core/session/lib/types/index.d.ts"],
+      "@deepseek-ai/schemastery": ["../../../../deepseek-harness/vendor/schemastery/lib/types/index.d.ts"],
+      
+      
+      "@deepseek-ai/dsh-typert-protocol": ["../../../../deepseek-harness/packages/typert/protocol/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-client-connection/client": ["../../../../deepseek-harness/packages/client/connection/lib/types/client/index.d.ts"],
+      "@deepseek-ai/dsh-client-locale/client": ["../../../../deepseek-harness/packages/client/locale/lib/types/client/index.d.ts"],
+      "@deepseek-ai/dsh-client-ui-primitives": ["../../../../deepseek-harness/packages/client/ui-primitives/lib/types/index.d.ts"],
+      "@deepseek-ai/dsh-client-ui-renderer/client": ["../../../../deepseek-harness/packages/client/ui-renderer/lib/types/client/index.d.ts"],
+      "@deepseek-ai/dsh-client-ui-settings/client": ["../../../../deepseek-harness/packages/client/ui-settings/lib/types/client/index.d.ts"],
+      "@deepseek-ai/dsh-client-ui-settings-plugins/client": ["../../../../deepseek-harness/packages/client/ui-settings-plugins/lib/types/client/index.d.ts"],
+      "@deepseek-ai/dsh-client-ui-slots": ["../../../../deepseek-harness/packages/client/ui-slots/lib/types/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

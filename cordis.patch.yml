@@ -7,3 +7,9 @@
         maxConsecutiveBlocks: 3
     - id: md
       name: './modules/md/lib/index.js'
+    - id: prompt
+      name: './modules/prompt/lib/index.js'
+      config:
+        providerTimeoutMs: 2000
+        totalTimeoutMs: 5000
+        renderBudgetChars: 4000

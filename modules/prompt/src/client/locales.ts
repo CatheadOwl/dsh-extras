@@ -1,0 +1,49 @@
+export type PromptMiddlewareLocaleKey =
+  | 'tab'
+  | 'title'
+  | 'description'
+  | 'loading'
+  | 'empty'
+  | 'error'
+  | 'retry'
+  | 'refresh'
+  | 'modeAlways'
+  | 'modeOnce'
+  | 'priority'
+  | 'timeout'
+  | 'sourceImperative'
+  | 'sourceDeclarative'
+
+export const en: Record<PromptMiddlewareLocaleKey, string> = {
+  tab: 'Prompt Middleware',
+  title: 'Prompt enrichment providers',
+  description: 'Turning a provider off stops its injection from the next turn. Turning it back on does not repeat content already shown in this conversation; it resumes after compact or in a new conversation.',
+  loading: 'Loading providers…',
+  empty: 'No prompt-middleware providers are registered.',
+  error: 'Failed to load providers.',
+  retry: 'Retry',
+  refresh: 'Refresh',
+  modeAlways: 'always',
+  modeOnce: 'once',
+  priority: 'priority',
+  timeout: 'timeout',
+  sourceImperative: 'imperative',
+  sourceDeclarative: 'declarative',
+}
+
+export const zh: Record<PromptMiddlewareLocaleKey, string> = {
+  tab: 'Prompt Middleware',
+  title: '提示词增强 provider',
+  description: '关闭后从下一轮对话起不再注入其内容。重新打开后，本会话已展示过的内容不会重复出现；compact 或新会话后恢复。',
+  loading: '正在加载 provider…',
+  empty: '没有注册 prompt-middleware provider。',
+  error: '加载 provider 失败。',
+  retry: '重试',
+  refresh: '刷新',
+  modeAlways: '每轮',
+  modeOnce: '仅一次',
+  priority: '优先级',
+  timeout: '超时',
+  sourceImperative: '命令式',
+  sourceDeclarative: '声明式',
+}

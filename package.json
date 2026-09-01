@@ -12,7 +12,7 @@
       "types": "./modules/md/lib/gate-check.d.ts",
       "default": "./modules/md/lib/gate-check.js"
     },
-    "./client": "./modules/gates/lib/client.js",
+    "./client": "./modules/client/lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -42,14 +42,18 @@
   },
   "scripts": {
     "build:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/gates/tsconfig.json",
-    "build:gates:client": "cd modules/gates && ..\\..\\..\\..\\deepseek-harness\\node_modules\\.bin\\tsdown.cmd",
+    "build:client": "cd modules/client && ..\\..\\..\\..\\deepseek-harness\\node_modules\\.bin\\tsdown.cmd",
     "check-types:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/gates/tsconfig.json",
     "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
     "test:gates:composition": "cd modules/gates && node --test --test-isolation=none test/composition.test.mjs",
-    "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run build:gates:client && pnpm run test:gates",
+    "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run test:gates",
     "build:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/md/tsconfig.json",
     "check-types:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/md/tsconfig.json",
-    "test:md": "cd modules/md && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs"
+    "test:md": "cd modules/md && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs",
+    "build:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/prompt/tsconfig.json",
+    "check-types:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/prompt/tsconfig.json",
+    "test:prompt": "cd modules/prompt && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
+    "check-types:client": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/client/tsconfig.check.json"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
