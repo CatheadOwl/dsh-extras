@@ -7,11 +7,13 @@
  * 子进程失败时错误会回流为工具结果、turn 照常 exit 0，意图断言照过（见
  * Gremlins 20260822-1521 经验 2）；端到端内容由人工暗号取证覆盖。
  */
-import { firstTool, toolCallArgs } from '../../../../../eval/src/index.mjs'
+import { firstTool, toolCallArgs } from '../../../../../../eval/src/index.mjs'
 
 export default {
   id: 'subagent-at-intent-cross-directory',
   mode: 'real',
+  // 同 intent-same-workspace：eval 工作区非 git 仓库，gates 关掉。
+  gates: 'off',
   // 端到端时会真拉子运行时（进程启动 + 握手 + 完整一轮），留足预算。
   timeoutMs: 300_000,
   task:

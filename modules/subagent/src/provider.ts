@@ -47,8 +47,10 @@ export class AtSdkSubagentProvider implements SubagentProvider {
     // this delegation instead of silently re-anchoring the child.
     const resolved = assertUsableCwd(PLUGIN_PREFIX, 'per-call cwd', cwd)
     const spec: AtRunSpec = {
-      command: this.config.command,
-      args: this.config.args,
+      dshBin: this.config.dshBin,
+      profile: this.config.profile,
+      patches: this.config.patches,
+      dshHome: this.config.dshHome,
       cwd: resolved,
       provider: this.config.provider,
       model: this.config.model,

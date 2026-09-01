@@ -29,6 +29,9 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
 随源码从原包整体迁入）。
 
+模块 UI 开发指南（何时写 client 半边、锚点机制、tab 形态与拆分出口）：
+[docs/client-ui.md](docs/client-ui.md)。
+
 ## API 面
 
 - `@catheadowl/dsh-extras/register`——gates 的插件消费面（`registerGate` +

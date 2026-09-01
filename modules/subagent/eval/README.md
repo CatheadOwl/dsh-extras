@@ -13,15 +13,16 @@ description: subagent-at eval 的 case 清单与运行方式——real 层验证
 且插件配置可用：
 
 ```powershell
-dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/subagent-at
+dsh plugin --profile headless add D:/Document/Projects/dsh-extra/dsh-plugin-dev/extras/modules/subagent
 ```
 
-子运行时 `command`/`args` 为占位时：
+子运行时组合（profile/patches）按
+[`../docs/child-runtime.md`](../docs/child-runtime.md) 配置：
 
-- **mock** 与 **意图选择断言**不受影响（脚本化调用/只断言 `tool/call`）；
-- 端到端委派（子代理真的跑起来）需要先按
-  [`../docs/child-runtime.md`](../docs/child-runtime.md) 配好子运行时
-  （本机样例见 `../../_scratch/subagent-at-local.patch.yml`）。
+- **mock** 与 **意图选择断言**不受子运行时组合影响（脚本化调用/只断言
+  `tool/call`）；
+- 端到端委派（子代理真的跑起来）需要子 profile 组合就绪
+  （默认 `sdk` profile，或 patches 叠加 agent-instructions 等）。
 
 ## Case 清单
 
@@ -46,9 +47,9 @@ dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/subage
 ## 运行
 
 ```powershell
-# 从插件目录（或用 package.json scripts: pnpm eval / pnpm eval:mock）
-node ../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness eval/behavior/real
-node ../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness --mode mock eval/behavior/mock
+# 从插件目录
+node ../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness eval/behavior/real
+node ../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness --mode mock eval/behavior/mock
 ```
 
 real 层需要 `DEEPSEEK_API_KEY` 或 `$DSH_HOME/.credentials.yaml`；mock 不需要。

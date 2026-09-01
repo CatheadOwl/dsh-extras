@@ -6,11 +6,14 @@
  * 注意：这条会真实拉起一个 in-process 子代理（一次额外模型调用），
  * 任务保持最小以控成本。
  */
-import { firstTool, toolNotCalled } from '../../../../../eval/src/index.mjs'
+import { firstTool, toolNotCalled } from '../../../../../../eval/src/index.mjs'
 
 export default {
   id: 'subagent-at-intent-same-workspace',
   mode: 'real',
+  // eval 临时工作区非 git 仓库，gates 的 doc-link 门在其中只会报错注入
+  // 反馈步骤、多耗一次模型调用——关掉（意图断言与 gates 无关）。
+  gates: 'off',
   task: '把一个独立小任务委派给子代理：检查当前工作区根目录有哪些顶层条目，返回一句话总结。等它做完再回复我。',
   expect: [
     firstTool('subagent'),

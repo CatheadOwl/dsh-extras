@@ -8,11 +8,13 @@
  * `ctx.systemPrompt.section({ name: 'tool:subagent_at', order: 116.6 })`
  * 必须每步出现在组装后的系统提示词里，模型才能看到跨目录触发条件。
  */
-import { textStep, systemPromptIncludes, toolMounted, finalTextIncludes } from '../../../../../eval/src/index.mjs'
+import { textStep, systemPromptIncludes, toolMounted, finalTextIncludes } from '../../../../../../eval/src/index.mjs'
 
 export default {
   id: 'subagent-at-mock-system-prompt-section',
   mode: 'mock',
+  // 同 cwd-validation：eval 工作区非 git 仓库，gates 关掉（详见彼处注释）。
+  gates: 'off',
   task: 'eval driver: scripted system-prompt inspection',
   script: {
     steps: [

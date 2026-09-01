@@ -37,10 +37,23 @@ export interface Config {
    * Task on the host jobs seam.
    */
   enableRunInBackground?: boolean
-  /** The child runtime executable (a `dsh-jsonrpc-agent` bin, packaged exe, or `node`). */
-  command: string
-  /** Arguments passed to {@link command} (typically the child's `cordis.yml` path). */
-  args: string[]
+  /**
+   * Explicit dsh CLI module for the child (absolute or caller-relative);
+   * omitted resolves the SDK client's same-version dependency. The child is
+   * always a dsh CLI runtime — arbitrary executables are outside the host's
+   * public launch face (docs/architecture.md#application-launch).
+   */
+  dshBin?: string
+  /** Named child profile serving the SDK protocol (default `sdk`). */
+  profile: string
+  /**
+   * Ordered per-launch profile patch files — the sanctioned expression of the
+   * child's composition (the former `child-runtime/cordis.yml` recipe now
+   * installs as a patch layer).
+   */
+  patches: string[]
+  /** Explicit isolated Harness home for the child; omitted uses the default. */
+  dshHome?: string
   /** Provider route the child runtime initializes with (default `deepseek-official`). */
   provider: string
   /** Model the child runtime initializes with (default `deepseek-v4-flash`). */
@@ -67,8 +80,10 @@ export const Config: z<Config> = z.object({
   providerName: z.string().default('dsh-sdk-at'),
   toolName: z.string().default('subagent_at'),
   enableRunInBackground: z.boolean().default(true),
-  command: z.string().required(),
-  args: z.array(z.string()).default([]),
+  dshBin: z.string(),
+  profile: z.string().default('sdk'),
+  patches: z.array(z.string()).default([]),
+  dshHome: z.string(),
   provider: z.string().default('deepseek-official'),
   model: z.string().default('deepseek-v4-flash'),
   env: z.dict(z.string()).default({}),

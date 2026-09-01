@@ -2,10 +2,10 @@
  * Fresh-process driver for one directory-targeted child runtime. Adapted
  * from the host's `@deepseek-ai/dsh-subagent-dsh-sdk` run driver (`run.ts`
  * is not in that package's published exports, so the ~90 lines of glue are
- * mirrored here): spawn over the SDK client, race the handshake against
- * cancellation, fold `session.event` notifications into the final output,
- * settle the result under the seam's never-reject contract, and tear the
- * child down through the bounded shutdown ladder.
+ * mirrored here): spawn over the SDK client's public launch face, race the
+ * handshake against cancellation, fold `session.event` notifications into
+ * the final output, settle the result under the seam's never-reject
+ * contract, and tear the child down through the bounded shutdown ladder.
  *
  * @module @catheadowl/dsh-subagent-at/run
  */
@@ -20,10 +20,14 @@ import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
 
 /** Resolved spawn spec for one directory-targeted child runtime run. */
 export interface AtRunSpec {
-  /** The executable to spawn (a `dsh-jsonrpc-agent` bin, packaged exe, or `node`). */
-  command: string
-  /** Arguments passed to {@link command} (typically the child's `cordis.yml` path). */
-  args: string[]
+  /** Explicit dsh CLI module; omitted resolves the SDK client's same-version dependency. */
+  dshBin?: string
+  /** Named child profile serving the SDK protocol. */
+  profile: string
+  /** Ordered per-launch profile patch files (the child's composition). */
+  patches: string[]
+  /** Explicit isolated Harness home for the child; omitted uses the default. */
+  dshHome?: string
   /**
    * Absolute per-call target directory: the child process cwd AND the
    * workspace cwd of its SDK session (validated by the provider beforehand).
@@ -89,16 +93,16 @@ export async function startAtRun(request: SubagentStartRequest, spec: AtRunSpec)
   const id = SessionId(randomUUID())
 
   const harness = new DeepSeekHarness({
-    launch: {
-      command: spec.command,
-      args: spec.args,
-      cwd: spec.cwd,
-      env: { ...scrubbedParentEnv(), ...spec.env },
-      shutdownTimeoutMs: spec.shutdownTimeoutMs,
-      disposeEofGraceMs: spec.disposeEofGraceMs,
-      disposeGraceMs: spec.disposeGraceMs,
-    },
+    dshBin: spec.dshBin,
+    profile: spec.profile,
+    patches: spec.patches,
+    dshHome: spec.dshHome,
+    processCwd: spec.cwd,
     cwd: spec.cwd,
+    env: { ...scrubbedParentEnv(), ...spec.env },
+    shutdownTimeoutMs: spec.shutdownTimeoutMs,
+    disposeEofGraceMs: spec.disposeEofGraceMs,
+    disposeGraceMs: spec.disposeGraceMs,
     provider: spec.provider,
     model: spec.model,
   })
