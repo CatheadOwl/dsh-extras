@@ -25,7 +25,7 @@ import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import TokenMeter from '@deepseek-ai/dsh-token-meter'
 
 import * as promptMiddleware from '../lib/index.js'
-import * as anyRoutes from '../../../../any_routes/lib/index.js'  /* TODO(routes 迁入后改 '../../routes/lib/index.js') */
+import * as anyRoutes from '../../routes/lib/index.js'
 
 /** Scripted text chunks: one model reply ends with a `stop` finish. */
 function textResponse(text) {

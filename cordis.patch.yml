@@ -13,3 +13,5 @@
         providerTimeoutMs: 2000
         totalTimeoutMs: 5000
         renderBudgetChars: 4000
+    - id: routes
+      name: './modules/routes/lib/index.js'

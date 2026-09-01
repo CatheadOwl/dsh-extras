@@ -1,0 +1,17 @@
+{
+  "actions": ["read", "grep", "any_routes"],
+  "scenarios": [
+    {
+      "id": "s1-orient",
+      "task": "You just landed in an unfamiliar repository and want to see the layout of its Markdown documentation before doing anything specific."
+    },
+    {
+      "id": "s2-known-path",
+      "task": "You need the contents of the file `handbooks/README.md`, which you already know exists at that exact path."
+    },
+    {
+      "id": "s3-content-search",
+      "task": "Find which documentation file discusses the phrase 'context compaction'."
+    }
+  ]
+}

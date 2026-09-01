@@ -23,7 +23,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 | `modules/gates` | 原 `@catheadowl/dsh-gates`（ctx.gates 质量门禁） | 已迁入 |
 | `modules/md` | 原 md-links + md-rename + md-links-gates（`md_rename` 工具 + `doc-link` gate + 内置链接事务库） | 已迁入 |
 | `modules/prompt` | 原 prompt-middleware + prompt-parse + workspace-tree（prompt 注入服务 + 内置 parse/tree 库） | 已迁入 |
-| `modules/routes` | any_routes | 迁入中 |
+| `modules/routes` | 原 any_routes（通用 Markdown 路由视图工具 any_routes + breadcrumb relates provider） | 已迁入 |
 | `modules/subagent` | subagent-at | 迁入中 |
 
 各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
