@@ -8,6 +8,7 @@ export async function check(root) {
   const violations = await verifyPackageFace({
     package: join(resolve(root, '../..'), 'package.json'),
     rootExport: null,
+    allowedExports: ['./gate-check'], // md module's gates.yml module: fallback face
     rootEntry: join(root, 'src/index.ts'),
     rootExports: ['name', 'inject', 'Config', 'apply'],
     subentries: {

@@ -60,10 +60,13 @@ export async function verifyPackageFace(options) {
   // (bundle-shaped packages whose plugin rows load via relative subpaths and
   // which therefore deliberately expose no `.` export).
   const rootExport = options.rootExport === null ? [] : ['.']
-  const expectedExports = [...rootExport, ...Object.keys(options.subentries ?? {}), './package.json']
+  // `allowedExports` names package faces owned by OTHER modules of the same
+  // bundle package — present in the manifest but not the caller's concern.
+  const allowed = options.allowedExports ?? []
+  const expectedExports = [...rootExport, ...Object.keys(options.subentries ?? {}), ...allowed, './package.json']
   const actualExports = Object.keys(manifest.exports ?? {})
   for (const entry of expectedExports) {
-    if (!actualExports.includes(entry)) violations.push(`package exports is missing ${entry}`)
+    if (!actualExports.includes(entry) && !allowed.includes(entry)) violations.push(`package exports is missing ${entry}`)
   }
   for (const entry of actualExports) {
     if (!expectedExports.includes(entry)) violations.push(`package exports has unexpected entry ${entry}`)

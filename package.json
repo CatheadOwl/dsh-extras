@@ -8,6 +8,10 @@
       "types": "./modules/gates/lib/register.d.ts",
       "default": "./modules/gates/lib/register.js"
     },
+    "./gate-check": {
+      "types": "./modules/md/lib/gate-check.d.ts",
+      "default": "./modules/md/lib/gate-check.js"
+    },
     "./client": "./modules/gates/lib/client.js",
     "./package.json": "./package.json"
   },
@@ -42,7 +46,10 @@
     "check-types:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/gates/tsconfig.json",
     "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
     "test:gates:composition": "cd modules/gates && node --test --test-isolation=none test/composition.test.mjs",
-    "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run build:gates:client && pnpm run test:gates"
+    "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run build:gates:client && pnpm run test:gates",
+    "build:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/md/tsconfig.json",
+    "check-types:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/md/tsconfig.json",
+    "test:md": "cd modules/md && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
@@ -72,6 +79,10 @@
     "react": "*"
   },
   "dependencies": {
+    "@types/mdast": "^4.0.4",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-gfm": "^3.1.0",
+    "micromark-extension-gfm": "^3.0.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

@@ -22,7 +22,7 @@ node --test --test-isolation=none <package.json test 列出的文件>
 node scripts/register-reference.mjs --write
 ```
 
-组合测试需要本机 host junction 与已构建的 `md-links-gates`：
+组合测试需要本机 host junction 与已构建的 extras md 模块：
 
 ```powershell
 node --test --test-isolation=none test/composition.test.mjs

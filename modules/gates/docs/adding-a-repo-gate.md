@@ -110,7 +110,7 @@ LLM 写）：
 
 dsh 仓库根的 `gates.yml` 的 `md-metadata` 条目就是 module 形态的完整实例（rationale
 含检查范围与旁路修复策略）。`doc-link` 曾是 module 形态的另一实例，2026-08-30 已
-升华为插件级 gate（`dsh-plugin-dev/md-links-gates/` 注册，见
+升华为插件级 gate（`dsh-plugin-dev/extras/modules/md/` 注册，见
 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级声明会与插件 gate 撞名，
 不再适合当仓库级示例。`gates.yml` 解析失败时不会静默：会以一个专用 `gates-config`
 blocking gate 报错，驱动修复配置文件本身。

@@ -30,11 +30,11 @@ import * as fork from '@deepseek-ai/dsh-subagent-fork-in-process'
 
 import * as gates from '../lib/index.js'
 
-// The real doc-link gate data plane, now shipped inside the md-links-gates
+// The real doc-link gate data plane, now shipped inside the extras md module
 // plugin (`dsh-plugin-dev/md-links-gates`, formerly `scripts/doc-link-lib.mjs`):
 // the same `check(root, changes)` surface the plugin's registerGate definition
 // and the module-gate form load.
-import { check as docLinkCheck } from '../../../../md-links-gates/lib/gate-check.js'
+import { check as docLinkCheck } from '../../md/lib/gate-check.js'
 
 /** Scripted text chunks: one model reply ends with a `stop` finish. */
 function textResponse(text) {

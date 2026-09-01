@@ -93,6 +93,10 @@ function importCoverage(root, declared) {
       if (specifier.startsWith('.') || specifier.startsWith('node:')) continue
       const name = packageName(specifier)
       if (name === OWN_NAME) continue
+      // Type-only bare import satisfied by an @types mapping: a type import
+      // of bare package `mdast` passes when `@types/mdast` is declared — the
+      // same NodeNext resolution the compiler performs.
+      if (declared.has(`@types/${name}`)) continue
       if (!declared.has(name)) {
         violations.push(`${relative(root, file).replaceAll('\\', '/')} imports ${name} but it is declared in neither dependencies nor peerDependencies`)
       }

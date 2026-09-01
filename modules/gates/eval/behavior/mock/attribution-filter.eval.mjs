@@ -7,7 +7,7 @@
  * full scan sees both. The scripted model `write`s only task-a.md (rewriting
  * the SAME broken content, not a fix), so the session change set is
  * `{ paths: ['task-a.md'] }`. At turn-stop the real doc-link check (shipped in
- * the md-links-gates plugin, loaded here through the module-gate form)
+ * the md module of @catheadowl/dsh-extras, loaded here through the module-gate form)
  * full-scans, then filters to session-attributable violations: only task-a.md
  * survives, so every steer mentions task-a.md and never task-b.md — isolation
  * comes from the change set, not from visibility.
@@ -26,13 +26,13 @@ import { fileURLToPath } from 'node:url'
 import { textStep, toolCallStep, userMessageTextExcludes, userMessageTextIncludes } from '../../../../../../eval/src/index.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
-// The doc-link gate surface lives in the md-links-gates plugin; its
+// The doc-link gate surface lives in the md module of @catheadowl/dsh-extras; its
 // `./gate-check` subpath exports the generic `check` for the module-gate form
 // (the same `check` the plugin's registerGate definition loads, without the
 // plugin-entry `registerGate` runtime deps). `moduleGate` resolves a relative
 // `module` against the SESSION workspace cwd (this run's temp dir), so the
 // path must be absolute. Forward slashes keep the YAML scalar unescaped.
-const docLinkLib = join(here, '..', '..', '..', '..', 'md-links-gates', 'lib', 'gate-check.js').split(sep).join('/')
+const docLinkLib = join(here, '..', '..', '..', 'md', 'lib', 'gate-check.js').split(sep).join('/')
 
 const BROKEN_A = '[broken](task-a-missing.md)\n'
 const BROKEN_B = '[broken](task-b-missing.md)\n'

@@ -5,3 +5,5 @@
       name: './modules/gates/lib/index.js'
       config:
         maxConsecutiveBlocks: 3
+    - id: md
+      name: './modules/md/lib/index.js'

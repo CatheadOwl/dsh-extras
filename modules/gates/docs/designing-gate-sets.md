@@ -68,7 +68,7 @@ gates:
     module: scripts/md-metadata-lib.mjs
     level: defer
     fixer: { kind: subagent, prompt: "..." }
-  - id: link-integrity   # 语义决策 → blocking（示意 id；真实 doc-link 已走插件级注册，见 md-links-gates）
+  - id: link-integrity   # 语义决策 → blocking（示意 id；真实 doc-link 已走插件级注册，见 extras md 模块）
     module: scripts/link-check.mjs
     level: blocking
 ```
