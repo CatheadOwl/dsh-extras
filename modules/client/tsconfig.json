@@ -12,7 +12,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
-    "typeRoots": ["../../../../deepseek-harness/node_modules/@types", "node_modules/@types"]
+    "typeRoots": ["../../../../deepseek-harness/node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["src/index.ts"]
 }
