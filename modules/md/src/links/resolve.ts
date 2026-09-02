@@ -1,13 +1,13 @@
 /**
- * Resolve layer (ADR 0002: self-written — no host equivalent; the host's
+ * Resolve layer (self-written — no host equivalent; the host's
  * `findViolations` is gate orchestration bound to `PATTERNS` + `process.exit`,
- * not a reusable API). Semantics align with upstream `verify-md-links.ts`
- * (spec §3.3): `//`, `/`, and scheme targets are skipped; a `#fragment` on an
+ * not a reusable API). Semantics align with upstream `verify-md-links.ts`:
+ * `//`, `/`, and scheme targets are skipped; a `#fragment` on an
  * empty path resolves to the source file; document-relative targets resolve
  * against the source directory; malformed `%zz` stays raw (fail-closed, the
  * link reports broken rather than crashing). Extraction walks the forked mdast
- * AST (spec §3.2), not a regex state machine; anchors come from the forked
- * `anchors.ts`. Wikilinks are not parsed (spec §3.4).
+ * AST, not a regex state machine; anchors come from the forked
+ * `anchors.ts`. Wikilinks are not parsed.
  */
 
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
@@ -156,7 +156,7 @@ function fragmentPart(url: string): string | null {
  * Resolve one reference to an absolute path — the single resolution seam for
  * `checkRepository`. External targets are ignored; a fragment on an empty path
  * resolves to the source file; document-relative targets resolve against the
- * source directory (spec §3.3: `/` is skipped, never root-relative).
+ * source directory (`/` is skipped, never root-relative).
  */
 export function resolveReference(reference: LinkReference, sourceFile: string, root: string): Resolution {
   const url = reference.url

@@ -1,5 +1,5 @@
 /**
- * Root-relative link normalization seam (self-written, reverses the ADR 0002
+ * Root-relative link normalization seam (self-written, reverses the earlier
  * "存量原地保留" stance): a `/`-prefixed reference whose target is a tracked
  * repository path is rewritten to document-relative form. Rationale: the
  * resolver (resolve.ts) treats `/` as site-root/external and skips it, so an

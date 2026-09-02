@@ -17,6 +17,10 @@
 //      published docs cannot reach the surrounding dev repository.
 //   6. npm scripts locality: path arguments in `scripts` entries must stay
 //      inside the package root; borrowing host checkout paths (L0) is allowed.
+//   7. meta locality: module sources must not cite dev-repo control-plane
+//      terms (ADR/RFC/PRD/SPEC ids, spec docs, dated workunit TODOs) —
+//      comments carry functional semantics, design attribution lives in the
+//      cognition layer.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -206,6 +210,50 @@ function docsLocality(root, extraMarkdown = []) {
   return violations
 }
 
+// Dev-repo control-plane vocabulary (decision-record ids, spec citations,
+// dated workunit TODOs) must not appear in module source code: comments there
+// carry functional semantics only, design attribution lives in the cognition
+// layer. Scanned on the code layer (modules/<m>/src) only — docs/README/eval
+// may cite dev-repo evidence as plain text, and dev-repo path namespaces
+// (workunits/, handbooks/, ...) double as example data in prompt/routes
+// sources, so they stay out of scope. Widen the token set by evidence only.
+const META_TERMS = [
+  /\b(?:ADR|RFC|PRD|SPEC)[ -]?\d+/u,
+  /\bspec\s*[§:「]/u,
+  /\bspec's\b/u,
+  /\bworkunit spec\b/u,
+  /TODO \d{8}/u,
+]
+
+// Comment-shaped lines only: `spec` doubles as an ordinary noun / identifier
+// (`AtRunSpec`, `spec.dshBin`, "spawn spec"), so the citation forms above are
+// matched inside `*`/`//` comment lines, never on code lines.
+const COMMENT_LINE = /^\s*(?:\*|\/\/|#)/u
+
+function commentText(text) {
+  return text.split(/\r?\n/u).filter(line => COMMENT_LINE.test(line)).join('\n')
+}
+
+function metaLocality(root, extraSources = []) {
+  const violations = []
+  const entries = [
+    ...contentRoots(root).flatMap(contentRoot => collectFiles(join(contentRoot, 'src'), ['.ts', '.tsx', '.js', '.mjs'])),
+    ...extraSources.map(extra => ({ path: join(root, extra.path), text: extra.text })),
+  ]
+  for (const entry of entries) {
+    const file = typeof entry === 'string' ? entry : entry.path
+    const text = typeof entry === 'string' ? readFileSync(file, 'utf8') : entry.text
+    const haystack = commentText(text)
+    for (const pattern of META_TERMS) {
+      pattern.lastIndex = 0
+      if (pattern.test(haystack)) {
+        violations.push(`${relative(root, file).replaceAll('\\', '/')} cites control-plane term ${pattern} — keep design attribution in the cognition layer, functional semantics in code`)
+      }
+    }
+  }
+  return violations
+}
+
 export function check(root, options = {}) {
   root = resolve(root)
   const manifest = options.manifestOverride ?? JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -220,6 +268,7 @@ export function check(root, options = {}) {
     ...importCoverage(root, declared),
     ...scriptsLocality(root, declared, options.extraScripts),
     ...docsLocality(root, options.extraMarkdown),
+    ...metaLocality(root, options.extraSources),
   ]
   return reasons.map(reason => ({
     reason,

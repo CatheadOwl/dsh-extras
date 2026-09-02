@@ -13,9 +13,8 @@ export interface BreadcrumbDescriptionOptions {
 }
 
 /**
- * Local structural mirror of prompt-middleware's frozen `RelatesResolveResult`
- * (see `workunits/prompt-middleware/spec/declarative-enricher-api.md`). The
- * provider is registered through the `ctx.inject(['promptMiddleware'], ...)`
+ * Local structural mirror of prompt-middleware's frozen `RelatesResolveResult`.
+ * The provider is registered through the `ctx.inject(['promptMiddleware'], ...)`
  * soft dependency, so any_routes keeps no hard type/runtime import of
  * prompt-middleware (same registration shape as coggit's cognition-link).
  */

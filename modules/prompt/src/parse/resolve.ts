@@ -6,7 +6,7 @@
  * primitives `parsePaths` / `suggestPathCandidates` stay decision-free; call
  * them directly when you want the full `{ matches, total }` and your own policy.
  *
- * Policy (see spec「使用范式」):
+ * Policy:
  * - `bare` mention → matched only against candidates within `maxDepth` (default 2)
  * - strong specifier (`dir` / `file` / `path`) → matched against the full tree
  * - root-anchored mention (normalized keeps the leading `/`, the

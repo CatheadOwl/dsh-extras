@@ -18,17 +18,16 @@
  * - the inside of code spans (`` `src/x.ts` ``),
  * - the inside of quoted strings (`"docs/design notes.md"` — quoting is how a
  *   path-with-spaces is delimited),
- * - every other bare word (see the spec's "方案 A": a bare word like
+ * - every other bare word (a bare word like
  *   `handbooks` is emitted, and the consumer's fuzzy `total` decides whether
  *   it is a path).
  *
  * It excludes email addresses and URLs. New input shapes = new recognizers
  * appended to the pipeline, never changes to this trunk. (CJK boundary
- * tokenization is a deliberate base change — defect fix, not a new shape;
- * see the spec「归一化规则」and the proposal.)
+ * tokenization is a deliberate base change — defect fix, not a new shape.)
  */
 
-/** Three-tier classification of an extracted token (see spec「三档提取」). */
+/** Three-tier classification of an extracted token. */
 export type PathKind = 'dir' | 'file' | 'path' | 'bare'
 
 export interface PathCandidate {

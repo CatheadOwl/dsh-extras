@@ -26,11 +26,14 @@ gates:
     relevant: ['README.md', 'docs/']
   - id: publish-readiness
     module: ../../scripts/verify-publish-readiness.mjs
-    description: The extras package stays independently publishable (peer-only host deps, registry ranges, self-contained docs).
+    description: The extras package stays independently publishable (peer-only host deps, registry ranges, self-contained docs, meta-free sources).
     rationale: >-
       extras ships without bundling the dsh host: host packages are peerDependencies provided
       at runtime, and every other dependency must resolve from a public registry. Docs must
       not link into the surrounding dev repository because published readers cannot reach it.
+      Module sources must not cite dev-repo control-plane terms (decision-record ids, spec
+      docs, dated workunit TODOs): comments carry functional semantics, design attribution
+      lives in the cognition layer.
     level: blocking
     relevant: ['package.json', 'src/', 'README.md', 'docs/', 'eval/']
 

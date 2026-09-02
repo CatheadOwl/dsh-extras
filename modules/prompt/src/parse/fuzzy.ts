@@ -5,7 +5,7 @@
  * how well each extracted token matches the project's real paths. This module
  * is the pure matcher: segment-suffix matching plus a dotless-leaf
  * extension-stripping rule, ported from CogGit's `pathHints` with three
- * adaptations for the prompt-parsing shape (see the workunit spec):
+ * adaptations for the prompt-parsing shape:
  *
  * - `cap` is a parameter, not a hardcoded constant.
  * - An exact match is a hit. CogGit's `pathHints` excluded it because it only

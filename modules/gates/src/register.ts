@@ -1,5 +1,5 @@
 /**
- * Hard-import registration face for plugin-owned gates (ADR 0003). Consumers
+ * Hard-import registration face for plugin-owned gates. Consumers
  * `import { registerGate } from '@catheadowl/dsh-extras/register'` and call it
  * in `apply(ctx)` instead of hand-writing structural `*Like` mirrors plus
  * `ctx.inject(['gates'], …)`. The gate routes into the same `ctx.gates`

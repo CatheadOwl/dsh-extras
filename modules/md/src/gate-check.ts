@@ -3,15 +3,14 @@
  * (link, image, definition) must resolve to an existing target and, for
  * Markdown targets, a valid heading anchor. Reuses the md-links pure lib
  * (`checkRepository`) — this module is the shape adapter plus the turn-end
- * attribution predicate (ADR 0008 / spec gate-attribution-filter). For
+ * attribution predicate. For
  * anchor-missing violations the remedy guidance carries a deterministic hint:
  * the target's headings whose slug shares the longest prefix with the failed
  * fragment, each with its exact `#anchor`, so the model can claim the heading
  * it meant without knowing the slug rules.
  *
  * Lineage: this is the former repo-level thin shim
- * `scripts/doc-link-lib.mjs` (archived at `archived/scripts/doc-link-lib/`),
- * now shipped inside the md-links-gates plugin so every project gets the same
+ * `scripts/doc-link-lib.mjs`, now shipped inside the md-links-gates plugin so every project gets the same
  * data plane without copying a shim. `check(root, changes?)` keeps the generic
  * module-gate surface (`gates.yml` `module:` form and the plugin's
  * `registerGate` definition both load it).

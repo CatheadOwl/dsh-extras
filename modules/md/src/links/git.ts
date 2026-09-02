@@ -1,5 +1,5 @@
 /**
- * Git scan source (ADR 0002: self-written — no host equivalent; the host's
+ * Git scan source (self-written — no host equivalent; the host's
  * `uniqueRepoFiles` is a `globSync` set, not git). The data plane asks git for
  * the repository file list instead of walking the file system, so gitignored
  * artifacts and submodule contents (gitlinks only) never enter the scan.
@@ -18,7 +18,7 @@ import { join, resolve } from 'node:path'
 export type GitLsFiles = (root: string) => string[]
 
 /**
- * Single safe-spawn primitive (spec: git 数据面契约 §1). Captures stdout
+ * Single safe-spawn primitive. Captures stdout
  * through a temp file rather than a pipe: pipe capture is EPERM under sandboxed
  * hosts, and a temp file is equally valid for a one-shot synchronous read.
  * Exported so the rename kernel (git grep / git mv) and any future consumer

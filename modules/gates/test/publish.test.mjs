@@ -27,6 +27,9 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
     extraScripts: [
       { path: 'scripts/escape.mjs', text: "import { x } from '../../handbooks/dsh-plugin-dev/scripts/verify-package-face.mjs'\nconst ts = new URL('../../../deepseek-harness/node_modules/typescript/lib/typescript.js', import.meta.url)\nimport yaml from 'yaml'" },
     ],
+    extraSources: [
+      { path: 'modules/x/src/leak.ts', text: '// see ADR 0008 / spec「归一化规则」; tracked in TODO 20260831-posthoc\nexport const x = 1\n// spawn spec (ordinary noun) and const spec: AtRunSpec stay legal\n' },
+    ],
   })
   const reasons = violations.map(violation => violation.reason).join('\n')
   assert.match(reasons, /"private": true/u)
@@ -38,6 +41,9 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
   assert.match(reasons, /scripts\/escape\.mjs references \.\.\/\.\.\/\.\.\/deepseek-harness/u)
   assert.match(reasons, /scripts\.eval references \.\.\/eval\/bin\/dsh-eval\.mjs/u)
   assert.match(reasons, /scripts\.eval references \.\.\/md-links\/test/u)
+  assert.match(reasons, /modules\/x\/src\/leak\.ts cites control-plane term/u)
   // L0 host borrows must NOT be flagged (documented exception).
   assert.doesNotMatch(reasons, /scripts\.build references/u)
+  // Ordinary-noun / identifier uses of "spec" must not be flagged.
+  assert.equal((reasons.match(/control-plane term/gu) ?? []).length, 3)
 })

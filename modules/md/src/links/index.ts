@@ -4,8 +4,6 @@
  * Anchor seam: `src/anchors.ts` (fork of upstream scripts/verify-md-links.ts).
  * Resolve seam: `src/resolve.ts` (self-written, aligned with upstream semantics).
  * Git seam: `src/git.ts` (self-written; host uses glob, not git).
- * Provenance split (fork vs self-written): `workunits/md-links/ADR/0002`.
- * Contracts: `workunits/md-links/spec/canonical-lib.md` (唯一说法).
  * @module @catheadowl/dsh-md-links
  */
 export {

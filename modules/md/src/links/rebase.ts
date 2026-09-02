@@ -1,9 +1,9 @@
 /**
- * Rebase seam (ADR 0002: self-written — the host verifies but never rewrites,
+ * Rebase seam (self-written — the host verifies but never rewrites,
  * so there is no host equivalent to fork). Byte-preserving destination rewrite:
  * replace only the destination substring of one reference, keeping the
  * fragment/query suffix and every other byte. The offset-rewrite pattern
- * follows upstream `translation-links.ts` (spec §3.2), but this function is
+ * follows upstream `translation-links.ts`, but this function is
  * self-written.
  */
 import { splitMarkdownUrlTarget } from './markdown.js'

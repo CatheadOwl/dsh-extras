@@ -3,9 +3,9 @@
  *
  * `enumerateWorkspacePaths` walks a workspace root and returns project-relative
  * paths (directories carry a trailing `/`, files do not), honoring every
- * `.gitignore` along the way (root + nested, including a submodule's own). This
- * is the "接入层枚举" from the prompt-parse spec: the pure `prompt-parse` lib
- * never touches the filesystem, so its `candidatePaths` come from here.
+ * `.gitignore` along the way (root + nested, including a submodule's own).
+ * The pure `prompt-parse` lib never touches the filesystem, so its
+ * `candidatePaths` come from here.
  */
 
 import { readdir, readFile } from 'node:fs/promises'
