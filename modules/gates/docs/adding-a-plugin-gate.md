@@ -83,10 +83,10 @@ export function apply(ctx: Context): void {
 
 ## 实例
 
-- `coggit-misplaced`（`dsh-plugin-dev/coggit/src/gates.ts`）：镜像对齐检查，数据面
+- `coggit-misplaced`（coggit 插件 `src/gates.ts`）：镜像对齐检查，数据面
   `listMisplacedCognition()`，remedy manual（registry reconcile-on-read 保证手挪无漂移）。
-- `doc-link`（`dsh-plugin-dev/extras/modules/markdown/`）：**通用** Markdown 链接完整性 gate——
-  数据面是 `@catheadowl/dsh-md-links` 纯库，插件只持有政策（rationale / level /
+- `doc-link`（同包 markdown 模块）：**通用** Markdown 链接完整性 gate——
+  数据面是 markdown 模块内 links 事务库，插件只持有政策（rationale / level /
   `relevantPath` / W10 归责谓词）。这是「仓库级 → 插件级」升格样板：检查本身项目无关，
   装一次、整个 profile 的所有工作区自动获得门禁（原每项目 `gates.yml` `module:` 薄
   shim 已归档；需要仓库级声明时可把 `module:` 指向本插件的 `./markdown/gate-check` 面）。

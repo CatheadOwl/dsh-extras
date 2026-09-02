@@ -2,23 +2,20 @@
 description: md-links 纯库槽位——Markdown 链接完整性数据面（mdast 解析 + 字节保真定位 + 文档锚点）
 ---
 
-# md-links — Markdown 链接完整性数据面
+# links 库（`src/links/`）— Markdown 链接完整性数据面
 
-把 Markdown 文本解析成可定位的链接与锚点事实，供链接完整性门禁消费。它是
-本仓库第三个**纯库**、第一个带第三方运行时依赖的纯库（mdast 解析栈）。
+把 Markdown 文本解析成可定位的链接与锚点事实，供链接完整性门禁与 rename 工具
+消费。模块内**纯库**：非插件、非服务、零 dsh 运行时绑定，不单独发布（第二个
+外部消费者出现时再按抽取规则处理）。
 
-- **纯库**：非插件、非服务、零 dsh 运行时绑定。经 `exports` 消费，先例
-  `dsh-plugin-dev/prompt-parse/`、`dsh-plugin-dev/file-history/`。
 - **第三方依赖**：4 个 mdast 包（`mdast-util-from-markdown` / `mdast-util-gfm` /
   `micromark-extension-gfm` / `@types/mdast`）声明为 registry `^range`；开发期解析
-  靠指向宿主检出的既有 `node_modules` junction（Windows 链接，见开发仓
-  `handbooks/dsh-plugin-dev/07-新增能力与外部依赖.md` §4.4；声明与解析解耦的模型见
-  开发仓 `handbooks/dsh-deps/resolution-ladder.md`）。
-- **消费者**：rename 工具 `dsh-plugin-dev/md-rename/`（`ctx.tools` 薄 wrapper）与
-  链接完整性 gate `dsh-plugin-dev/md-links-gates/`（插件级 `doc-link` 注册，
-  `./markdown/gate-check` 兼作 `gates.yml` `module:` 回退面）。
-- **契约不在此**：本库的「唯一说法」见开发仓 `workunits/md-links/spec/canonical-lib.md`；
-  提升决策见开发仓 `workunits/md-links/ADR/0001-promote-to-independent-pure-lib.md`。
+  靠指向 dsh 宿主检出的 `node_modules` junction（接线方式见包根 README 开发节）。
+- **消费者（包内）**：rename 工具 `md_rename`（`ctx.tools` 薄 wrapper）与
+  `doc-link` gate（插件级注册，`markdown/gate-check` 兼作 `gates.yml`
+  `module:` 回退面）。工具与 gate 共享同一算法、同版本演进——单拷贝不变量，
+  vendor 两份即两个漂移点。
+- **契约不在此**：库契约的唯一说法与提升决策史在开发仓库 workunits（纯文本引用）。
 
 ## 模块
 

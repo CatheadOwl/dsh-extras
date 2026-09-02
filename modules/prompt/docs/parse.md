@@ -2,7 +2,11 @@
 description: prompt-parse 纯库 — user prompt 路径提取的 API、使用范式与开发说明
 ---
 
-# @catheadowl/dsh-prompt-parse
+# parse 库（prompt 模块内嵌，`src/parse/`）
+
+user prompt 路径提取纯库（fuzzy / parse / resolve），非插件、非服务、零 dsh
+运行时绑定，不单独发布（第二个外部消费者出现时再按抽取规则处理）。能力边界
+spec 见开发仓库 workunits（纯文本引用）。
 
 从一段 user prompt 文本里提取「可能是路径」的候选，并对每个候选做 fuzzy 匹配、返回候选路径列表。
 
@@ -86,9 +90,10 @@ v0 `ProjectRelativePathRecognizer` 提取：带 `/` 或 `\` 的 token、裸 `wor
 测试跑**编译后 `lib/`**（`node:test` + `node:assert`，无框架依赖），所以先 build 再 test：
 
 ```powershell
-# 从仓库根；tsc 复用宿主的 TypeScript（本包无自己的 node_modules）
-& 'deepseek-harness\node_modules\.bin\tsc.cmd' -p 'dsh-plugin-dev\prompt-parse\tsconfig.json'          # build
-node --test 'dsh-plugin-dev\prompt-parse\test\fuzzy.test.mjs' 'dsh-plugin-dev\prompt-parse\test\parse.test.mjs' 'dsh-plugin-dev\prompt-parse\test\resolve.test.mjs'
+# 从 extras 包根；tsc 借用 dsh 宿主检出的工具链（见包根 README 开发节）
+pnpm run check-types:prompt    # 含本库
+pnpm run build:prompt
+pnpm run test:prompt           # 含 fuzzy / parse / resolve 三套
 ```
 
 或在本目录跑 `pnpm run verify`（= check-types → build → test）。`lib/`、`node_modules/` 已 gitignore。

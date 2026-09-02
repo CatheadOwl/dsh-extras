@@ -1,15 +1,17 @@
 ---
-description: extras 的 prompt 模块——原 prompt-middleware（ctx.promptMiddleware provider registry + user prompt path relates additionalContext 注入），吸收 prompt-parse 与 workspace-tree 为模块内库 src/parse 与 src/tree
+description: extras 的 prompt 模块——user prompt enrichment 小框架：解析本轮用户提示词中的路径引用，运行 provider 注入 per-path relates 上下文（ctx.promptMiddleware 注册表 + Web 配置页开关）；内嵌 parse / tree 两个纯库
 ---
 
 # prompt 模块（`@catheadowl/dsh-extras` 一行）
 
-`prompt` 是 user prompt enrichment 的小框架：在 `agent/pre-step`
-中解析本轮直接用户提示词，产出 `ResolvedPromptPath[]`，再运行注册的 provider，
-把 per-path relates contribution 聚合成一条 plugin-sourced `UserMessage`。
+**价值**：让 dsh 会话在用户提到某个路径时自动获得该路径的定向上下文（面包屑、
+关联说明等），而不是让模型盲猜或用户手动粘贴——注入只按路径聚合、不改写用户
+消息、不阻断轮次。
 
-设计控制面见 `workunits/prompt-middleware/README.md`（开发仓库纯文本引用）。
-本插件只实现承载层，不内置 cognition 或面包屑业务逻辑。
+**与宿主的关系**：挂在 dsh 的 `agent/pre-step` 检查点上做一个 provider 注册表
+（`ctx.promptMiddleware`），本模块只实现承载层，不内置 cognition 或面包屑等
+业务逻辑——那些由其他插件/模块作为 provider 注册。设计控制面见
+`workunits/prompt-middleware/README.md`（开发仓库纯文本引用）。
 
 ## 提供面
 
@@ -73,9 +75,9 @@ cd modules\prompt ; node --test --test-isolation=none test/composition.test.mjs
 
 junction 层在 extras 包根 `node_modules/`（全模块共享）；
 `test/wire.test.mjs` 需要 `dsh-typert-registry`、`dsh-api-gateway` junction；
-组合测试额外需要 `dsh-system-prompt`、`dsh-tools`、`dsh-agent-loop` junction，
-any_routes 引入开发仓库同级模块的 lib 产物（相对路径仅存在于测试源码中，
-routes 迁入 extras 后改指模块内路径）。**不要在此目录跑 `pnpm install`**。
+组合测试额外需要 `dsh-system-prompt`、`dsh-tools`、`dsh-agent-loop` junction
+（接线方式见包根 README 开发节）。测试源码中的跨模块相对路径 import 均不越出
+extras 包根。**不要在此目录跑 `pnpm install`**。
 
 ## 模块内库（原纯库吸收）
 

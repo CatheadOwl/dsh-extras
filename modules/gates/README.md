@@ -103,11 +103,10 @@ import，通用 `check(root, changes?)`）或 `command`（shell，非零退出�
 
 ## 首发 gate
 
-- `doc-link`（**插件级**，`dsh-plugin-dev/extras/modules/markdown` 注册）：Markdown 链接完整性，
-  数据面复用 `@catheadowl/dsh-md-links`（`checkRepository`），git 扫描真实仓库全扫 < 1s；
-  通用检查（任何有 Markdown 的仓库都成立）——装一次该插件，profile 下所有工作区自动
-  获得轮末 + 手动门禁，无需每项目 shim / `gates.yml` 条目（原仓库级
-  `scripts/doc-link-lib.mjs` 薄 shim 已归档）。`doc-style` 已随全自由（free-relative）废弃。
+- `doc-link`（**插件级**，同包 markdown 模块注册）：Markdown 链接完整性，
+  数据面复用 markdown 模块内 links 事务库（`checkRepository`），git 扫描真实仓库全扫 < 1s；
+  通用检查（任何有 Markdown 的仓库都成立）——装一次 extras，profile 下所有工作区自动
+  获得轮末 + 手动门禁，无需每项目 shim / `gates.yml` 条目。`doc-style` 已随全自由（free-relative）废弃。
 - `coggit-misplaced`（coggit 插件注册）：镜像对齐检查，数据面
   `listMisplacedCognition()`（列出前自动 reconcile）；手挪文件即修复。
 - `md-metadata`（**插件级**，同 markdown 模块注册，`level: defer` 旁路档）：本轮被写
@@ -118,11 +117,11 @@ import，通用 `check(root, changes?)`）或 `command`（shell，非零退出�
 ## 本机命令
 
 ```powershell
-Set-Location d:\Document\Projects\dsh\dsh-plugin-dev\extras\modules\gates
-# 直调，不走 pnpm run（pnpm 在此目录会触发依赖状态校验）
-..\..\..\..\deepseek-harness\node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
-..\..\..\..\deepseek-harness\node_modules\.bin\tsc.cmd -p tsconfig.json
-..\..\..\..\deepseek-harness\node_modules\.bin\tsdown.cmd   # Web 配置页 client bundle → lib/client.js
+Set-Location <extras-checkout>\modules\gates
+# 直调，不走 pnpm run（pnpm 在此目录会触发依赖状态校验）；tsc/tsdown 借用 dsh 宿主检出的工具链
+<host-checkout>\node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
+<host-checkout>\node_modules\.bin\tsc.cmd -p tsconfig.json
+<host-checkout>\node_modules\.bin\tsdown.cmd   # Web 配置页 client bundle → lib/client.js
 # 单测清单以 extras 包根 package.json 的 scripts.test:gates 为准（SSOT），此处不复述
 node --test --test-isolation=none <package.json test 列出的文件>
 # 组合测试：真实 agent-loop + mock adapter，验证 turn-stopping 驱动（defer 旁路 / blocking 续步）
@@ -131,15 +130,13 @@ node --test --test-isolation=none <package.json test 列出的文件>
 node --test --test-isolation=none test/composition.test.mjs
 ```
 
-junction 解析层：**extras 包根 `node_modules/`**（`dsh-plugin-dev/extras/node_modules`，
-全模块共享一份）的 `@deepseek-ai/{cordis,schemastery,dsh-tools,
+junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份）的 `@deepseek-ai/{cordis,schemastery,dsh-tools,
 dsh-llm,dsh-agent,dsh-session,dsh-typert-protocol,dsh-invariants}` 指向
-vendored 源码的 `lib/types`/包目录
-（参照 07 章配方；`dsh-commands`、`dsh-skill`、`dsh-subagent` 仅类型面，走
+dsh 宿主检出（vendored 源码的 `lib/types`/包目录，接线配方见包根 README 开发节；
+`dsh-commands`、`dsh-skill`、`dsh-subagent` 仅类型面，走
 `import type {}`，插件 lib 运行时不需要 junction）。组合测试
 （`test/composition.test.mjs`）额外需要 `dsh-system-prompt`、`dsh-agent-loop`、
-`dsh-subagent`、`dsh-subagent-fork-in-process` 四个 junction，同样指向 host 包目录；
-`dsh-md-links` 依赖 md-links 包（尚未迁入 extras 时按其目录解析）。
+`dsh-subagent`、`dsh-subagent-fork-in-process` 四个 junction，同样指向 host 包目录。
 Web 配置页（client half）的类型依赖走 tsconfig `paths` 指向 host 包 `lib/types`；
 `react` / `@types/react` 以 junction 指向 vendored `.pnpm` 的版本化路径。
 **不要在此目录跑 `pnpm install`**。
@@ -152,7 +149,7 @@ import / `new URL(...)` 路径会被 `publish-readiness` gate 拦截。
 ## 安装与验证
 
 ```powershell
-dsh plugin add d:\Document\Projects\dsh\dsh-plugin-dev\extras   # 装的是 extras 包（gates 是其中一行）
+dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 ```
 
 装入 profile 后按 `docs/meeting-room/20260822-1436-local-ci-gates/` 两个 case 文件的"预期"节做行为验收：坏链接触发轮末续步修复、`/gates` 聚合、卸载后注册方不受影响等。注意：case 文档为讨论期档案，其中名称/路径为旧称（`ci_run`/`/ci` 现为 `gates_run`/`/gates`，`local-ci` 现为 `gates`，`vscode-plugins/codebase/coggit` 现为 `dsh-plugin-dev/coggit`）。

@@ -13,10 +13,10 @@ description: gates 插件维护指南——消费面变更、构建与测试阶�
 ## 构建与测试
 
 ```powershell
-Set-Location d:\Document\Projects\dsh\dsh-plugin-dev\extras\modules\gates
-..\..\..\..\deepseek-harness\node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
-..\..\..\..\deepseek-harness\node_modules\.bin\tsc.cmd -p tsconfig.json
-..\..\..\..\deepseek-harness\node_modules\.bin\tsdown.cmd
+Set-Location <extras-checkout>\modules\gates
+<host-checkout>\node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
+<host-checkout>\node_modules\.bin\tsc.cmd -p tsconfig.json
+<host-checkout>\node_modules\.bin\tsdown.cmd
 # 单测清单以 package.json 的 test script 为准（SSOT），此处不复述
 node --test --test-isolation=none <package.json test 列出的文件>
 node scripts/register-reference.mjs --write

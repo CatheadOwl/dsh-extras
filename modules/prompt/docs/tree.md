@@ -2,9 +2,9 @@
 description: workspace-tree 纯模块 — gitignore-aware 的 workspace 枚举, 产出 prompt-parse 的 candidatePaths
 ---
 
-# @catheadowl/dsh-workspace-tree
+# tree 库（prompt 模块内嵌，`src/tree/`）
 
-从 workspace 根目录枚举出 gitignore-aware 的 project 相对路径列表（目录带尾斜杠、文件不带），作为 `@catheadowl/dsh-prompt-parse` 的 `candidatePaths` 输入。
+从 workspace 根目录枚举出 gitignore-aware 的 project 相对路径列表（目录带尾斜杠、文件不带），作为同模块 parse 库（`src/parse/`）的 `candidatePaths` 输入。
 
 **纯模块，非插件、非服务，零 npm 运行时依赖**（`.gitignore` 匹配用 vendored `ignore@5.3.2`，见 `vendor/ignore/README.md`）。它是 prompt-parse spec「接入结论」的落地：prompt-parse 纯库不碰文件系统，`candidatePaths` 由本模块产出。
 
@@ -33,8 +33,10 @@ async function enumerateWorkspacePaths(root: string, options?): Promise<string[]
 ## 开发
 
 ```powershell
-& 'deepseek-harness\node_modules\.bin\tsc.cmd' -p 'dsh-plugin-dev\workspace-tree\tsconfig.json'   # build
-node --test 'dsh-plugin-dev\workspace-tree\test\enumerate.test.mjs'
+# 从 extras 包根；tsc 借用 dsh 宿主检出的工具链（见包根 README 开发节）
+pnpm run check-types:prompt
+pnpm run build:prompt
+pnpm run test:prompt           # 含 enumerate 套件
 ```
 
-或在本目录 `pnpm run verify`（= check-types → build → test）。`lib/`、`node_modules/` 已 gitignore；`vendor/` 是 vendored 源码（提交，勿删）。
+`lib/`、`node_modules/` 已 gitignore；`vendor/` 是 vendored 源码（提交，勿删）。
