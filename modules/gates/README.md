@@ -110,9 +110,10 @@ import，通用 `check(root, changes?)`）或 `command`（shell，非零退出�
   `scripts/doc-link-lib.mjs` 薄 shim 已归档）。`doc-style` 已随全自由（free-relative）废弃。
 - `coggit-misplaced`（coggit 插件注册）：镜像对齐检查，数据面
   `listMisplacedCognition()`（列出前自动 reconcile）；手挪文件即修复。
-- `md-metadata`（仓库级，本仓库根 `gates.yml` 声明，`level: defer` 旁路档）：本轮被写
-  md 必须带非空 frontmatter `description`；数据面 `scripts/md-metadata-lib.mjs`，消费
-  变更集输入（T6 首个消费者）。
+- `md-metadata`（**插件级**，同 md 模块注册，`level: defer` 旁路档）：本轮被写
+  md 必须带非空 frontmatter `description`；数据面在 md 模块
+  `src/metadata-check.ts`，消费变更集输入（T6 首个消费者；2026-09-02 由本仓库根
+  `gates.yml` 仓库级条目升格，原 `scripts/md-metadata-lib.mjs` 已删）。
 
 ## 本机命令
 

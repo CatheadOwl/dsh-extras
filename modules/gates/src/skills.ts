@@ -119,10 +119,15 @@ manual 入口不注入该变量。
 - **\`level\` 词汇表在插件加载时定死**：新增 level（如 \`defer\`）需重启 host，
   仅改 \`gates.yml\` 不够（\`gates.yml\` 按 mtime 热读不受此限，但 level 白名单在
   插件加载时读入）。
+- **完整可跑的 module 形态参考实现**：\`examples/md-metadata/module-form.mjs\`
+  （冻结标本，可直接 \`module:\` 指向或拷走改 id）。
 - 慢检查优先优化自身或声明 \`relevant\`（精确脏轮可跳过无关检查，无脏轮整体短路）；
   仍慢则调 \`level: advisory\`。
 - 手动入口（\`gates_run\` / \`/gates\`）总是全扫，且不回写轮末脏状态
   （手动通过不会让下个轮末短路，保守方向）。
+- **仓库级 id 与插件级 gate 撞名会 fail loud**：示例 id \`md-metadata\` 已被
+  \`@catheadowl/dsh-extras\` md 模块插件级注册（defer + subagent fixer，装该包的
+  profile 自带）；要声明自己的等价检查需换 id，或直接复用插件 gate 不再声明。
 `
 
 /**

@@ -1,17 +1,20 @@
 /**
  * md module: the Markdown toolchain row of `@catheadowl/dsh-extras` — one
- * fiber registering BOTH model-facing surfaces:
+ * fiber registering all three model-facing surfaces:
  *
  * - the `md_rename` tool (move + deterministic all-or-nothing link rewrite),
  *   a thin wrapper over the in-module `./links` pure lib (plan/apply:
  *   `planRename` / `applyRenamePlan`; conflict → report, never guess);
  * - the `doc-link` gate (Markdown link integrity at turn-stop and manual runs),
  *   soft-registered through `registerGate` (gates absent → loads, registers
- *   nothing) with the data plane and attribution policy in `./gate-check`.
+ *   nothing) with the data plane and attribution policy in `./gate-check`;
+ * - the `md-metadata` gate (session-written Markdown must declare a non-empty
+ *   frontmatter `description`; defer + subagent fixer), data plane in
+ *   `./metadata-check` — the former repo-level `scripts/md-metadata-lib.mjs`.
  *
- * The two surfaces share one fiber on purpose (single-copy rule): the tool and
- * the gate must agree on the same link algorithm at the same version —
- * vendoring two copies would drift and a drift is a false report.
+ * The surfaces share one fiber on purpose (single-copy rule): the tool and the
+ * gates must agree on the same Markdown algorithms at the same version —
+ * vendoring copies would drift and a drift is a false report.
  *
  * @module @catheadowl/dsh-extras/modules/md
  */
@@ -24,7 +27,8 @@ import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/regis
 import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename } from './links/index.js'
 import type { RenameConflict, RenameSkip } from './links/index.js'
 
-import { check } from './gate-check.js'
+import { check as checkDocLink } from './gate-check.js'
+import { check as checkMdMetadata } from './metadata-check.js'
 
 export const name = 'md'
 
@@ -85,6 +89,49 @@ const DOC_LINK_GATE: Omit<GateDefinition, 'check'> = {
   relevantPath: (path) => path.toLowerCase().endsWith('.md'),
 }
 
+/** The fixer prompt's house rules for writing a `description` (semantic, not mechanical). */
+const MD_METADATA_FIXER_PROMPT = [
+  'You are repairing a workspace quality-gate failure. Each file listed',
+  'below must declare a non-empty `description` in its YAML frontmatter.',
+  'If a file has no frontmatter block, create one at the top of the file.',
+  'For each file: read it, then add (or fill) a `description` field — one',
+  'sentence acting as the file\'s business card, written by these house',
+  'rules:',
+  '- Match the language of the document body.',
+  '- Keep it skeletal and stable: one short sentence, never more than two',
+  '  rendered lines.',
+  '- Use precise domain/code vocabulary (entity names, symbols, concepts)',
+  '  to state the subject exactly — no generic filler.',
+  '- Do not restate the filename; say what the file contains or who it is for.',
+  '- At most 4 enumerated items; beyond that, generalize to a precise',
+  '  category term (a domain word, not a filler like "misc" or "stuff").',
+  'Then sanity-check: without reading the body, can a reader tell what',
+  'this document is about, and will the summary stay accurate as the',
+  'body grows? Do not create new files and do not change anything else.',
+].join('\n')
+
+const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
+  id: 'md-metadata',
+  description: 'Markdown files written this session must declare a non-empty `description` in their YAML frontmatter.',
+  rationale:
+    'The frontmatter `description` is a note\'s discovery and classification key; a note without one is hard '
+    + 'to find or categorize later. The gate rechecks only files written since the last clean pass, so it stays '
+    + 'cheap and targeted at new docs. A vague or filename-restating description is nearly as bad as a missing '
+    + 'one, so the fixer writes each one following the house rules embedded in its prompt instead of improvising. '
+    + 'A good description is a semantic judgment rather than a mechanical extraction, so repair is delegated to a '
+    + 'subagent: it inherits the session context, reads each file, and writes the description outside the main '
+    + 'turn. The repair is one additive frontmatter field and the fixer changes nothing else, so it is low-risk. '
+    + 'A defer-level failure never blocks the session: the fixer is dispatched, the turn closes immediately, and '
+    + 'the gate rescans at the next turn-stop until it passes. Known boundary: files produced through opaque '
+    + 'tools (bash/subagents) or external editors are invisible to the session change set; they surface only '
+    + 'when later written directly by the session or caught in a manual git review.',
+  on: ['stop', 'manual'],
+  level: 'defer',
+  // Incremental shortcut: only dirty .md paths can change this gate's result.
+  relevantPath: (path) => path.toLowerCase().endsWith('.md'),
+  fixer: { kind: 'subagent', prompt: MD_METADATA_FIXER_PROMPT },
+}
+
 export function apply(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'md_rename',
@@ -131,6 +178,11 @@ export function apply(ctx: Context): void {
 
   registerGate(ctx, {
     ...DOC_LINK_GATE,
-    check: async (root, changes): Promise<GateViolation[]> => check(root, changes),
+    check: async (root, changes): Promise<GateViolation[]> => checkDocLink(root, changes),
+  })
+
+  registerGate(ctx, {
+    ...MD_METADATA_GATE,
+    check: async (root, changes): Promise<GateViolation[]> => checkMdMetadata(root, changes),
   })
 }
