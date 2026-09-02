@@ -53,14 +53,16 @@ dsh plugin add @catheadowl/dsh-extras
 
 ## API 面
 
-除组合行外，本包还导出两个稳定子路径（供其他插件消费）：
+除组合行外，本包导出插件开发者消费的稳定子路径：
 
 - `@catheadowl/dsh-extras/gates/register`——gates 插件消费面（`registerGate` +
-  `GateDefinition` / `GateViolation` 类型）；
-- `@catheadowl/dsh-extras/markdown/gate-check`——markdown 模块 gates.yml 回退面。
+  `GateDefinition` / `GateViolation` 类型）。
 
+各模块自己的次级消费面（如 markdown 的仓库级 `gates.yml` 回退）见对应模块文档。
 Web Settings Tab（gates / prompt）由包内嵌套锚点包
 `@catheadowl/dsh-extras-client` 合成装载，不需要单独安装。
+
+模块间依赖拓扑与对外消费面（exports 对账）见 [docs/dependencies.md](docs/dependencies.md)。
 
 ## 开发
 
