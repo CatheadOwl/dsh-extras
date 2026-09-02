@@ -4,7 +4,7 @@ description: prompt-middleware eval——behavior harness 用例(注入接线 sm
 
 # prompt-middleware eval
 
-本目录只有 behavior harness 用例,复用 `../../eval`（开发仓库 `dsh-plugin-dev/eval/README.md`，纯文本引用） 的共享 runner
+本目录只有 behavior harness 用例,复用开发仓库共享 eval runner（`dsh-plugin-dev/eval/README.md`，纯文本引用）
 (`dsh-eval.mjs`)。
 
 ## 用例

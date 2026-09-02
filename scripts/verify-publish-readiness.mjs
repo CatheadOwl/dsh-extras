@@ -14,7 +14,10 @@
 //      client half but only present in devDependencies).
 //   5. docs locality: markdown links in README.md, docs/ and eval/ must stay
 //      inside the package root and must not use absolute repo paths — the
-//      published docs cannot reach the surrounding dev repository.
+//      published docs cannot reach the surrounding dev repository. Plain-text
+//      relative path tokens that escape the package root are rejected for the
+//      same reason (unread outside the dev repo); host checkout borrows
+//      (deepseek-harness paths) stay exempt as everywhere else.
 //   6. npm scripts locality: path arguments in `scripts` entries must stay
 //      inside the package root; borrowing host checkout paths (L0) is allowed.
 //   7. meta locality: module sources must not cite dev-repo control-plane
@@ -180,6 +183,33 @@ function markdownLinks(markdown) {
   return links
 }
 
+// Plain-text relative path tokens (`../../../workunits/...`) in published
+// docs must resolve to an existing path inside the package root: tokens
+// escaping the root are unreachable for published readers, and tokens landing
+// on a nonexistent in-package path are dangling pointers (stale dev-repo
+// citations that mis-counted their `../` levels). Fenced code blocks and
+// markdown link targets are excluded (links have their own pass);
+// `deepseek-harness` tokens are the documented host-borrow exemption. This
+// is the only citation form mechanically separable from functional example
+// data (namespace-shaped tokens like `handbooks/` double as parser fixtures,
+// so those stay judgment-side — see extras AGENTS.md).
+function devRepoPathCitations(markdown, base, displayed, root, violations) {
+  const withoutFences = markdown.replace(/```[\s\S]*?```/gu, '')
+  // Whole markdown links (text + target) are removed: links have their own
+  // pass above, and a path-shaped link text (`[../README.md](...)`) is part
+  // of that link, not a plain-text citation.
+  const withoutLinks = withoutFences.replace(/\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\)/gu, '')
+  for (const match of withoutLinks.matchAll(/(?:\.\.[/\\])+[^\s`'"，。；：））、】》]*/gu)) {
+    const token = match[0]
+    if (token.includes('deepseek-harness')) continue
+    const target = resolve(base, token)
+    const insideRoot = target === root || target.startsWith(root + '/') || target.startsWith(root + '\\')
+    if (!insideRoot || !existsSync(target)) {
+      violations.push(`${relative(root, displayed).replaceAll('\\', '/')} cites dev-repo path ${token} which does not resolve to an existing in-package path — name the source instead of pathing it`)
+    }
+  }
+}
+
 function docsLocality(root, extraMarkdown = []) {
   const violations = []
   const targets = [
@@ -206,6 +236,7 @@ function docsLocality(root, extraMarkdown = []) {
         violations.push(`${relative(root, displayed).replaceAll('\\', '/')} links outside the package root: ${link}`)
       }
     }
+    devRepoPathCitations(text, dirname(String(displayed)), String(displayed), root, violations)
   }
   return violations
 }

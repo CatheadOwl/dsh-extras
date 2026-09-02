@@ -125,10 +125,8 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 `maxDepth: 1` 把子限制为深度 1——子再派孙（深度 2）会被 `SubagentDepthError` 拒绝、
 落快照兜底，不会无限套娃。子自己跑 gate 是低成本自校验：修对了其 gate 通过。
 
-**当前边界（缺口）**：消费面跟踪于
-`../../../workunits/gates/TODO/20260827-gate-consumption-surface.md`。
-fixer 每次失败只记快照、不做「多次失败降级/冷却」，跟踪于
-`../../../workunits/gates/TODO/20260827-gate-fixer-cooldown.md`。另外 `level`
+**当前边界（缺口）**：消费面缺口与 fixer「多次失败降级/冷却」均跟踪于开发仓库
+workunit TODO（gate-consumption-surface、gate-fixer-cooldown）。另外 `level`
 词汇表在插件加载时定死：加 `level: defer` 需重启 host（`gates.yml` 本身按 mtime
 热读不受此限）。
 

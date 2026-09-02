@@ -22,7 +22,8 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
       },
     },
     extraMarkdown: [
-      { path: 'docs/escape.md', text: '[spec](../../../workunits/gates/spec/gate-fixer.md) and [abs](/deepseek-harness/docs)' },
+      { path: 'docs/escape.md', text: '[spec](../../../workunits/gates/spec/gate-fixer.md) and [abs](/deepseek-harness/docs) plus plain-text `../../../workunits/gates/TODO/x.md`' },
+      { path: 'docs/inside.md', text: 'see `../README.md` (exists in-package) — must not be flagged' },
     ],
     extraScripts: [
       { path: 'scripts/escape.mjs', text: "import { x } from '../../handbooks/dsh-plugin-dev/scripts/verify-package-face.mjs'\nconst ts = new URL('../../../deepseek-harness/node_modules/typescript/lib/typescript.js', import.meta.url)\nimport yaml from 'yaml'" },
@@ -37,6 +38,9 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
   assert.match(reasons, /dependencies\.yaml uses non-registry specifier/u)
   assert.match(reasons, /links outside the package root/u)
   assert.match(reasons, /links absolute repo path/u)
+  assert.match(reasons, /docs\/escape\.md cites dev-repo path \.\.\/\.\.\/\.\.\/workunits\/gates\/TODO\/x\.md which does not resolve to an existing in-package path/u)
+  // In-package relative tokens that exist must NOT be flagged.
+  assert.doesNotMatch(reasons, /docs\/inside\.md cites dev-repo path/u)
   assert.match(reasons, /scripts\/escape\.mjs references \.\.\/\.\.\/handbooks/u)
   assert.match(reasons, /scripts\/escape\.mjs references \.\.\/\.\.\/\.\.\/deepseek-harness/u)
   assert.match(reasons, /scripts\.eval references \.\.\/eval\/bin\/dsh-eval\.mjs/u)

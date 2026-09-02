@@ -74,8 +74,8 @@ cd modules\prompt ; node --test --test-isolation=none test/composition.test.mjs
 junction 层在 extras 包根 `node_modules/`（全模块共享）；
 `test/wire.test.mjs` 需要 `dsh-typert-registry`、`dsh-api-gateway` junction；
 组合测试额外需要 `dsh-system-prompt`、`dsh-tools`、`dsh-agent-loop` junction，
-any_routes 通过相对路径 `../../../../any_routes/lib/index.js` 引入
-（routes 迁入 extras 后改指模块内路径）。**不要在此目录跑 `pnpm install`**。
+any_routes 引入开发仓库同级模块的 lib 产物（相对路径仅存在于测试源码中，
+routes 迁入 extras 后改指模块内路径）。**不要在此目录跑 `pnpm install`**。
 
 ## 模块内库（原纯库吸收）
 
