@@ -1,0 +1,1 @@
+# Keep npm pack from inheriting the module .gitignore.

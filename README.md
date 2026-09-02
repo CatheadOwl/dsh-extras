@@ -51,9 +51,15 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 
 ```powershell
 # 从本目录（dsh-plugin-dev/extras）
+pnpm run build               # root build：四个可重建模块 + client bundle
 pnpm run build:gates            # tsc：模块 lib/ + types
 pnpm run build:gates:client     # tsdown：Web client bundle → modules/gates/lib/client.js
 pnpm run test:gates             # 模块单元测试
+pnpm run verify:package-face    # root facade / exports 校验
+pnpm run verify:publish-readiness # root publish hygiene 校验
+
+# 从仓库根目录
+node scripts/pack-extras-release.mjs   # pack 到 .tmp/publish-sim/，cache 也收进 .tmp/publish-sim/npm-cache
 
 # 装进 profile（裸路径 = link 语义）
 dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/extras
