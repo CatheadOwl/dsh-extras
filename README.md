@@ -1,69 +1,83 @@
 ---
-description: dsh-extras 单包多行发布载体——一个 npm 包装多个独立插件模块（gates 已迁入，md/prompt/routes/subagent 迁入中）；模块=组合行=独立 fiber，./register 保留 gates API 面
+description: dsh-extras 发布包 README——一个 npm 包装多个运行时独立的 dsh 插件模块（gates/markdown/prompt/routes 首发四行），安装、模块、配置、API 面与开发指南
 ---
 
 # @catheadowl/dsh-extras
 
-单一 npm 包承载多个**运行时独立**的 dsh 插件模块。设计依据、实验证据与发布方案见
-`workunits/extras/release-plan/`（开发仓库纯文本引用，不随包发布解析）。
+一个 npm 包，多个**运行时独立**的 [dsh](https://github.com/deepseek-ai/deepseek-harness) 插件模块：
+质量门禁、Markdown 链接治理、prompt 注入、知识库路由——`dsh plugin add` 一次全装，
+每个模块独立开关，不需要的行关掉即可，互不影响。
 
-## 形态（单包多行）
+## 安装
 
-- `cordis.patch.yml` 用 `- insert:` 声明每个模块一行，行 `name` 是锚定在本包目录的
-  相对子路径（`./modules/<m>/lib/index.js`）；
-- 每行独立 fiber、独立 Config——用户在 profile patch 层对某行 `id` 写
-  `disabled: true` 即单关一个模块；
-- 安装 = `dsh plugin add @catheadowl/dsh-extras` 一次全装；
-- 模块下架 = 包版本更新（删行删子路径，`plugin update` 收缩）。
+```powershell
+dsh plugin add @catheadowl/dsh-extras
+```
+
+要求：已安装 dsh CLI。所有运行时依赖由 dsh 宿主提供（peerDependencies，
+`plugin add` 时随宿主解析），本包自身只带少量纯 JS 工具依赖。
 
 ## 模块
 
-| 模块 | 内容 | 状态 |
-|---|---|---|
-| `modules/gates` | 原 `@catheadowl/dsh-gates`（ctx.gates 质量门禁） | 已迁入 |
-| `modules/markdown` | 原 md-links + md-rename + md-links-gates（`md_rename` 工具 + `doc-link` gate + 内置链接事务库） | 已迁入 |
-| `modules/prompt` | 原 prompt-middleware + prompt-parse + workspace-tree（prompt 注入服务 + 内置 parse/tree 库） | 已迁入 |
-| `modules/routes` | 原 any_routes（通用 Markdown 路由视图工具 any_routes + breadcrumb relates provider） | 已迁入 |
-| `modules/subagent` | 原 subagent-at（`subagent_at` 工具 + `dsh-sdk-at` provider；行 id `subagent-at`——宿主 dsh-base 已占用 `subagent`） | 已迁入* |
+| 模块 | 行 id | 提供什么 | 文档 |
+|---|---|---|---|
+| gates | `gates` | 质量门禁框架（`ctx.gates`）：turn 收尾自动运行的可组合 gate 与 `registerGate` 消费面 | [modules/gates/README.md](modules/gates/README.md) |
+| markdown | `markdown` | `md_rename` 工具（搬移并改写 Markdown 内链）+ `doc-link` gate + 内置链接事务库 | [modules/markdown/README.md](modules/markdown/README.md) |
+| prompt | `prompt` | prompt 注入服务（declarative provider + 内置 parse/tree 库），向会话注入项目知识 | [modules/prompt/README.md](modules/prompt/README.md) |
+| routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
+| subagent | `subagent-at` | `subagent_at` 工具（带血缘的子代理定向派发，per-call `cwd`）+ `dsh-sdk-at` provider（行 id 避让宿主 `subagent`） | [modules/subagent/README.md](modules/subagent/README.md) |
 
-各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
-随源码从原包整体迁入）。client 面的挂载机制与「表面 UI / 实际 source 归属」的
-教训见开发仓库 `handbooks/Gremlins/20260901-2312-dsh-client-source-attribution/`
-（纯文本引用，不随包发布解析）。
+每个模块是 cordis 组合里的独立一行（fiber）：不共享状态，关掉任何一行，
+其余模块行为不变。
+
+## 配置
+
+在你的 profile patch 层按行 id 单关一个模块：
+
+```yaml
+- id: gates
+  disabled: true
+```
+
+带默认配置的模块可覆写（键见各模块文档）：
+
+```yaml
+- id: prompt
+  config:
+    providerTimeoutMs: 2000
+    totalTimeoutMs: 5000
+    renderBudgetChars: 4000
+```
+
+模块上下架走包版本更新：升级本包后 `dsh plugin update` 收缩/扩展组合行。
 
 ## API 面
 
-- `@catheadowl/dsh-extras/register`——gates 的插件消费面（`registerGate` +
-  `GateDefinition`/`GateViolation` 类型），保持原 `@catheadowl/dsh-gates/register`
-  的导出集合不变（coggit 等消费方只改包名）；
-- `@catheadowl/dsh-extras/gate-check`——markdown 模块 gates.yml 回退面。
-- Web 客户端面：`modules/client` 嵌套锚点包（`@catheadowl/dsh-extras-client`，自带
-  package.json + `dsh.client` + `./client` export，不单独发布）——gates/prompt 的
-  Settings Tab 经此合成 bundle 装载；`nearestPackage` 把 client 行归属到嵌套 manifest，
-  extras 根保持 server-only，绕开 client-modules「一包一源」冲突（独立 DSH_HOME
-  web 终态 boot 验收通过，见 `workunits/extras/release-plan/README.md` §目标态）。
+除组合行外，本包还导出两个稳定子路径（供其他插件消费）：
 
-## 构建与验证（开发态）
+- `@catheadowl/dsh-extras/gates/register`——gates 插件消费面（`registerGate` +
+  `GateDefinition` / `GateViolation` 类型）；
+- `@catheadowl/dsh-extras/markdown/gate-check`——markdown 模块 gates.yml 回退面。
 
-> *subagent 模块源码重建被上游缝缺口挂起（SDK client 收走任意子运行时启动面，见
-> `upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`），沿用缝前构建的 lib；
-> 其余四模块 tsc 重建正常。
+Web Settings Tab（gates / prompt）由包内嵌套锚点包
+`@catheadowl/dsh-extras-client` 合成装载，不需要单独安装。
+
+## 开发
 
 ```powershell
-# 从本目录（dsh-plugin-dev/extras）
-pnpm run build               # root build：四个可重建模块 + client bundle
-pnpm run build:gates            # tsc：模块 lib/ + types
-pnpm run build:gates:client     # tsdown：Web client bundle → modules/gates/lib/client.js
-pnpm run test:gates             # 模块单元测试
-pnpm run verify:package-face    # root facade / exports 校验
-pnpm run verify:publish-readiness # root publish hygiene 校验
-
-# 从仓库根目录
-node scripts/pack-extras-release.mjs   # pack 到 .tmp/publish-sim/，cache 也收进 .tmp/publish-sim/npm-cache
-
-# 装进 profile（裸路径 = link 语义）
-dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/extras
+# 从本目录（extras 包根）
+pnpm run build                  # 四模块 lib + client bundle
+pnpm run test:gates             # 各模块单测（test:markdown / test:prompt / test:routes）
+pnpm run verify:package-face    # exports / facade 校验
+pnpm run verify:publish-readiness  # 发布卫生校验（docs locality 等）
 ```
 
-peer 解析（Windows junction）与测试前置同原各包：`extras/node_modules/` 的
-junction 层覆盖运行时 peer，随模块迁入逐步并集。
+构建借用宿主 checkout 的工具链（`deepseek-harness/node_modules/.bin` 下的
+tsc / tsdown，见 package.json scripts）——克隆本包仓库后需先准备好一份 dsh
+检出，并把 `node_modules/@deepseek-ai/*` peer 按 junction 接到宿主（Windows
+开发态的既有接线方式）。各模块的行为 eval（意图/回归用例）位于
+`modules/<m>/eval/`，框架与运行方式见各模块 eval README。
+
+## License
+
+[MIT](LICENSE)

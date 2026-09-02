@@ -2,9 +2,10 @@
 # Row names: package subpath specifiers (@catheadowl/dsh-extras/<module>) for
 # the four published modules — each is a public contract (package.json
 # `exports` must declare the same subpath; see plugin-release 03/05).
-# The subagent row is withheld from the first release and the extras-client
-# row is the nested client anchor: both intentionally keep relative paths
-# (bare/nested names break loader resolution — release-plan experiments).
+# The subagent row ships with the first release (unblocked 2026-09-03) and the
+# extras-client row is the nested client anchor: both intentionally keep
+# relative paths (bare/nested names break loader resolution — release-plan
+# experiments; subagent specifier-ization unverified, revisit opportunistically).
 - insert:
     - id: gates
       name: '@catheadowl/dsh-extras/gates'
