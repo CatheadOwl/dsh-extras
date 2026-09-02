@@ -11,7 +11,7 @@ description: subagent_at 子运行时（child runtime）的形态与配置——
 public SDK argv escapes are forbidden），因此子运行时**只能是 dsh CLI**——
 自定义组合通过 profile patch 层表达，而不是 `command`/`args` 指向任意可执行
 文件（旧设计，已随宿主 `DeepSeekHarnessOptions.launch` 的移除作废，
-档案 `docs/upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`）。
+档案 `upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`）。
 
 ## 契约：子运行时满足什么
 
