@@ -1,5 +1,5 @@
 /**
- * Rename transaction kernel (ADR 0001 §2/§3): rebaseHref (a document-relative
+ * Rename transaction kernel: rebaseHref (a document-relative
  * href from a source file to an absolute target) plus planRename/applyRenamePlan
  * (plan-then-apply, "工作树绝不半改"). Pure lib — no ctx, node:test-able.
  *
@@ -7,10 +7,9 @@
  * L2/L3/L4 (git rename detection / content similarity / agent fallback) are
  * gate-side (路 B) and out of scope here.
  *
- * Post-hoc repair (workunits/md-rename TODO 20260831-posthoc-repair-mode,
- * D1–D4): when the move ALREADY happened — oldPath missing, newPath present,
- * and git can witness it (staged `R old→new`, a `D old` whose shifted new-side
- * counterpart exists on disk, or a HEAD record when the worktree shows
+ * Post-hoc repair: when the move ALREADY happened — oldPath missing, newPath
+ * present, and git can witness it (staged `R old→new`, a `D old` whose shifted
+ * new-side counterpart exists on disk, or a HEAD record when the worktree shows
  * nothing) — the same (old, new) pair plans a link-only repair: no `git mv`,
  * in-links resolved lexically (existence-free, never silently dropped),
  * out-links read at the new position and resolved against the old baseline,
