@@ -389,8 +389,22 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
     const rewrites: Rewrite[] = []
     for (const ref of extractReferences(source)) {
       const resolution = resolveReference(ref, candidateAbs, repoRoot)
-      if (resolution.ignored || resolution.reason) continue // not an internal in-link to old
-      if (!isInside(oldAbs, resolution.abs!)) continue // points elsewhere
+      if (resolution.ignored) continue // not an internal in-link to old
+      if (resolution.abs === undefined) {
+        // Pre-broken/unresolvable in-link: report it only when it points
+        // lexically INTO the moved subtree's old namespace (TODO
+        // 20260902 — same honesty rule as the post-hoc pass: every
+        // old-pointing reference is either rewritten or reported, never
+        // silently dropped). Breakage elsewhere is the doc-link gate's
+        // territory, not this move's.
+        const lexical = resolveReferenceLexically(ref, candidateAbs)
+        if (lexical.abs !== undefined && isInside(oldAbs, lexical.abs)) {
+          skips.push(skip(posixRelative(repoRoot, candidateAbs), ref,
+            'in-link target did not exist before the move (rename does not repair broken links)'))
+        }
+        continue
+      }
+      if (!isInside(oldAbs, resolution.abs)) continue // points elsewhere
       if (ref.start === undefined || ref.end === undefined) {
         skips.push(skip(posixRelative(repoRoot, candidateAbs), ref, 'in-link has no rebasable destination (autolink / bare URL)'))
         continue

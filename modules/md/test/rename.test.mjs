@@ -117,6 +117,54 @@ describe('planRename / applyRenamePlan (L1 explicit)', () => {
     assert.equal(readFileSync(join(root, 'guide.md'), 'utf8'), '# Guide\n\n[broken](missing.md)\n')
   })
 
+  it('reports a pre-broken in-link pointing into the moved subtree instead of silently dropping it', () => {
+    // TODO 20260902: lexical landing inside the old subtree, but the target
+    // never existed even before the move — must surface as a skip.
+    const root = fixture({
+      'README.md': '[guide](docs/guide.md)\n[ghost](docs/never-existed.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { certain, plan } = planRename(root, 'docs', 'notes')
+    assert.equal(certain, true)
+    assert.equal(plan.skips.length, 1)
+    assert.equal(plan.skips[0].file, 'README.md')
+    assert.match(plan.skips[0].reason, /did not exist before the move/)
+
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'),
+      '[guide](notes/guide.md)\n[ghost](docs/never-existed.md)\n')
+  })
+
+  it('leaves a pre-broken in-link outside the moved subtree to the doc-link gate (no skip)', () => {
+    const root = fixture({
+      'README.md': '[guide](docs/guide.md)\n[elsewhere](other/missing.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { certain, plan } = planRename(root, 'docs', 'notes')
+    assert.equal(certain, true)
+    assert.deepEqual(plan.skips, [])
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'),
+      '[guide](notes/guide.md)\n[elsewhere](other/missing.md)\n')
+  })
+
+  it('leaves an in-link whose ../ chain escapes the repository root untouched and unreported', () => {
+    // TODO 20260902 field case (plugin-publish/02): `../../../docs/…` from a
+    // depth-2 file lands OUTSIDE repoRoot — not inside the moved subtree's
+    // old namespace, so it stays the doc-link gate's territory. Pin the
+    // silence so it is not "fixed" into guessing later.
+    const root = fixture({
+      'handbooks/plugin-publish/02.md': '[log](../../../docs/upstream-issues/CHANGELOGS.md)\n',
+      'docs/upstream-issues/CHANGELOGS.md': '# Logs\n',
+    })
+    const { certain, plan } = planRename(root, 'docs/upstream-issues', 'upstream-issues')
+    assert.equal(certain, true)
+    assert.deepEqual(plan.skips, [])
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'handbooks/plugin-publish/02.md'), 'utf8'),
+      '[log](../../../docs/upstream-issues/CHANGELOGS.md)\n')
+  })
+
   it('preserves a fragment suffix through the rewrite', () => {
     const root = fixture({
       'README.md': '[x](docs/guide.md#start)\n',
