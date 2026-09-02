@@ -23,7 +23,8 @@
     "modules/*/gates.yml",
     "modules/*/docs/**/*.md",
     "modules/*/examples/**",
-    "modules/*/child-runtime/**"
+    "modules/*/child-runtime/**",
+    "modules/*/vendor/**"
   ],
   "dsh": {
     "bundle": {

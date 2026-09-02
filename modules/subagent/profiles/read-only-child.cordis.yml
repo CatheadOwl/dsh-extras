@@ -1,0 +1,8 @@
+# Internal child overlay for subagent-at.
+# Appended after user-supplied patches so the child runtime lands in read-only
+# sandbox mode for the current one-shot-only product shape.
+- id: sandbox-policy
+  name: '@deepseek-ai/dsh-sandbox-policy'
+  config:
+    mode: read-only
+    workspaceRoot: !!js process.cwd()

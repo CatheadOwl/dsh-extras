@@ -17,7 +17,7 @@ dsh plugin --profile headless add D:/Document/Projects/dsh-extra/dsh-plugin-dev/
 ```
 
 子运行时组合（profile/patches）按
-[`../docs/child-runtime.md`](../docs/child-runtime.md) 配置：
+[模块 README 配置节](../README.md#配置) 配置：
 
 - **mock** 与 **意图选择断言**不受子运行时组合影响（脚本化调用/只断言
   `tool/call`）；

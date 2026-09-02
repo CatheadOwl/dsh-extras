@@ -10,6 +10,8 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type {
   ResolvedSubagentStartRequest,
   SubagentCapabilities,
@@ -20,6 +22,16 @@ import { startAtRun, type AtRunSpec } from './run.js'
 import type { AtStartRequest, Config } from './types.js'
 
 export const PLUGIN_PREFIX = 'subagent-at'
+export const READ_ONLY_CHILD_PROFILE_PATCH = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../profiles/read-only-child.cordis.yml',
+)
+
+export function resolveChildPatches(patches: readonly string[]): string[] {
+  const next = [...patches]
+  if (!next.includes(READ_ONLY_CHILD_PROFILE_PATCH)) next.push(READ_ONLY_CHILD_PROFILE_PATCH)
+  return next
+}
 
 /**
  * The provider. Advertises NO start-time capabilities: an out-of-process
@@ -49,7 +61,7 @@ export class AtSdkSubagentProvider implements SubagentProvider {
     const spec: AtRunSpec = {
       dshBin: this.config.dshBin,
       profile: this.config.profile,
-      patches: this.config.patches,
+      patches: resolveChildPatches(this.config.patches),
       dshHome: this.config.dshHome,
       cwd: resolved,
       provider: this.config.provider,

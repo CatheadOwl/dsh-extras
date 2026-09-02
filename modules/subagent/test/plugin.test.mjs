@@ -80,6 +80,16 @@ test('provider advertises the out-of-process contract', async () => {
   assert.equal(provider.inheritsParentContext, false)
 })
 
+test('provider appends the built-in read-only child patch last', async () => {
+  const { READ_ONLY_CHILD_PROFILE_PATCH, resolveChildPatches } = await import(fromLib('provider'))
+  const merged = resolveChildPatches(['one.cordis.yml', 'two.cordis.yml'])
+  assert.deepEqual(merged, ['one.cordis.yml', 'two.cordis.yml', READ_ONLY_CHILD_PROFILE_PATCH])
+  assert.ok(
+    READ_ONLY_CHILD_PROFILE_PATCH.endsWith(join('profiles', 'read-only-child.cordis.yml')),
+    'the built-in patch should live under the package root profiles/ directory',
+  )
+})
+
 test('description = native wording verbatim + cwd hint only (drift guard)', async () => {
   const { apply } = await import(fromLib('index')); const { toolDescription } = await import(fromLib('wording'))
   const ctx = makeCtx()
