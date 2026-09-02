@@ -32,7 +32,7 @@ export const name = 'subagent-at'
 export const inject = ['tools', 'subagents', 'systemPrompt']
 export { Config } from './types.js'
 
-// Loader-contract entry only (ADR 0001): wording SSOT lives in ./wording.js
+// Loader-contract entry only: wording SSOT lives in ./wording.js
 // (consumed by the drift-guard test); AtStartRequest stays in ./types.js.
 
 /**

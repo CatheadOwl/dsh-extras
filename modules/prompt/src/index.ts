@@ -10,9 +10,9 @@ import { ConfigSchema, PromptMiddlewareService } from './service.js'
 import type { Config as PromptMiddlewarePluginConfig } from './service.js'
 import type { PromptMiddlewareTraceEvent } from './types.js'
 
-// Loader-contract entry only (ADR 0001): every composition row's index.ts
-// exports exactly name/inject/Config/apply. In-package consumers (tests,
-// client half) import the owning modules directly.
+// Loader-contract entry only: every composition row's index.ts exports
+// exactly name/inject/Config/apply. In-package consumers (tests, client
+// half) import the owning modules directly.
 
 export const name = 'prompt-middleware'
 export const inject: string[] = []

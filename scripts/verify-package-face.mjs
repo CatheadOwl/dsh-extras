@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Package-level face gate for the whole @catheadowl/dsh-extras bundle.
 //
-// One entry, one config table, every module covered (ADR 0001):
+// One entry, one config table, every module covered:
 //   - the manifest exports face is exactly the entries owned by this table;
 //   - each composition row's loader entry (modules/<name>/src/index.ts) may
 //     only export the dsh loader contract (name/inject/Config/apply);

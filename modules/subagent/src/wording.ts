@@ -1,8 +1,8 @@
 /**
  * Model-facing wording for `subagent_at`, aligned verbatim with the native
  * `tool-subagent` one-shot wording. Lives in its own module so the row's
- * loader entry stays on the loader contract (ADR 0001) while the drift-guard
- * test keeps importing the single SSOT.
+ * loader entry stays on the loader contract while the drift-guard test keeps
+ * importing the single SSOT.
  */
 
 /**

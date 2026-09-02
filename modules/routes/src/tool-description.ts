@@ -1,6 +1,6 @@
 /**
  * Model-facing wording for the `any_routes` tool. Lives in its own module so
- * the row's loader entry stays on the loader contract (ADR 0001) while the
+ * the row's loader entry stays on the loader contract while the
  * description-contract test keeps importing the single SSOT.
  */
 export const ANY_ROUTES_DESCRIPTION =
