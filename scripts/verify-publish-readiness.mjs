@@ -183,7 +183,7 @@ function markdownLinks(markdown) {
   return links
 }
 
-// Plain-text relative path tokens (`../../../workunits/...`) in published
+// Plain-text relative path tokens (`../../../outside-the-package.md`) in published
 // docs must resolve to an existing path inside the package root: tokens
 // escaping the root are unreachable for published readers, and tokens landing
 // on a nonexistent in-package path are dangling pointers (stale dev-repo
@@ -191,8 +191,8 @@ function markdownLinks(markdown) {
 // markdown link targets are excluded (links have their own pass);
 // `deepseek-harness` tokens are the documented host-borrow exemption. This
 // is the only citation form mechanically separable from functional example
-// data (namespace-shaped tokens like `handbooks/` double as parser fixtures,
-// so those stay judgment-side — see extras AGENTS.md).
+// data (namespace-shaped tokens double as parser fixtures, so those stay
+// judgment-side — see extras AGENTS.md).
 function devRepoPathCitations(markdown, base, displayed, root, violations) {
   const withoutFences = markdown.replace(/```[\s\S]*?```/gu, '')
   // Whole markdown links (text + target) are removed: links have their own
@@ -246,7 +246,7 @@ function docsLocality(root, extraMarkdown = []) {
 // carry functional semantics only, design attribution lives in the cognition
 // layer. Scanned on the code layer (modules/<m>/src) only — docs/README/eval
 // may cite dev-repo evidence as plain text, and dev-repo path namespaces
-// (workunits/, handbooks/, ...) double as example data in prompt/routes
+// double as example data in prompt/routes
 // sources, so they stay out of scope. Widen the token set by evidence only.
 const META_TERMS = [
   /\b(?:ADR|RFC|PRD|SPEC)[ -]?\d+/u,
