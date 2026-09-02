@@ -1,5 +1,6 @@
 {
   "name": "@catheadowl/dsh-extras-client",
+  "version": "0.1.0",
   "description": "Nested client anchor for @catheadowl/dsh-extras: owns the single dsh.client declaration so the extras root stays server-only while the combined browser bundle resolves as exactly one Loader source via nearestPackage. Not published standalone; ships inside the extras tarball.",
   "private": true,
   "type": "module",
