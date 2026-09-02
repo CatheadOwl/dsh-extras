@@ -1,20 +1,11 @@
-# extras 包内约定
+# AGENTS.md
 
-## 文档纪律（发布边界）
+`@catheadowl/dsh-extras` is a single-package multi-row Cordis plugin carrier: each `modules/<m>/` is a runtime-independent dsh plugin row. Package face, layout, and commands: [README.md](README.md).
 
-发布物必须自包含：读者手里只有这个包，没有任何周边仓库。
+## Conventions
 
-1. README/docs/eval 不链接包外路径；引用包外来源时写**来源名**
-   （「上游文档」「原设计记录」），不写路径走法。
-2. 正文中的相对路径 token 必须解析到包内真实路径——机械检查由
-   `scripts/verify-publish-readiness.mjs` 兜底，判不了的形态按本约定执行。
-3. 示例数据（教学示例、fixture 中的路径与命名空间）用中性名字
-   （`guides/`、`notes/x.md`），不复用任何真实仓库的命名空间——
-   避免读者把示例误读为引用。
-4. 源码注释只承载功能语义；设计归因（为什么这样设计、决策出处）
-   放 cognition 层。
-
-## 开发期例外
-
-借用宿主检出（`deepseek-harness` 路径）与 `@deepseek-ai/*` host 包是
-文档化例外：runtime 由 dsh 宿主提供，开发期借用其构建产物合法。
+- **Published docs are self-contained**: readers have only this package. README/docs/eval link in-package paths only; cite out-of-package sources by name ("upstream doc", "original design record"), never by path directions.
+- **Relative path tokens in prose resolve in-package**: escaping or dangling forms fail `scripts/verify-publish-readiness.mjs` (docs locality); forms the gate cannot judge are governed by this file.
+- **Example data uses neutral namespaces** (`guides/`, `notes/x.md`), never a real repository's namespaces — examples must not be misread as citations.
+- **Comments carry functional semantics only**; design attribution (why it is designed this way, decision provenance) lives in the cognition layer, not in source comments.
+- **Host borrows are the documented exception**: `deepseek-harness` checkout paths and `@deepseek-ai/*` host packages are legal in dev-time wiring — runtime is provided by the dsh host, and the publish gates carry the matching exemptions.
