@@ -105,6 +105,12 @@ export interface DeclarativeRelatesProvider {
    * runner calls it before invoking `resolve` to keep the once pre-filter.
    */
   subjectOf?(path: ResolvedPromptPath): string
+  /**
+   * Resolve the enrichment for ONE mentioned path. Return `undefined` to skip
+   * this path — and note a result whose `value`/`href` are both empty strings
+   * is skipped the same way with no contribution and no error signal (trace
+   * only), so prefer returning `undefined` explicitly over an empty string.
+   */
   resolve(ctx: RelatesResolveContext): Promise<RelatesResolveResult | undefined>
 }
 

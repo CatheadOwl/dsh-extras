@@ -5,8 +5,8 @@
 //   - the manifest exports face is exactly the entries owned by this table;
 //   - each composition row's loader entry (modules/<name>/src/index.ts) may
 //     only export the dsh loader contract (name/inject/Config/apply);
-//   - public consumer subentries (./gates/register, ./client, ./markdown/gate-check) are
-//     frozen by facade allowlists;
+//   - public consumer subentries (./gates/register, ./prompt/register,
+//     ./markdown/gate-check) are frozen by facade allowlists;
 //   - deep imports bypassing @catheadowl/dsh-extras/gates/register are forbidden
 //     across all module sources and docs.
 import { existsSync, readdirSync } from 'node:fs'

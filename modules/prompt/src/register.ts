@@ -37,7 +37,9 @@ export function registerPromptMiddlewareProvider(ctx: Context, provider: PromptM
  * and call it in `apply(ctx)` instead of hand-writing structural `*Like` mirrors
  * plus `ctx.inject(['promptMiddleware'], …)`. The provider is materialized by
  * the same runner as the seam face (once ledger / aggregation / budget /
- * timeout / rendering) and shares its lifecycle.
+ * timeout / rendering) and shares its lifecycle: the disposer returned by
+ * `registerRelates` runs when the owning fiber unloads or the prompt service
+ * disappears — the same lifecycle as the seam face.
  */
 export function registerRelatesProvider(ctx: Context, provider: DeclarativeRelatesProvider): void {
   ctx.inject(['promptMiddleware'], (promptCtx) => {
