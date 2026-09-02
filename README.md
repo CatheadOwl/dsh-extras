@@ -4,8 +4,8 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 
 # @catheadowl/dsh-extras
 
-单一 npm 包承载多个**运行时独立**的 dsh 插件模块。设计依据、实验证据与迁移 SOP 见
-`workunits/plugin-publish/release-plan.md`（开发仓库纯文本引用，不随包发布解析）。
+单一 npm 包承载多个**运行时独立**的 dsh 插件模块。设计依据、实验证据与发布方案见
+`workunits/extras/release-plan.md`（开发仓库纯文本引用，不随包发布解析）。
 
 ## 形态（单包多行）
 
@@ -28,7 +28,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 
 各模块的架构、契约、测试与使用文档在各自目录（`modules/<m>/README.md` 等，
 随源码从原包整体迁入）。client 面的挂载机制与「表面 UI / 实际 source 归属」的
-教训见 [Gremlins 20260901-2312](../../handbooks/Gremlins/20260901-2312-dsh-client-source-attribution.md)。
+教训见 [Gremlins 20260901-2312](../../handbooks/Gremlins/20260901-2312-dsh-client-source-attribution/README.md)。
 
 ## API 面
 
@@ -40,7 +40,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
   package.json + `dsh.client` + `./client` export，不单独发布）——gates/prompt 的
   Settings Tab 经此合成 bundle 装载；`nearestPackage` 把 client 行归属到嵌套 manifest，
   extras 根保持 server-only，绕开 client-modules「一包一源」冲突（独立 DSH_HOME
-  web 终态 boot 验收通过，见 `workunits/plugin-publish/release-plan.md` §目标态）。
+  web 终态 boot 验收通过，见 `workunits/extras/release-plan.md` §目标态）。
 
 ## 构建与验证（开发态）`r`n`r`n> *subagent 模块源码重建被上游缝缺口挂起（SDK client 收走任意子运行时启动面,见`r`n> `docs/upstream-issues/20260901-1642-sdk-client-no-arbitrary-runtime-launch/`）,沿用缝前构建的 lib;`r`n> 其余四模块 tsc 重建正常。
 
