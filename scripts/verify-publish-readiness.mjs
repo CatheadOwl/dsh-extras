@@ -29,6 +29,7 @@ import { extname, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const HOST_SCOPE = '@deepseek-ai/'
+const OWN_SCOPE = '@catheadowl/'
 const OWN_NAME = '@catheadowl/dsh-extras'
 const NON_REGISTRY_SPECIFIER = /^(link|file|workspace|portal|cat|patch|git\+|https?:\/\/|[A-Za-z]:\\|\/|\.\/|\.\.\/)/u
 
@@ -42,8 +43,8 @@ function manifestRules(manifest) {
         if (name.startsWith(HOST_SCOPE)) violations.push(`dependencies must not contain host package ${name} — move it to peerDependencies (runtime is provided by the dsh host)`)
         if (NON_REGISTRY_SPECIFIER.test(specifier)) violations.push(`dependencies.${name} uses non-registry specifier "${specifier}" — publish needs a registry range`)
       }
-      else if (NON_REGISTRY_SPECIFIER.test(specifier) && !name.startsWith(HOST_SCOPE)) {
-        violations.push(`devDependencies.${name} uses non-registry specifier "${specifier}" — only @deepseek-ai/* host packages may use link:/path specifiers`)
+      else if (NON_REGISTRY_SPECIFIER.test(specifier) && !name.startsWith(HOST_SCOPE) && !name.startsWith(OWN_SCOPE)) {
+        violations.push(`devDependencies.${name} uses non-registry specifier "${specifier}" — only @deepseek-ai/* host packages and @catheadowl/* own dev-time packages may use link:/path/git specifiers`)
       }
     }
   }

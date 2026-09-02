@@ -38,8 +38,17 @@ eval behavior 层。host 级并行隔离测试仍在
 ## 运行
 
 ```powershell
-node bin/dsh-eval.mjs run --profile headless --repo ../deepseek-harness dsh-plugin-dev/extras/modules/gates/eval
+# 从 extras 包根
+pnpm run eval:gates
 ```
+
+## 依赖关系（隔离形态）
+
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），
+  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- `--repo` 指向一份**已构建的 dsh 检出**（`apps/cli/lib/bin.js`）——开发期宿主借用，
+  scripts 默认 `../../deepseek-harness`，按本机布局调整；
+- 框架规则与 matcher 以 `@catheadowl/dsh-eval` 包内 README 为准。
 
 `headless` profile 已装 gates（依赖清单见其 `package.json`）；case 是 profile 无关的，
 任何装了 gates + `tool-fs` 的 profile 都行。

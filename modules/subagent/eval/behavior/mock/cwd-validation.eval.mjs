@@ -5,7 +5,7 @@
  * `toolResultIsError('subagent_at')` 直接断言空 cwd 产生错误结果，
  * fail-loud 语义由 eval 框架而非单元测试独力兑底。
  */
-import { firstTool, toolResultIsError, finalTextIncludes, toolCallStep, textStep } from '../../../../../../eval/src/index.mjs'
+import { firstTool, toolResultIsError, finalTextIncludes, toolCallStep, textStep } from '@catheadowl/dsh-eval'
 
 export default {
   id: 'subagent-at-mock-cwd-validation',

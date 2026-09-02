@@ -10,7 +10,7 @@ import {
   finalTextIncludes,
   toolCallStep,
   textStep,
-} from '../../../../../eval/src/index.mjs'
+} from '@catheadowl/dsh-eval'
 import { pathExists, seedRepo } from '../_fixtures/seed-repo.mjs'
 
 export default {

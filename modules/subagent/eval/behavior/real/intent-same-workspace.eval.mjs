@@ -6,7 +6,7 @@
  * 注意：这条会真实拉起一个 in-process 子代理（一次额外模型调用），
  * 任务保持最小以控成本。
  */
-import { firstTool, toolNotCalled } from '../../../../../../eval/src/index.mjs'
+import { firstTool, toolNotCalled } from '@catheadowl/dsh-eval'
 
 export default {
   id: 'subagent-at-intent-same-workspace',

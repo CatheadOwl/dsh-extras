@@ -7,7 +7,7 @@
  * auto-skips otherwise. Complements the mock cases, which prove the write
  * surface works once reached.
  */
-import { toolCalled, toolCallArgs } from '../../../../../eval/src/index.mjs'
+import { toolCalled, toolCallArgs } from '@catheadowl/dsh-eval'
 import { seedRepo } from '../_fixtures/seed-repo.mjs'
 
 export default {

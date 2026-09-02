@@ -4,7 +4,7 @@ description: any_routes 的规范化 eval：以共享 review experiment 描述�
 
 # any_routes eval
 
-本目录只保存 **any_routes 自己的试验设计**；任务组装、重复执行、产物落盘由共享 `dsh-plugin-dev/eval/`（开发仓库 dsh-plugin-dev/eval/README.md，纯文本引用） 提供。
+本目录只保存 **any_routes 自己的试验设计**；任务组装、重复执行、产物落盘由共享框架 `@catheadowl/dsh-eval`（extras 的 devDependency，`dsh-review` bin 消费）提供。
 
 ## 目录
 
@@ -30,14 +30,20 @@ eval/
 
 ## 运行
 
-```bash
-pnpm --dir dsh-plugin-dev/extras/modules/routes build
-pnpm --dir dsh-plugin-dev/extras/modules/routes eval:review
-
-# 只组装观测与任务，不调用模型
-node dsh-plugin-dev/eval/bin/dsh-review.mjs --dry-run \
-  dsh-plugin-dev/extras/modules/routes/eval/comprehension
+```powershell
+# 从 extras 包根
+pnpm run build:routes               # 先构建（观测投影用当前 lib/routes.js）
+pnpm run eval:routes:dry            # 只组装观测与任务，不调用模型（两个实验都跑）
+pnpm run eval:routes:comprehension  # 理解评审（多次独立评审，需凭证）
+pnpm run eval:routes:schema-intent  # 意图闭集评审
 ```
+
+## 依赖关系（隔离形态）
+
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-review` bin 消费），
+  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- 真实评审的 `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
+  `../../deepseek-harness`，按本机布局调整；dry-run 不需要。
 
 产物在 `comprehension/.runs/any-routes-comprehension/`：`observations.md`、`task.txt`、`run-N.txt` 和运行元数据。逐次答案人工对照 [`rubric.md`](comprehension/rubric.md)；多次一致才视为理解收敛，rubric 中已登记的 intentional design 不重复算缺陷。
 

@@ -10,7 +10,7 @@ import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { buildAnyRoutes } from '../../lib/routes.js'
-import { defineReviewExperiment } from '../../../../eval/src/index.mjs'
+import { defineReviewExperiment } from '@catheadowl/dsh-eval'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixture = JSON.parse(readFileSync(join(here, 'fixtures.json'), 'utf8'))

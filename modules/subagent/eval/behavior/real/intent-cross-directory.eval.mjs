@@ -7,7 +7,7 @@
  * 子进程失败时错误会回流为工具结果、turn 照常 exit 0，意图断言照过（见
  * Gremlins 20260822-1521 经验 2）；端到端内容由人工暗号取证覆盖。
  */
-import { firstTool, toolCallArgs } from '../../../../../../eval/src/index.mjs'
+import { firstTool, toolCallArgs } from '@catheadowl/dsh-eval'
 
 export default {
   id: 'subagent-at-intent-cross-directory',

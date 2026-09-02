@@ -9,7 +9,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { textStep } from '../../../../../eval/src/index.mjs'
+import { textStep } from '@catheadowl/dsh-eval'
 
 export default {
   id: 'prompt-middleware-injection-smoke',

@@ -11,7 +11,7 @@
  * states is a separately filed workunit). Requires a credential;
  * auto-skips otherwise.
  */
-import { toolCalled, toolCallArgs, toolResultTextIncludes } from '../../../../../eval/src/index.mjs'
+import { toolCalled, toolCallArgs, toolResultTextIncludes } from '@catheadowl/dsh-eval'
 import { pathExists, seedRepo } from '../_fixtures/seed-repo.mjs'
 
 export default {

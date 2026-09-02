@@ -23,7 +23,7 @@ import { writeFileSync } from 'node:fs'
 import { dirname, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { textStep, toolCallStep, userMessageTextExcludes, userMessageTextIncludes } from '../../../../../../eval/src/index.mjs'
+import { textStep, toolCallStep, userMessageTextExcludes, userMessageTextIncludes } from '@catheadowl/dsh-eval'
 
 const here = dirname(fileURLToPath(import.meta.url))
 // The doc-link gate surface lives in the md module of @catheadowl/dsh-extras; its

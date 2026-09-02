@@ -8,7 +8,7 @@
  * status are asserted; model wording and exploration-first ordering are
  * not. Requires a credential; auto-skips otherwise.
  */
-import { toolCalled, toolCallArgs, toolResultTextIncludes } from '../../../../../eval/src/index.mjs'
+import { toolCalled, toolCallArgs, toolResultTextIncludes } from '@catheadowl/dsh-eval'
 import { pathExists, readText, seedRepo } from '../_fixtures/seed-repo.mjs'
 import { mkdirSync, renameSync } from 'node:fs'
 import { join } from 'node:path'

@@ -20,6 +20,10 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
         build: '..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p .',
         eval: 'node ../eval/bin/dsh-eval.mjs --repo ../../deepseek-harness --fixture ../md-links/test',
       },
+      devDependencies: {
+        '@catheadowl/dsh-eval': 'file:../eval',
+        'left-pad': 'file:../left-pad',
+      },
     },
     extraMarkdown: [
       { path: 'docs/escape.md', text: '[spec](../../../workunits/gates/spec/gate-fixer.md) and [abs](/deepseek-harness/docs) plus plain-text `../../../workunits/gates/TODO/x.md`' },
@@ -45,6 +49,9 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
   assert.match(reasons, /scripts\/escape\.mjs references \.\.\/\.\.\/\.\.\/deepseek-harness/u)
   assert.match(reasons, /scripts\.eval references \.\.\/eval\/bin\/dsh-eval\.mjs/u)
   assert.match(reasons, /scripts\.eval references \.\.\/md-links\/test/u)
+  // Own-scope dev-time devDeps (file:/git:) are exempt; foreign ones are not.
+  assert.doesNotMatch(reasons, /devDependencies\.@catheadowl\/dsh-eval/u)
+  assert.match(reasons, /devDependencies\.left-pad uses non-registry specifier/u)
   assert.match(reasons, /modules\/x\/src\/leak\.ts cites control-plane term/u)
   // L0 host borrows must NOT be flagged (documented exception).
   assert.doesNotMatch(reasons, /scripts\.build references/u)

@@ -4,7 +4,7 @@ description: md-rename eval——headless behavior harness 覆盖 md_rename 工�
 
 # md-rename eval
 
-框架与规则以 `dsh-plugin-dev/eval/`（开发仓库 dsh-plugin-dev/eval/README.md，纯文本引用） 为准；本目录只放 md-rename 的 case。
+框架与规则以 `@catheadowl/dsh-eval`（extras 的 devDependency）为准；本目录只放 md-rename 的 case。
 
 ## 覆盖范围（多层 fallback 的哪几层）
 
@@ -38,22 +38,27 @@ eval/
 
 ## 前置
 
-所有 behavior case 都要求 **插件已装进被启动的 `headless` profile**：
+所有 behavior case 都要求 **extras 已装进被启动的 `headless` profile**：
 
 ```powershell
-dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/extras
+dsh plugin --profile headless add @catheadowl/dsh-extras
 ```
 
-另需 `deepseek-harness` 的 CLI 已构建（`apps/cli/lib/bin.js`）。
+另需一份**已构建的 dsh 检出**（`apps/cli/lib/bin.js`）。
 
 ## 运行
 
 ```powershell
-# mock 层（免 key，确定性回归；工作目录：dsh-plugin-dev/extras/modules/markdown）
-node ../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness --mode mock eval/behavior/mock
-
-# real 层（需 DEEPSEEK_API_KEY 或 $DSH_HOME/.credentials.yaml）
-node ../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness eval/behavior/real
+# 从 extras 包根
+pnpm run eval:markdown:mock   # mock 层（免 key，确定性回归）
+pnpm run eval:markdown:real   # real 层（需 DEEPSEEK_API_KEY 或 $DSH_HOME/.credentials.yaml）
 ```
+
+## 依赖关系（隔离形态）
+
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），
+  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
+  `../../deepseek-harness`，按本机布局调整。
 
 失败产物落在 case 旁 `.runs/<case id>/`（gitignored，不提交）。

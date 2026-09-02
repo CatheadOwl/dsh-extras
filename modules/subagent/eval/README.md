@@ -4,16 +4,16 @@ description: subagent-at eval 的 case 清单与运行方式——real 层验证
 
 # subagent-at eval
 
-框架与规则以 `dsh-plugin-dev/eval/`（开发仓库 dsh-plugin-dev/eval/README.md，纯文本引用） 为准；
+框架与规则以 `@catheadowl/dsh-eval`（extras 的 devDependency）为准；
 本目录只放本插件的 case。
 
 ## 前置
 
-所有 behavior case 都要求 **插件已装进被启动的 profile**（默认 `headless`）
+所有 behavior case 都要求 **extras 已装进被启动的 profile**（默认 `headless`）
 且插件配置可用：
 
 ```powershell
-dsh plugin --profile headless add D:/Document/Projects/dsh-extra/dsh-plugin-dev/extras/modules/subagent
+dsh plugin --profile headless add @catheadowl/dsh-extras
 ```
 
 子运行时组合（profile/patches）按
@@ -47,11 +47,18 @@ dsh plugin --profile headless add D:/Document/Projects/dsh-extra/dsh-plugin-dev/
 ## 运行
 
 ```powershell
-# 从插件目录
-node ../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness eval/behavior/real
-node ../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness --mode mock eval/behavior/mock
+# 从 extras 包根
+pnpm run eval:subagent:mock   # 免 key
+pnpm run eval:subagent:real   # 需 DEEPSEEK_API_KEY 或 $DSH_HOME/.credentials.yaml
 ```
 
-real 层需要 `DEEPSEEK_API_KEY` 或 `$DSH_HOME/.credentials.yaml`；mock 不需要。
+## 依赖关系（隔离形态）
+
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），
+  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
+  `../../deepseek-harness`，按本机布局调整。
+
+real 层需要凭证；mock 不需要。
 注意 `intent-same-workspace` 会真实拉起一个 in-process 子代理（多一次模型
 调用），任务已保持最小。

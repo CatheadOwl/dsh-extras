@@ -8,7 +8,7 @@
  * `ctx.systemPrompt.section({ name: 'tool:subagent_at', order: 116.6 })`
  * 必须每步出现在组装后的系统提示词里，模型才能看到跨目录触发条件。
  */
-import { textStep, systemPromptIncludes, toolMounted, finalTextIncludes } from '../../../../../../eval/src/index.mjs'
+import { textStep, systemPromptIncludes, toolMounted, finalTextIncludes } from '@catheadowl/dsh-eval'
 
 export default {
   id: 'subagent-at-mock-system-prompt-section',

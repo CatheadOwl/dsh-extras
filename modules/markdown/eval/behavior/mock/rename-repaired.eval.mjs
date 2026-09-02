@@ -13,7 +13,7 @@ import {
   finalTextIncludes,
   toolCallStep,
   textStep,
-} from '../../../../../eval/src/index.mjs'
+} from '@catheadowl/dsh-eval'
 import { pathExists, readText, seedRepo } from '../_fixtures/seed-repo.mjs'
 import { mkdirSync, renameSync } from 'node:fs'
 import { join } from 'node:path'

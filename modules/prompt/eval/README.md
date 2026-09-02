@@ -4,7 +4,7 @@ description: prompt-middleware eval——behavior harness 用例(注入接线 sm
 
 # prompt-middleware eval
 
-本目录只有 behavior harness 用例,复用上游开发仓库的共享 eval runner(`dsh-eval.mjs`)。
+本目录只有 behavior harness 用例,复用共享 eval 框架 `@catheadowl/dsh-eval`（extras 的 devDependency）。
 
 ## 用例
 
@@ -20,11 +20,16 @@ description: prompt-middleware eval——behavior harness 用例(注入接线 sm
 
 ## 运行
 
-```bash
-cd dsh-plugin-dev
-node eval/bin/dsh-eval.mjs run --profile headless --repo ../deepseek-harness --mode mock \
-  prompt-middleware/eval/behavior/mock/injection-smoke.eval.mjs
+```powershell
+# 从 extras 包根
+pnpm run eval:prompt:mock
 ```
 
-前置:`deepseek-harness` 的 CLI 已构建(`apps/cli/lib/bin.js`),且 headless profile 已装
-`prompt-middleware` 与 `any_routes`。
+## 依赖关系（隔离形态）
+
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），
+  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
+  `../../deepseek-harness`，按本机布局调整。
+
+前置:`dsh plugin --profile headless add @catheadowl/dsh-extras`（prompt 与 routes 行都在包内）。

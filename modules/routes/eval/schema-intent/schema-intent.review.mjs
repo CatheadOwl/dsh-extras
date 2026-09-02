@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defineReviewExperiment } from '../../../../eval/src/index.mjs'
+import { defineReviewExperiment } from '@catheadowl/dsh-eval'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixtures = JSON.parse(readFileSync(join(here, 'fixtures.json'), 'utf8'))
