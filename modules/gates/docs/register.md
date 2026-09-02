@@ -1,16 +1,16 @@
 ---
-description: gates 插件消费面入口——@catheadowl/dsh-extras/register 的最小注册示例、六类提供面与自动生成的公共 API reference
+description: gates 插件消费面入口——@catheadowl/dsh-extras/gates/register 的最小注册示例、六类提供面与自动生成的公共 API reference
 ---
 
 # gates register face
 
-`@catheadowl/dsh-extras/register` 是依赖 gates 的插件开发者可 import 的稳定消费面。gates 缺席时消费者插件仍可加载；gates 存在时注册进入同一个 `ctx.gates` 注册表，并自动加入 `/gates`、`gates_run`、轮末执行、增量短路与阻断预算。
+`@catheadowl/dsh-extras/gates/register` 是依赖 gates 的插件开发者可 import 的稳定消费面。gates 缺席时消费者插件仍可加载；gates 存在时注册进入同一个 `ctx.gates` 注册表，并自动加入 `/gates`、`gates_run`、轮末执行、增量短路与阻断预算。
 
 ## Quickstart
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { registerGate } from '@catheadowl/dsh-extras/register'
+import { registerGate } from '@catheadowl/dsh-extras/gates/register'
 
 const definition = {
   id: 'my-plugin-consistency',
@@ -54,7 +54,7 @@ export function apply(ctx: Context): void {
 
 | 面 | 入口 | 消费者 |
 |---|---|---|
-| package register face | `@catheadowl/dsh-extras/register` | 插件开发者 |
+| package register face | `@catheadowl/dsh-extras/gates/register` | 插件开发者 |
 | service seam | `ctx.gates` | 插件与 gates 内部驱动 |
 | agent tool | `gates_run` | 模型 |
 | human command | `/gates` | 用户 |

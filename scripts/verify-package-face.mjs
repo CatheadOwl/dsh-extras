@@ -5,9 +5,9 @@
 //   - the manifest exports face is exactly the entries owned by this table;
 //   - each composition row's loader entry (modules/<name>/src/index.ts) may
 //     only export the dsh loader contract (name/inject/Config/apply);
-//   - public consumer subentries (./register, ./client, ./gate-check) are
+//   - public consumer subentries (./gates/register, ./client, ./markdown/gate-check) are
 //     frozen by facade allowlists;
-//   - deep imports bypassing @catheadowl/dsh-extras/register are forbidden
+//   - deep imports bypassing @catheadowl/dsh-extras/gates/register are forbidden
 //     across all module sources and docs.
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -27,8 +27,8 @@ const SUBENTRIES = {
   './markdown': 'modules/markdown/src/index.ts',
   './prompt': 'modules/prompt/src/index.ts',
   './routes': 'modules/routes/src/index.ts',
-  './register': 'modules/gates/src/register.ts',
-  './gate-check': 'modules/markdown/src/gate-check.ts',
+  './gates/register': 'modules/gates/src/register.ts',
+  './markdown/gate-check': 'modules/markdown/src/gate-check.ts',
 }
 
 function absoluteSubentries(root) {
@@ -38,7 +38,7 @@ function absoluteSubentries(root) {
 // Frozen facade for the register entry: the gates API face (w12). Adding a
 // public export requires updating this list (and regenerating docs/register.md).
 const FACADE_EXPORTS = {
-  './register': [
+  './gates/register': [
     'registerGate',
     'GateChangeSet',
     'GateDefinition',
@@ -58,7 +58,7 @@ const FACADE_EXPORTS = {
 }
 
 const FORBIDDEN_IMPORTS = [
-  /from\s+['"]@catheadowl\/dsh-extras(?!\/register(?:\.js)?['"])[^'"]*['"]/u,
+  /from\s+['"]@catheadowl\/dsh-extras(?!\/gates\/register(?:\.js)?['"])[^'"]*['"]/u,
 ]
 
 // Every composition-row module with a loader entry — each is checked against

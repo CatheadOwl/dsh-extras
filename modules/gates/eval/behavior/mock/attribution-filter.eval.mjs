@@ -27,7 +27,7 @@ import { textStep, toolCallStep, userMessageTextExcludes, userMessageTextInclude
 
 const here = dirname(fileURLToPath(import.meta.url))
 // The doc-link gate surface lives in the md module of @catheadowl/dsh-extras; its
-// `./gate-check` subpath exports the generic `check` for the module-gate form
+// `./markdown/gate-check` subpath exports the generic `check` for the module-gate form
 // (the same `check` the plugin's registerGate definition loads, without the
 // plugin-entry `registerGate` runtime deps). `moduleGate` resolves a relative
 // `module` against the SESSION workspace cwd (this run's temp dir), so the

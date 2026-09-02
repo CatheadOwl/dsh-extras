@@ -16,7 +16,7 @@
     "paths": {
       "@deepseek-ai/cordis": ["../../../../deepseek-harness/vendor/cordis/lib/types/index.d.ts"],
       "@deepseek-ai/dsh-tools": ["../../../../deepseek-harness/packages/core/tools/lib/types/index.d.ts"],
-      "@catheadowl/dsh-extras/register": ["../gates/lib/register.d.ts"]
+      "@catheadowl/dsh-extras/gates/register": ["../gates/lib/register.d.ts"]
     }
   },
   "include": ["src"]

@@ -16,7 +16,7 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
   开发仓 `handbooks/dsh-deps/resolution-ladder.md`）。
 - **消费者**：rename 工具 `dsh-plugin-dev/md-rename/`（`ctx.tools` 薄 wrapper）与
   链接完整性 gate `dsh-plugin-dev/md-links-gates/`（插件级 `doc-link` 注册，
-  `./gate-check` 兼作 `gates.yml` `module:` 回退面）。
+  `./markdown/gate-check` 兼作 `gates.yml` `module:` 回退面）。
 - **契约不在此**：本库的「唯一说法」见开发仓 `workunits/md-links/spec/canonical-lib.md`；
   提升决策见开发仓 `workunits/md-links/ADR/0001-promote-to-independent-pure-lib.md`。
 

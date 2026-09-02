@@ -1,7 +1,8 @@
 {
   "name": "@catheadowl/dsh-extras",
-  "description": "Curated extras for dsh: one npm package, several independent plugin modules (gates today; md / prompt / routes / subagent migrate in). Each module is a separate composition row with its own fiber and Config; `dsh plugin add @catheadowl/dsh-extras` installs them all, per-row `disabled` turns one off.",
+  "description": "Curated extras for dsh: one npm package, several independent plugin modules — gates (turn-close quality gates), markdown (md_rename tool + doc-link gate), prompt (declarative prompt injection), routes (any_routes knowledge routing), subagent (subagent_at scoped delegation). `dsh plugin add @catheadowl/dsh-extras` installs them all; per-row `disabled` turns one off.",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "exports": {
     "./gates": {
@@ -20,11 +21,11 @@
       "types": "./modules/routes/lib/index.d.ts",
       "default": "./modules/routes/lib/index.js"
     },
-    "./register": {
+    "./gates/register": {
       "types": "./modules/gates/lib/register.d.ts",
       "default": "./modules/gates/lib/register.js"
     },
-    "./gate-check": {
+    "./markdown/gate-check": {
       "types": "./modules/markdown/lib/gate-check.d.ts",
       "default": "./modules/markdown/lib/gate-check.js"
     },

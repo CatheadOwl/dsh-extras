@@ -1,5 +1,5 @@
 ---
-description: 插件通过 registerGate 注册 gate 的配方——@catheadowl/dsh-extras/register 硬导入面 + 软服务依赖 + 返回 disposer，含模板与契约边界行为
+description: 插件通过 registerGate 注册 gate 的配方——@catheadowl/dsh-extras/gates/register 硬导入面 + 软服务依赖 + 返回 disposer，含模板与契约边界行为
 ---
 
 # 配方：插件注册自己的 gate（软依赖）
@@ -15,12 +15,12 @@ description: 插件通过 registerGate 注册 gate 的配方——@catheadowl/ds
 
 1. **硬包依赖 + 软服务依赖**：`package.json` 的 `dependencies` 声明
    `@catheadowl/dsh-extras`（`link:` 同层 gates），import
-   `{ registerGate } from '@catheadowl/dsh-extras/register'`（ADR 0003 硬导入面，
+   `{ registerGate } from '@catheadowl/dsh-extras/gates/register'`（ADR 0003 硬导入面，
    取代早期的结构 `*Like` 镜像 + 手写 `ctx.inject` + `declare module` 仪式）。
    `registerGate` 内部走 `ctx.inject(['gates'], …)` 条件注入——profile 未装 gates 时
    你的插件照常加载、只是不注册。**禁止**把 `gates` 写进插件自己的硬 `inject` 数组。
 2. **类型面只 import type**：`GateDefinition` / `GateViolation` 等从
-   `@catheadowl/dsh-extras/register` **type-only** import（编译期擦除），运行时只留
+   `@catheadowl/dsh-extras/gates/register` **type-only** import（编译期擦除），运行时只留
    `registerGate` 一个符号——两个包各自独立编译，不互相捆绑。
 3. **disposer 由 `registerGate` 接进 fiber 生命周期**：`registerGate` 把 `register` 的
    disposer 作为 `ctx.inject(['gates'], …)` 回调的返回值交还 Cordis fiber（fiber 卸载时
@@ -32,8 +32,8 @@ description: 插件通过 registerGate 注册 gate 的配方——@catheadowl/ds
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { registerGate } from '@catheadowl/dsh-extras/register'
-import type { GateChangeSet, GateDefinition, GateViolation } from '@catheadowl/dsh-extras/register'
+import { registerGate } from '@catheadowl/dsh-extras/gates/register'
+import type { GateChangeSet, GateDefinition, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 
 // 1) gate 定义：rationale 写清"为什么存在 + 为什么手改安全"
 const MY_GATE: Omit<GateDefinition, 'check'> = {
@@ -89,7 +89,7 @@ export function apply(ctx: Context): void {
   数据面是 `@catheadowl/dsh-md-links` 纯库，插件只持有政策（rationale / level /
   `relevantPath` / W10 归责谓词）。这是「仓库级 → 插件级」升格样板：检查本身项目无关，
   装一次、整个 profile 的所有工作区自动获得门禁（原每项目 `gates.yml` `module:` 薄
-  shim 已归档；需要仓库级声明时可把 `module:` 指向本插件的 `./gate-check` 面）。
+  shim 已归档；需要仓库级声明时可把 `module:` 指向本插件的 `./markdown/gate-check` 面）。
 - `md-metadata`（同模块 `src/metadata-check.ts` + `src/index.ts`）：**defer + subagent
   fixer** 的插件级样板——会话被写 md 必须带非空 frontmatter `description`；检查是
   change-set 消费者（`changes` 为 null 直接放行），修复是语义判断故派子 agent 离线

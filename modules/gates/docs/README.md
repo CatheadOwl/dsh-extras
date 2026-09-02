@@ -12,7 +12,7 @@ description: gates 插件的使用文档入口（cookbook 风格阅读地图）�
 | 文档 | 内容 |
 |------|------|
 | [execution-model](execution-model.md) | 触发时机与执行链、级别与预算、反馈形状、成本模型 |
-| [register](register.md) | 插件消费面：`@catheadowl/dsh-extras/register`、最小 quickstart、公共 API reference |
+| [register](register.md) | 插件消费面：`@catheadowl/dsh-extras/gates/register`、最小 quickstart、公共 API reference |
 | [adding-a-repo-gate](adding-a-repo-gate.md) | 配方: 给仓库加一个 Config 声明式 gate（module / command 两形态） |
 | [adding-a-plugin-gate](adding-a-plugin-gate.md) | 配方: 插件以软依赖方式注册自己的 gate（条件注入 + 结构类型模板） |
 | [designing-gate-sets](designing-gate-sets.md) | 配方: 一个逻辑检查拆成多个 gate，按确定性分档（自动修 / 阻断 / 报告） |

@@ -1,6 +1,6 @@
 /**
  * Hard-import registration face for plugin-owned gates. Consumers
- * `import { registerGate } from '@catheadowl/dsh-extras/register'` and call it
+ * `import { registerGate } from '@catheadowl/dsh-extras/gates/register'` and call it
  * in `apply(ctx)` instead of hand-writing structural `*Like` mirrors plus
  * `ctx.inject(['gates'], …)`. The gate routes into the same `ctx.gates`
  * registry as the seam face, so it still joins `/gates` + `gates_run`

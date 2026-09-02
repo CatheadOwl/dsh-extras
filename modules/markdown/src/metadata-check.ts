@@ -23,7 +23,7 @@
 import { readFileSync } from 'node:fs'
 import { relative, resolve, sep } from 'node:path'
 
-import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/register'
+import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 
 const MANUAL_REMEDY = {
   kind: 'manual' as const,

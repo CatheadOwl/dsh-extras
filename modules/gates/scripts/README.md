@@ -40,7 +40,7 @@ docs 树导航完整性：`docs/` 下每个 markdown 文件必须能从 `docs/RE
 
 ## 包级 gate（声明在 gates.yml，入口在包根）
 
-`gates.yml` 的 `register-face-boundary` 与 `publish-readiness` 指向 `../../scripts/verify-package-face.mjs` 与 `../../scripts/verify-publish-readiness.mjs`——前者守护**整个 extras 包**的消费面（每行组合 entry 只许导出 dsh loader 契约、`./register`/`./client`/`./gate-check` facade 冻结、禁止绕过 `@catheadowl/dsh-extras/register` 深导入），后者守护**唯一那份根 manifest** 的发布卫生（manifest 规则、import 覆盖、scripts/docs 局部性，`contentRoots()` 枚举全部 `modules/<name>/`）。规则明细见包根 `scripts/` 内两个入口的头部注释与 ADR 0001。
+`gates.yml` 的 `register-face-boundary` 与 `publish-readiness` 指向 `../../scripts/verify-package-face.mjs` 与 `../../scripts/verify-publish-readiness.mjs`——前者守护**整个 extras 包**的消费面（每行组合 entry 只许导出 dsh loader 契约、`./gates/register`/`./client`/`./markdown/gate-check` facade 冻结、禁止绕过 `@catheadowl/dsh-extras/gates/register` 深导入），后者守护**唯一那份根 manifest** 的发布卫生（manifest 规则、import 覆盖、scripts/docs 局部性，`contentRoots()` 枚举全部 `modules/<name>/`）。规则明细见包根 `scripts/` 内两个入口的头部注释与 ADR 0001。
 
 ## gate 面契约
 

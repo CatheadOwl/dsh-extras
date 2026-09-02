@@ -25,7 +25,7 @@ description: md-links-gates 插件（@catheadowl/dsh-md-links-gates）——通�
 
 | 模块 | 职责 |
 |---|---|
-| `src/gate-check.ts` | 通用 gate 表面 `check(root, changes?)`：形状适配 + W10 归责谓词（从归档的 `scripts/doc-link-lib.mjs` 迁入，语义不变）；`./gate-check` 子路径导出，供 `gates.yml` `module:` 回退与测试复用 |
+| `src/gate-check.ts` | 通用 gate 表面 `check(root, changes?)`：形状适配 + W10 归责谓词（从归档的 `scripts/doc-link-lib.mjs` 迁入，语义不变）；`./markdown/gate-check` 子路径导出，供 `gates.yml` `module:` 回退与测试复用 |
 | `src/index.ts` | 插件入口：`apply(ctx)` → `registerGate(ctx, { id: 'doc-link', … })`（ADR 0003 硬导入面，软服务依赖——gates 缺席时本插件照常加载、不注册） |
 
 ## 契约要点
@@ -52,7 +52,7 @@ node --test --test-isolation=none test/doc-link-gate.test.mjs              # tes
 
 测试 import 已构建 `lib/`；运行时依赖经 `node_modules` junction 解析
 （`@catheadowl/dsh-md-links` → 同层 md-links；`@catheadowl/dsh-extras` → 同层 gates 的
-`./register` 面）。**不要在此目录跑 `pnpm install` 之外的东西**——junction 指向宿主检出，
+`./gates/register` 面）。**不要在此目录跑 `pnpm install` 之外的东西**——junction 指向宿主检出，
 宿主升级依赖版本时需同步重建（同树外脆弱性范畴）。
 
 ## 装入

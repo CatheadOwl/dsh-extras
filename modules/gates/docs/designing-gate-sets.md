@@ -51,7 +51,7 @@ description: 配方：一个逻辑检查拆成多个 gate——按修复确定�
 一个插件调多次 `registerGate`（或多次 `ctx.inject(['gates'], …)`），每个 gate 独立：
 
 ```ts
-import { registerGate } from '@catheadowl/dsh-extras/register'
+import { registerGate } from '@catheadowl/dsh-extras/gates/register'
 
 // 可确定修 → defer + fixer
 registerGate(ctx, { ...AUTO_FIX_GATE, level: 'defer', fixer: { kind: 'command', command: 'node scripts/normalize.mjs' }, check })

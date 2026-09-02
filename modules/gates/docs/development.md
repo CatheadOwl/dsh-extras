@@ -43,7 +43,7 @@ node --test --test-isolation=none test/composition.test.mjs
 
 ## 兼容与发布
 
-- `./register` 是已承诺消费面；开发期也不随意重命名。
+- `./gates/register` 是已承诺消费面；开发期也不随意重命名。
 - gate 契约类型变更必须同步 generated reference、quickstart 与消费者测试。
 - `gates_run` 是模型可见公共面；schema、输出与描述按 agent tool 契约维护。
 - root implementation exports 已移除，不添加兼容 alias。

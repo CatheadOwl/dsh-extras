@@ -21,7 +21,7 @@
 import { readFileSync } from 'node:fs'
 import { REASON_ANCHOR_MISSING, canonicalPath, checkRepository, documentAnchorPairs } from './links/index.js'
 import type { LinkViolation } from './links/index.js'
-import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/register'
+import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 
 const MANUAL_REMEDY = {
   kind: 'manual' as const,

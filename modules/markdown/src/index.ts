@@ -7,7 +7,7 @@
  *   `planRename` / `applyRenamePlan`; conflict → report, never guess);
  * - the `doc-link` gate (Markdown link integrity at turn-stop and manual runs),
  *   soft-registered through `registerGate` (gates absent → loads, registers
- *   nothing) with the data plane and attribution policy in `./gate-check`;
+ *   nothing) with the data plane and attribution policy in `./markdown/gate-check`;
  * - the `md-metadata` gate (session-written Markdown must declare a non-empty
  *   frontmatter `description`; defer + subagent fixer), data plane in
  *   `./metadata-check` — the former repo-level `scripts/md-metadata-lib.mjs`.
@@ -22,8 +22,8 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import z from '@deepseek-ai/schemastery'
-import { registerGate } from '@catheadowl/dsh-extras/register'
-import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/register'
+import { registerGate } from '@catheadowl/dsh-extras/gates/register'
+import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename } from './links/index.js'
 import type { RenameConflict, RenameSkip } from './links/index.js'
 
