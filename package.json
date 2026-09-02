@@ -75,6 +75,7 @@
     "@deepseek-ai/dsh-token-meter": "*",
     "@deepseek-ai/dsh-tools": "*",
     "@deepseek-ai/dsh-typert-protocol": "*",
+    "@deepseek-ai/dsh-util-values": "*",
     "@deepseek-ai/schemastery": "*",
     "react": "*"
   },

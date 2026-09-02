@@ -25,6 +25,7 @@ gate 面（[`src/gate-check.ts`](src/gate-check.ts)，归责谓词 + 锚点修�
 | `md_rename` 工具 | 写 integrity | 显式 `oldPath → newPath`（工作区根相对）→ `planRename` 冲突则报告拒改 / 否则 `applyRenamePlan`（`git mv` + 写回 edit） |
 | `doc-link` gate | 轮末/手动检查 | 全量 + 轮末归责过滤（只报本轮可归责文件的坏链）；gates 缺席时软加载不注册 |
 
+文档入口：[docs/README.md](docs/README.md)——
 库契约文档：[docs/links-lib.md](docs/links-lib.md)（API/边界/fork 同步义务）；
 gate 注册面文档：[docs/doc-link-gate.md](docs/doc-link-gate.md)。
 

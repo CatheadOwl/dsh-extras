@@ -1,0 +1,9 @@
+gates:
+  - id: docs-nav
+    module: scripts/verify-docs-nav.mjs
+    description: Every active md-module document is reachable from the documentation entry.
+    rationale: >-
+      docs/README.md is the reader entry point. An unlinked page is hidden even when its
+      content is current, so navigation integrity is part of documentation correctness.
+    level: blocking
+    relevant: ['README.md', 'docs/']

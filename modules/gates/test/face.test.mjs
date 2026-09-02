@@ -5,17 +5,18 @@ import { test } from 'node:test'
 
 import * as rootFace from '../lib/index.js'
 import { check as checkDocsNav } from '../scripts/verify-docs-nav.mjs'
-import { check as checkFace } from '../scripts/verify-register-face.mjs'
+import { check as checkPackageFace } from '../../../scripts/verify-package-face.mjs'
 import { check as checkRegisterDocs } from '../scripts/register-reference.mjs'
 
 const packageRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
+const extrasRoot = resolve(packageRoot, '../..')
 
 test('root entry exports only the dsh loader contract', () => {
   assert.deepEqual([...Object.keys(rootFace).sort()], ['Config', 'apply', 'inject', 'name'])
 })
 
-test('register-face boundary gate passes for the current package', async () => {
-  assert.deepEqual(await checkFace(packageRoot), [])
+test('package face gate passes for the whole extras package', async () => {
+  assert.deepEqual(await checkPackageFace(extrasRoot), [])
 })
 
 test('register-face generated docs gate passes for the current package', async () => {

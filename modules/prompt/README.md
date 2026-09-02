@@ -79,6 +79,8 @@ any_routes 通过相对路径 `../../../../any_routes/lib/index.js` 引入
 
 ## 模块内库（原纯库吸收）
 
+文档入口：[docs/README.md](docs/README.md)。
+
 - `src/parse/`（原 `@catheadowl/dsh-prompt-parse`）：fuzzy/parse/resolve 纯库，
   契约文档 [docs/parse.md](docs/parse.md)；
 - `src/tree/`（原 `@catheadowl/dsh-workspace-tree`）：gitignore-aware 枚举

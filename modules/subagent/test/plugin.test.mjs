@@ -38,7 +38,7 @@ test('apply registers exactly one provider and one tool', async () => {
 })
 
 test('apply registers exactly one top-level system-prompt section for the tool', async () => {
-  const { apply, SYSTEM_PROMPT_TEXT } = await import(fromLib('index'))
+  const { apply } = await import(fromLib('index')); const { SYSTEM_PROMPT_TEXT } = await import(fromLib('wording'))
   const ctx = makeCtx()
   apply(ctx, makeConfig())
   assert.equal(ctx.sections.length, 1)
@@ -50,7 +50,7 @@ test('apply registers exactly one top-level system-prompt section for the tool',
 })
 
 test('the system-prompt section leads with the directory-context value and routes same-workspace work away', async () => {
-  const { SYSTEM_PROMPT_TEXT } = await import(fromLib('index'))
+  const { SYSTEM_PROMPT_TEXT } = await import(fromLib('wording'))
   // The section is the top-level mental model of the tool description's
   // directory-targeting hint: it must state WHY this tool exists (reusing the
   // target directory's context — its entry files), name the trigger condition
@@ -81,7 +81,7 @@ test('provider advertises the out-of-process contract', async () => {
 })
 
 test('description = native wording verbatim + cwd hint only (drift guard)', async () => {
-  const { apply, toolDescription } = await import(fromLib('index'))
+  const { apply } = await import(fromLib('index')); const { toolDescription } = await import(fromLib('wording'))
   const ctx = makeCtx()
   apply(ctx, makeConfig())
   const def = ctx.defs[0]
@@ -99,7 +99,7 @@ test('description = native wording verbatim + cwd hint only (drift guard)', asyn
 })
 
 test('enableRunInBackground: false swaps to the native foreground suffix', async () => {
-  const { apply, toolDescription } = await import(fromLib('index'))
+  const { apply } = await import(fromLib('index')); const { toolDescription } = await import(fromLib('wording'))
   const ctx = makeCtx()
   apply(ctx, makeConfig({ enableRunInBackground: false }))
   const def = ctx.defs[0]

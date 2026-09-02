@@ -18,6 +18,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
+import z from '@deepseek-ai/schemastery'
 import { registerGate } from '@catheadowl/dsh-extras/register'
 import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/register'
 import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename } from './links/index.js'
@@ -28,6 +29,9 @@ import { check } from './gate-check.js'
 export const name = 'md'
 
 export const inject = ['tools']
+
+/** Loader contract: the md row takes no user-facing options today. */
+export const Config = z.object({})
 
 /** Calling session's workspace (`SessionHeader.cwd`); non-agent callers fall back to the process cwd. */
 function sessionWorkspace(exec: ToolExecution): string {

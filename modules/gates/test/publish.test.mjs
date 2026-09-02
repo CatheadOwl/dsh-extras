@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 
-import { check as checkPublishReadiness } from '../scripts/verify-publish-readiness.mjs'
+import { check as checkPublishReadiness } from '../../../scripts/verify-publish-readiness.mjs'
 
 const packageRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..') // extras package root
 

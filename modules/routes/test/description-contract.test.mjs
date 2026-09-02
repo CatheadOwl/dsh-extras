@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { ANY_ROUTES_DESCRIPTION } from '../lib/index.js'
+import { ANY_ROUTES_DESCRIPTION } from '../lib/tool-description.js'
 
 test('description states the truncated-folder | description suffix (anti-#2 regression)', () => {
   assert.ok(

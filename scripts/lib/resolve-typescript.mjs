@@ -18,7 +18,7 @@ export async function loadTypeScript() {
   }
   catch (error) {
     throw new Error(
-      `cannot resolve typescript from the gates package; install dev dependencies, link a node_modules/typescript junction, or set DSH_TYPESCRIPT_PATH (${error.message})`,
+      `cannot resolve typescript from the extras package; install dev dependencies, link a node_modules/typescript junction, or set DSH_TYPESCRIPT_PATH (${error.message})`,
     )
   }
 }

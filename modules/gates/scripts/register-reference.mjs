@@ -3,8 +3,8 @@
 import { fileURLToPath } from 'node:url'
 import { join, resolve } from 'node:path'
 
-import { loadTypeScript } from './lib/resolve-typescript.mjs'
-import { generateApiReference } from './lib/api-reference.mjs'
+import { loadTypeScript } from '../../../scripts/lib/resolve-typescript.mjs'
+import { generateApiReference } from '../../../scripts/lib/api-reference.mjs'
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
 

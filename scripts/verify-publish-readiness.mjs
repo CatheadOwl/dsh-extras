@@ -141,21 +141,28 @@ function scriptsLocality(root, declared, extraScripts = []) {
 // lines are under the same locality constraint as scripts/*.mjs — they must not
 // reach siblings, the shared eval harness, or other dev-repo directories. The
 // documented L0 exception (borrowing host .bin / host checkout paths, see
-// resolution-ladder) is allowed. A leading `cd <dir> && ` prefix moves the
-// resolution base (that is where the shell actually runs the command).
+// resolution-ladder) is allowed. Each `&&`-separated segment is scanned with
+// the resolution base moved by any preceding `cd <dir> &&` segment (that is
+// where the shell actually runs that segment).
 function npmScriptsLocality(manifest, root) {
   const violations = []
   const hostRoot = resolve(root, '../..', 'deepseek-harness')
   const inside = (target, base) => target === base || target.startsWith(base + '/') || target.startsWith(base + '\\')
   for (const [name, command] of Object.entries(manifest.scripts ?? {})) {
     if (typeof command !== 'string') continue
-    const cd = /^cd\s+([^\s&|;]+)\s*&&\s*/u.exec(command)?.[1]
-    const base = cd === undefined ? root : /^[A-Za-z]:\\|^\//u.test(cd) ? resolve(cd) : resolve(root, cd)
-    for (const match of command.matchAll(/(?:\.\.[/\\])+[^\s'"&|;]+/gu)) {
-      const token = match[0]
-      const target = resolve(base, token)
-      if (!inside(target, root) && !inside(target, hostRoot)) {
-        violations.push(`scripts.${name} references ${token} which resolves outside the package root (and is not a documented L0 host borrow) — keep dev-repo-only commands out of the shipped manifest`)
+    let base = root
+    for (const segment of command.split('&&')) {
+      const cd = /^cd\s+([^\s&|;]+)\s*$/u.exec(segment.trim())?.[1]
+      if (cd !== undefined) {
+        base = /^[A-Za-z]:\\|^\//u.test(cd) ? resolve(cd) : resolve(base, cd)
+        continue
+      }
+      for (const match of segment.matchAll(/(?:\.\.[/\\])+[^\s'"&|;]+/gu)) {
+        const token = match[0]
+        const target = resolve(base, token)
+        if (!inside(target, root) && !inside(target, hostRoot)) {
+          violations.push(`scripts.${name} references ${token} which resolves outside the package root (and is not a documented L0 host borrow) — keep dev-repo-only commands out of the shipped manifest`)
+        }
       }
     }
   }
@@ -224,7 +231,7 @@ export function check(root, options = {}) {
 }
 
 export function main() {
-  const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..') // extras package root
+  const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..') // extras package root
   const violations = check(root)
   for (const violation of violations) console.error(violation.reason)
   return violations.length === 0 ? 0 : 1

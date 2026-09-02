@@ -1,11 +1,11 @@
 gates:
   - id: register-face-boundary
-    module: scripts/verify-register-face.mjs
-    description: The gates package exposes its loader root and stable register face without implementation exports.
+    module: ../../scripts/verify-package-face.mjs
+    description: The extras package exposes per-module loader entries and frozen public faces without implementation exports.
     rationale: >-
-      Consumers depend on @catheadowl/dsh-extras/register. Keeping the root entry limited to
-      the dsh loader contract prevents service, controller, runner, and dirty-state modules
-      from becoming accidental public API.
+      Consumers depend on @catheadowl/dsh-extras public entries. Keeping every composition
+      row's entry limited to the dsh loader contract prevents service, controller, runner,
+      and dirty-state modules from becoming accidental public API.
     level: blocking
     relevant: ['package.json', 'src/', 'docs/']
   - id: register-docs-fresh
@@ -25,10 +25,10 @@ gates:
     level: blocking
     relevant: ['README.md', 'docs/']
   - id: publish-readiness
-    module: scripts/verify-publish-readiness.mjs
-    description: The package stays independently publishable (peer-only host deps, registry ranges, self-contained docs).
+    module: ../../scripts/verify-publish-readiness.mjs
+    description: The extras package stays independently publishable (peer-only host deps, registry ranges, self-contained docs).
     rationale: >-
-      gates ships without bundling the dsh host: host packages are peerDependencies provided
+      extras ships without bundling the dsh host: host packages are peerDependencies provided
       at runtime, and every other dependency must resolve from a public registry. Docs must
       not link into the surrounding dev repository because published readers cannot reach it.
     level: blocking

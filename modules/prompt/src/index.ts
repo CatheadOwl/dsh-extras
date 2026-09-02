@@ -10,14 +10,9 @@ import { ConfigSchema, PromptMiddlewareService } from './service.js'
 import type { Config as PromptMiddlewarePluginConfig } from './service.js'
 import type { PromptMiddlewareTraceEvent } from './types.js'
 
-export { PromptMiddlewareRunner, createPromptMiddlewareRegistry, renderRelates } from './core.js'
-export { resolvePromptPathList } from './path-resolver.js'
-export { registerPromptMiddlewareProvider } from './register.js'
-export { ConfigSchema, PromptMiddlewareService } from './service.js'
-export { PromptMiddlewareController } from './controller.js'
-export type { PromptMiddlewareListRequest, PromptMiddlewareSetDisabledRequest } from './controller.js'
-export type { Config as PromptMiddlewareConfig } from './service.js'
-export type * from './types.js'
+// Loader-contract entry only (ADR 0001): every composition row's index.ts
+// exports exactly name/inject/Config/apply. In-package consumers (tests,
+// client half) import the owning modules directly.
 
 export const name = 'prompt-middleware'
 export const inject: string[] = []

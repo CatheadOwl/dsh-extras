@@ -143,8 +143,8 @@ Web 配置页（client half）的类型依赖走 tsconfig `paths` 指向 host �
 `react` / `@types/react` 以 junction 指向 vendored `.pnpm` 的版本化路径。
 **不要在此目录跑 `pnpm install`**。
 
-校验脚本（`scripts/`）用的 TypeScript 走同一约定：`node_modules/typescript`
-junction 指向宿主安装。脚本代码里**零宿主路径字面量**（`scripts/lib/resolve-typescript.mjs`
+校验脚本用的 TypeScript 走同一约定：包根 `node_modules/typescript`
+junction 指向宿主安装。脚本代码里**零宿主路径字面量**（包级 `scripts/lib/resolve-typescript.mjs`
 只认本地可解析的 `typescript` 与 `DSH_TYPESCRIPT_PATH` 覆盖），越出包根的
 import / `new URL(...)` 路径会被 `publish-readiness` gate 拦截。
 
@@ -176,7 +176,7 @@ dsh plugin add d:\Document\Projects\dsh\dsh-plugin-dev\extras   # 装的是 extr
 - module gate 的动态 `import()` 受 Node 模块缓存约束：会话期间修改
   仓库 gate 模块不会生效，需重启进程。
 - 轮末驱动已接 `signal`（取消时未跑 gate 记 `skipped`）与 gate 级超时（防挂死命令卡住轮次关闭）；进程内 module 检查本身无法抢占中断，靠超时收敛。
-- `yaml` 是本插件自有的 registry 依赖（`^2.9.0`）；不要为它恢复指向宿主 `.pnpm` 内部路径的 `link:` 声明（发布场景不可解析，`scripts/verify-publish-readiness.mjs` 会拦截）。
+- `yaml` 是本插件自有的 registry 依赖（`^2.9.0`）；不要为它恢复指向宿主 `.pnpm` 内部路径的 `link:` 声明（发布场景不可解析，包级 `scripts/verify-publish-readiness.mjs` 会拦截）。
 - `gates-config` 是解析失败/配置冲突专用 gate 的保留 id：插件注册或项目声明同名 gate 会 fail loud；插件 gate 与项目 gate 撞名会以 `gates-config` blocking gate 暴露。
 - 用户开关是**全局偏好**（按 gate id × trigger 生效，不按工作区分），持久化在**浏览器
   localStorage**（`dsh.gates.disabled`，双列表 `{stop, manual}`），host 只有内存镜像：
