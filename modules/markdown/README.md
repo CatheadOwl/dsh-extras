@@ -34,6 +34,11 @@ gate 面（[`src/gate-check.ts`](src/gate-check.ts)，归责谓词 + 锚点修�
 库契约文档：[docs/links-lib.md](docs/links-lib.md)（API/边界/fork 同步义务）；
 gate 注册面文档：[docs/doc-link-gate.md](docs/doc-link-gate.md)。
 
+> 附加出口：不想装 markdown 行、但单个仓库仍想要链接门禁的项目，可在该仓库
+> `gates.yml` 里 `module: '@catheadowl/dsh-extras/markdown/gate-check'` 声明
+> 仓库级回退（同一份 `check` 实现；与插件级注册互斥）。适用条件与形态见
+> [docs/doc-link-gate.md](docs/doc-link-gate.md)「两种接入形态」。
+
 ## 构建 / 测试（extras 包根 scripts）
 
 ```powershell

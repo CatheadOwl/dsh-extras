@@ -101,7 +101,7 @@ fiber、按行 id 单关、模块上下架走包版本更新。
 | 消费面 | 类别 | 消费者 | 状态 |
 |---|---|---|---|
 | `gates/register` | 基座注册面（`ctx.gates` 的硬 import 形态） | 其他插件（coggit） | ✓ |
-| `prompt/register` | 基座注册面（`ctx.promptMiddleware` 的硬 import 形态） | 其他插件（结构类型软依赖亦可） | ✓ |
+| `prompt/register` | 基座注册面（`ctx.promptMiddleware` 的硬 import 形态；imperative `registerPromptMiddlewareProvider` + 声明式 `registerRelatesProvider` 双入口） | 其他插件（结构类型软依赖亦可） | ✓ |
 | `markdown/gate-check` | 配置面（`gates.yml` `module:` 回退） | 单仓项目配置 | ✓（niche，文档在 [modules/markdown](../modules/markdown/README.md)） |
 | `gates` / `markdown` / `prompt` / `routes` | 组合行 loader 入口（行名 specifier） | cordis.patch.yml | ✓ |
 

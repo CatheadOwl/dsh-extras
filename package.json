@@ -25,6 +25,10 @@
       "types": "./modules/gates/lib/register.d.ts",
       "default": "./modules/gates/lib/register.js"
     },
+    "./prompt/register": {
+      "types": "./modules/prompt/lib/register.d.ts",
+      "default": "./modules/prompt/lib/register.js"
+    },
     "./markdown/gate-check": {
       "types": "./modules/markdown/lib/gate-check.d.ts",
       "default": "./modules/markdown/lib/gate-check.js"

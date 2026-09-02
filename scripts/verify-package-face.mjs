@@ -28,6 +28,7 @@ const SUBENTRIES = {
   './prompt': 'modules/prompt/src/index.ts',
   './routes': 'modules/routes/src/index.ts',
   './gates/register': 'modules/gates/src/register.ts',
+  './prompt/register': 'modules/prompt/src/register.ts',
   './markdown/gate-check': 'modules/markdown/src/gate-check.ts',
 }
 
@@ -55,10 +56,32 @@ const FACADE_EXPORTS = {
     'GateTrigger',
     'GateViolation',
   ],
+  './prompt/register': [
+    'registerPromptMiddlewareProvider',
+    'registerRelatesProvider',
+    'PromptPathKind',
+    'ResolvedPromptPath',
+    'RelatesItem',
+    'PromptRelatesContribution',
+    'PromptMiddlewareInput',
+    'PromptMiddlewareProviderMode',
+    'PromptMiddlewareProvider',
+    'PromptMiddlewareProviderEntry',
+    'RelatesResolveContext',
+    'RelatesResolveResult',
+    'DeclarativeRelatesProvider',
+    'PromptMiddlewareTraceStatus',
+    'PromptMiddlewareTraceEvent',
+    'PromptMiddlewareConfig',
+    'PromptMiddlewareRunOptions',
+    'PromptRelatesGroup',
+    'PromptMiddlewareRunResult',
+    'PromptMiddlewareProviderView',
+  ],
 }
 
 const FORBIDDEN_IMPORTS = [
-  /from\s+['"]@catheadowl\/dsh-extras(?!\/gates\/register(?:\.js)?['"])[^'"]*['"]/u,
+  /from\s+['"]@catheadowl\/dsh-extras(?!\/(?:gates|prompt)\/register(?:\.js)?['"])[^'"]*['"]/u,
 ]
 
 // Every composition-row module with a loader entry — each is checked against
