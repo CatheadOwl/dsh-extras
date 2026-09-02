@@ -1,5 +1,5 @@
 /**
- * md module: the Markdown toolchain row of `@catheadowl/dsh-extras` — one
+ * markdown module: the Markdown toolchain row of `@catheadowl/dsh-extras` — one
  * fiber registering all three model-facing surfaces:
  *
  * - the `md_rename` tool (move + deterministic all-or-nothing link rewrite),
@@ -16,7 +16,7 @@
  * gates must agree on the same Markdown algorithms at the same version —
  * vendoring copies would drift and a drift is a false report.
  *
- * @module @catheadowl/dsh-extras/modules/md
+ * @module @catheadowl/dsh-extras/markdown
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -30,11 +30,11 @@ import type { RenameConflict, RenameSkip } from './links/index.js'
 import { check as checkDocLink } from './gate-check.js'
 import { check as checkMdMetadata } from './metadata-check.js'
 
-export const name = 'md'
+export const name = 'markdown'
 
 export const inject = ['tools']
 
-/** Loader contract: the md row takes no user-facing options today. */
+/** Loader contract: the markdown row takes no user-facing options today. */
 export const Config = z.object({})
 
 /** Calling session's workspace (`SessionHeader.cwd`); non-agent callers fall back to the process cwd. */

@@ -34,7 +34,7 @@ import * as gates from '../lib/index.js'
 // plugin (`dsh-plugin-dev/md-links-gates`, formerly `scripts/doc-link-lib.mjs`):
 // the same `check(root, changes)` surface the plugin's registerGate definition
 // and the module-gate form load.
-import { check as docLinkCheck } from '../../md/lib/gate-check.js'
+import { check as docLinkCheck } from '../../markdown/lib/gate-check.js'
 
 /** Scripted text chunks: one model reply ends with a `stop` finish. */
 function textResponse(text) {

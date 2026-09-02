@@ -1,8 +1,8 @@
 ---
-description: extras 的 md 模块——同一 fiber 的三个模型面：`md_rename` 写工具（移动/改名 + 全仓双向引用重定位，确定性 + 冲突交 agent）、`doc-link` 完整性 gate 与 `md-metadata` 元数据 gate（defer + subagent fixer）；数据面事务内核在模块内 src/links（原 md-links 纯库）
+description: extras 的 markdown 模块——同一 fiber 的三个模型面：`md_rename` 写工具（移动/改名 + 全仓双向引用重定位，确定性 + 冲突交 agent）、`doc-link` 完整性 gate 与 `md-metadata` 元数据 gate（defer + subagent fixer）；数据面事务内核在模块内 src/links（原 md-links 纯库）
 ---
 
-# md 模块（`@catheadowl/dsh-extras` 一行）
+# markdown 模块（`@catheadowl/dsh-extras` 一行）
 
 一个 fiber、三个模型面：`md_rename` agent tool（移动文件/目录并同步重定位本仓库内全部
 Markdown 引用——入链改写 + 出链 rebase，确定性、冲突交 agent）、`doc-link` gate
@@ -38,9 +38,9 @@ gate 注册面文档：[docs/doc-link-gate.md](docs/doc-link-gate.md)。
 
 ```powershell
 # 从 dsh-plugin-dev/extras
-pnpm run check-types:md
-pnpm run build:md
-pnpm run test:md    # 库 9 套 + plugin + doc-link-gate + metadata-check，共 101 case
+pnpm run check-types:markdown
+pnpm run build:markdown
+pnpm run test:markdown    # 库 9 套 + plugin + doc-link-gate + metadata-check，共 101 case
 ```
 
 测试 import 已构建 `lib/`，依赖经 extras 包根 `node_modules` junction 解析
@@ -53,7 +53,7 @@ pnpm run test:md    # 库 9 套 + plugin + doc-link-gate + metadata-check，共 
 见 [`eval/README.md`](eval/README.md)。
 
 ```powershell
-# 从 dsh-plugin-dev/extras/modules/md
+# 从 dsh-plugin-dev/extras/modules/markdown
 node ../../../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../../../deepseek-harness --mode mock eval/behavior/mock  # mock 层（免 key）
 node ../../../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../../../deepseek-harness eval/behavior/real               # real 层（需 key）
 ```

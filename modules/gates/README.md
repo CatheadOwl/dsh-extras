@@ -103,15 +103,15 @@ import，通用 `check(root, changes?)`）或 `command`（shell，非零退出�
 
 ## 首发 gate
 
-- `doc-link`（**插件级**，`dsh-plugin-dev/extras/modules/md` 注册）：Markdown 链接完整性，
+- `doc-link`（**插件级**，`dsh-plugin-dev/extras/modules/markdown` 注册）：Markdown 链接完整性，
   数据面复用 `@catheadowl/dsh-md-links`（`checkRepository`），git 扫描真实仓库全扫 < 1s；
   通用检查（任何有 Markdown 的仓库都成立）——装一次该插件，profile 下所有工作区自动
   获得轮末 + 手动门禁，无需每项目 shim / `gates.yml` 条目（原仓库级
   `scripts/doc-link-lib.mjs` 薄 shim 已归档）。`doc-style` 已随全自由（free-relative）废弃。
 - `coggit-misplaced`（coggit 插件注册）：镜像对齐检查，数据面
   `listMisplacedCognition()`（列出前自动 reconcile）；手挪文件即修复。
-- `md-metadata`（**插件级**，同 md 模块注册，`level: defer` 旁路档）：本轮被写
-  md 必须带非空 frontmatter `description`；数据面在 md 模块
+- `md-metadata`（**插件级**，同 markdown 模块注册，`level: defer` 旁路档）：本轮被写
+  md 必须带非空 frontmatter `description`；数据面在 markdown 模块
   `src/metadata-check.ts`，消费变更集输入（T6 首个消费者；2026-09-02 由本仓库根
   `gates.yml` 仓库级条目升格，原 `scripts/md-metadata-lib.mjs` 已删）。
 
@@ -127,7 +127,7 @@ Set-Location d:\Document\Projects\dsh\dsh-plugin-dev\extras\modules\gates
 node --test --test-isolation=none <package.json test 列出的文件>
 # 组合测试：真实 agent-loop + mock adapter，验证 turn-stopping 驱动（defer 旁路 / blocking 续步）
 # 不在 `pnpm verify` 内：依赖 host 源码 junction（见下），新克隆 / 非本机不可跑；
-# 前置：先 build md 模块（W10 用例 import 其 lib/gate-check.js 构建产物）
+# 前置：先 build markdown 模块（W10 用例 import 其 lib/gate-check.js 构建产物）
 node --test --test-isolation=none test/composition.test.mjs
 ```
 

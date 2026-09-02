@@ -21,7 +21,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 | 模块 | 内容 | 状态 |
 |---|---|---|
 | `modules/gates` | 原 `@catheadowl/dsh-gates`（ctx.gates 质量门禁） | 已迁入 |
-| `modules/md` | 原 md-links + md-rename + md-links-gates（`md_rename` 工具 + `doc-link` gate + 内置链接事务库） | 已迁入 |
+| `modules/markdown` | 原 md-links + md-rename + md-links-gates（`md_rename` 工具 + `doc-link` gate + 内置链接事务库） | 已迁入 |
 | `modules/prompt` | 原 prompt-middleware + prompt-parse + workspace-tree（prompt 注入服务 + 内置 parse/tree 库） | 已迁入 |
 | `modules/routes` | 原 any_routes（通用 Markdown 路由视图工具 any_routes + breadcrumb relates provider） | 已迁入 |
 | `modules/subagent` | 原 subagent-at（`subagent_at` 工具 + `dsh-sdk-at` provider；行 id `subagent-at`——宿主 dsh-base 已占用 `subagent`） | 已迁入* |
@@ -36,7 +36,7 @@ description: dsh-extras 单包多行发布载体——一个 npm 包装多个独
 - `@catheadowl/dsh-extras/register`——gates 的插件消费面（`registerGate` +
   `GateDefinition`/`GateViolation` 类型），保持原 `@catheadowl/dsh-gates/register`
   的导出集合不变（coggit 等消费方只改包名）；
-- `@catheadowl/dsh-extras/gate-check`——md 模块 gates.yml 回退面。
+- `@catheadowl/dsh-extras/gate-check`——markdown 模块 gates.yml 回退面。
 - Web 客户端面：`modules/client` 嵌套锚点包（`@catheadowl/dsh-extras-client`，自带
   package.json + `dsh.client` + `./client` export，不单独发布）——gates/prompt 的
   Settings Tab 经此合成 bundle 装载；`nearestPackage` 把 client 行归属到嵌套 manifest，

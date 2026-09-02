@@ -109,14 +109,14 @@ LLM 写）：
 ## 实例与教学示例
 
 「仓库级 → 插件级」已发生两次：`doc-link`（2026-08-30）与 `md-metadata`（2026-09-02）
-均升格为 `@catheadowl/dsh-extras` md 模块的插件级 gate（见
+均升格为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate（见
 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级声明会与插件 gate 撞名
 （重名注册即报错），本包开发仓库的根 `gates.yml` 因此当前无条目。
 
 module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是
 它升格前的仓库级原样（`check(root, changes?)` 的导出形状、defer + subagent fixer
 的声明语法），**完整可跑的参考实现**在同包 [`examples/md-metadata/module-form.mjs`](../examples/md-metadata/module-form.mjs)
-（冻结标本：原仓库级数据面原样迁入，不随活代码演进；活的数据面在 md 模块
+（冻结标本：原仓库级数据面原样迁入，不随活代码演进；活的数据面在 markdown 模块
 `src/metadata-check.ts`，插件级注册见其 `src/index.ts`）。要为自己的仓库声明等价
 检查时，把标本拷进仓库、`module:` 指过去，并换一个不撞名的 `id`。
 

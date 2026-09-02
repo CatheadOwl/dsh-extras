@@ -19,7 +19,7 @@ gates 的**可运行参考实现**（docs-as-code）：这里放能被 `gates.ym
 [md-metadata/module-form.mjs](md-metadata/module-form.mjs)——「会话被写 md 必须带
 非空 frontmatter `description`」检查的 module 形态参考实现。Lineage：原开发仓库根
 `scripts/md-metadata-lib.mjs`（仓库级 `gates.yml` 条目的数据面，defer-bypass probe
-的观测对象），2026-09-02 检查升插件级（`@catheadowl/dsh-extras` md 模块
+的观测对象），2026-09-02 检查升插件级（`@catheadowl/dsh-extras` markdown 模块
 `src/metadata-check.ts` + `registerGate`）后原样冻结迁入此处。
 
 在自己的仓库使用（照抄需换 id——`md-metadata` 已被插件级注册占用，撞名即报错）：

@@ -23,7 +23,7 @@ modules/gates/scripts/                  # 本目录：gates 专属薄入口
   verify-docs-nav.mjs                   #   gate 入口：docs 导航完整性
 ```
 
-分层原则：**入口脚本只携带模块专属配置**（哪些 source、哪些 docs 路径）并把结果包装成 violation 形状；**lib 引擎只做通用机制**，不知道自己在检查哪个包。其他模块按面接入：有 `docs/` 的模块声明自己的 docs-nav 薄入口（见 `modules/md/gates.yml`、`modules/prompt/gates.yml`），有公共消费入口的模块在包级 `verify-package-face.mjs` 的配置表里补行。
+分层原则：**入口脚本只携带模块专属配置**（哪些 source、哪些 docs 路径）并把结果包装成 violation 形状；**lib 引擎只做通用机制**，不知道自己在检查哪个包。其他模块按面接入：有 `docs/` 的模块声明自己的 docs-nav 薄入口（见 `modules/markdown/gates.yml`、`modules/prompt/gates.yml`），有公共消费入口的模块在包级 `verify-package-face.mjs` 的配置表里补行。
 
 ## 各入口职责
 

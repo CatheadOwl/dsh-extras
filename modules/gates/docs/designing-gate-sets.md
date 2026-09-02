@@ -64,11 +64,11 @@ registerGate(ctx, { ...SEMANTIC_GATE, level: 'blocking', check })
 
 ```yaml
 gates:
-  - id: md-metadata      # 语义但可 defer → defer + subagent fixer（示意：真实 md-metadata 已走插件级注册，见 extras md 模块；仓库级等价声明需换 id）
+  - id: md-metadata      # 语义但可 defer → defer + subagent fixer（示意：真实 md-metadata 已走插件级注册，见 extras markdown 模块；仓库级等价声明需换 id）
     module: scripts/md-metadata-lib.mjs
     level: defer
     fixer: { kind: subagent, prompt: "..." }
-  - id: link-integrity   # 语义决策 → blocking（示意 id；真实 doc-link 已走插件级注册，见 extras md 模块）
+  - id: link-integrity   # 语义决策 → blocking（示意 id；真实 doc-link 已走插件级注册，见 extras markdown 模块）
     module: scripts/link-check.mjs
     level: blocking
 ```

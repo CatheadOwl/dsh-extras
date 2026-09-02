@@ -126,7 +126,7 @@ manual 入口不注入该变量。
 - 手动入口（\`gates_run\` / \`/gates\`）总是全扫，且不回写轮末脏状态
   （手动通过不会让下个轮末短路，保守方向）。
 - **仓库级 id 与插件级 gate 撞名会 fail loud**：示例 id \`md-metadata\` 已被
-  \`@catheadowl/dsh-extras\` md 模块插件级注册（defer + subagent fixer，装该包的
+  \`@catheadowl/dsh-extras\` markdown 模块插件级注册（defer + subagent fixer，装该包的
   profile 自带）；要声明自己的等价检查需换 id，或直接复用插件 gate 不再声明。
 `
 

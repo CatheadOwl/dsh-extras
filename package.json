@@ -4,13 +4,29 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
+    "./gates": {
+      "types": "./modules/gates/lib/index.d.ts",
+      "default": "./modules/gates/lib/index.js"
+    },
+    "./markdown": {
+      "types": "./modules/markdown/lib/index.d.ts",
+      "default": "./modules/markdown/lib/index.js"
+    },
+    "./prompt": {
+      "types": "./modules/prompt/lib/index.d.ts",
+      "default": "./modules/prompt/lib/index.js"
+    },
+    "./routes": {
+      "types": "./modules/routes/lib/index.d.ts",
+      "default": "./modules/routes/lib/index.js"
+    },
     "./register": {
       "types": "./modules/gates/lib/register.d.ts",
       "default": "./modules/gates/lib/register.js"
     },
     "./gate-check": {
-      "types": "./modules/md/lib/gate-check.d.ts",
-      "default": "./modules/md/lib/gate-check.js"
+      "types": "./modules/markdown/lib/gate-check.d.ts",
+      "default": "./modules/markdown/lib/gate-check.js"
     },
     "./package.json": "./package.json"
   },
@@ -32,15 +48,15 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:gates && pnpm run build:md && pnpm run build:prompt && pnpm run build:routes && pnpm run build:client",
+    "build": "pnpm run build:gates && pnpm run build:markdown && pnpm run build:prompt && pnpm run build:routes && pnpm run build:client",
     "build:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/gates/tsconfig.json",
     "check-types:gates": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/gates/tsconfig.json",
     "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs",
     "test:gates:composition": "cd modules/gates && node --test --test-isolation=none test/composition.test.mjs",
     "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run test:gates",
-    "build:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/md/tsconfig.json",
-    "check-types:md": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/md/tsconfig.json",
-    "test:md": "cd modules/md && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs test/metadata-check.test.mjs",
+    "build:markdown": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/markdown/tsconfig.json",
+    "check-types:markdown": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/markdown/tsconfig.json",
+    "test:markdown": "cd modules/markdown && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs test/metadata-check.test.mjs",
     "build:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/prompt/tsconfig.json",
     "check-types:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/prompt/tsconfig.json",
     "test:prompt": "cd modules/prompt && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",

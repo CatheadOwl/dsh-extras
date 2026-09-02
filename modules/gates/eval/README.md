@@ -21,8 +21,8 @@ eval behavior 层。host 级并行隔离测试仍在
 
 ## 三个集成点（跑前必须成立）
 
-1. **extras md 模块已构建**（唯一构建依赖）：case 的 `gates.yml` `module:` 指向
-   `dsh-plugin-dev/extras/modules/md/lib/gate-check.js`（`./gate-check` 子路径导出的通用
+1. **extras markdown 模块已构建**（唯一构建依赖）：case 的 `gates.yml` `module:` 指向
+   `dsh-plugin-dev/extras/modules/markdown/lib/gate-check.js`（`./gate-check` 子路径导出的通用
    `check`，与插件 `registerGate` 同源；`lib/` 是构建产物且 gitignored）。跑前先 build 该插件。
 2. **profile 挂了 `tool-fs`（`write`）**：变更集采集只认 `PRECISE_WRITE_TOOLS = ['write','edit']`
    （`src/dirty.ts`），读 `arguments.file_path`。其它工具名归为 `opaque → true` 全算，

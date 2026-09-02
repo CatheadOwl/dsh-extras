@@ -1,5 +1,5 @@
 ---
-description: md 模块文档导航入口——链接库契约与 doc-link gate 注册面两篇文档的索引
+description: markdown 模块文档导航入口——链接库契约与 doc-link gate 注册面两篇文档的索引
 ---
 
 # md · docs

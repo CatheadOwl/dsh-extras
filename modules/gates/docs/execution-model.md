@@ -191,7 +191,7 @@ pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` �
   断掉。
 
 机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），
-政策归开发仓库的 `dsh-plugin-dev/extras/modules/md` 模块（`src/gate-check.ts` 的归责谓词，
+政策归开发仓库的 `dsh-plugin-dev/extras/modules/markdown` 模块（`src/gate-check.ts` 的归责谓词，
 原仓库级薄 shim 已归档）。manual 入口无
 `changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个
 违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。

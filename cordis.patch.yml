@@ -1,20 +1,25 @@
 # @catheadowl/dsh-extras — one row per module, added by `- insert:`.
-# Row names are relative specifiers anchored at this file's directory.
+# Row names: package subpath specifiers (@catheadowl/dsh-extras/<module>) for
+# the four published modules — each is a public contract (package.json
+# `exports` must declare the same subpath; see plugin-release 03/05).
+# The subagent row is withheld from the first release and the extras-client
+# row is the nested client anchor: both intentionally keep relative paths
+# (bare/nested names break loader resolution — release-plan experiments).
 - insert:
     - id: gates
-      name: './modules/gates/lib/index.js'
+      name: '@catheadowl/dsh-extras/gates'
       config:
         maxConsecutiveBlocks: 3
-    - id: md
-      name: './modules/md/lib/index.js'
+    - id: markdown
+      name: '@catheadowl/dsh-extras/markdown'
     - id: prompt
-      name: './modules/prompt/lib/index.js'
+      name: '@catheadowl/dsh-extras/prompt'
       config:
         providerTimeoutMs: 2000
         totalTimeoutMs: 5000
         renderBudgetChars: 4000
     - id: routes
-      name: './modules/routes/lib/index.js'
+      name: '@catheadowl/dsh-extras/routes'
     - id: subagent-at
       name: './modules/subagent/lib/index.js'
     - id: extras-client

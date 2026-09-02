@@ -221,7 +221,7 @@ describe('plugin registration', () => {
       },
     }
     apply(ctx)
-    // Merged md fiber: the tool and both gates register together.
+    // Merged markdown fiber: the tool and both gates register together.
     assert.equal(tools.length, 1)
     assert.equal(tools[0].name, 'md_rename')
     assert.equal(defs.length, 2)

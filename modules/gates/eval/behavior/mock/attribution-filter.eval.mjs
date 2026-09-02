@@ -32,7 +32,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 // plugin-entry `registerGate` runtime deps). `moduleGate` resolves a relative
 // `module` against the SESSION workspace cwd (this run's temp dir), so the
 // path must be absolute. Forward slashes keep the YAML scalar unescaped.
-const docLinkLib = join(here, '..', '..', '..', 'md', 'lib', 'gate-check.js').split(sep).join('/')
+const docLinkLib = join(here, '..', '..', '..', 'markdown', 'lib', 'gate-check.js').split(sep).join('/')
 
 const BROKEN_A = '[broken](task-a-missing.md)\n'
 const BROKEN_B = '[broken](task-b-missing.md)\n'

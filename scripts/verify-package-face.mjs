@@ -19,11 +19,16 @@ const OWN_NAME = '@catheadowl/dsh-extras'
 const LOADER_CONTRACT = ['name', 'inject', 'Config', 'apply']
 
 // Public consumer entries of the bundle: subpath -> source file (relative to
-// the package root). Modules without an exports entry simply have no row here.
+// the package root). The four module loader entries are public subpaths
+// (row-name specifiers — plugin-release 03/05); modules without an exports
+// entry simply have no row here.
 const SUBENTRIES = {
+  './gates': 'modules/gates/src/index.ts',
+  './markdown': 'modules/markdown/src/index.ts',
+  './prompt': 'modules/prompt/src/index.ts',
+  './routes': 'modules/routes/src/index.ts',
   './register': 'modules/gates/src/register.ts',
-  './client': 'modules/gates/src/client/index.ts',
-  './gate-check': 'modules/md/src/gate-check.ts',
+  './gate-check': 'modules/markdown/src/gate-check.ts',
 }
 
 function absoluteSubentries(root) {

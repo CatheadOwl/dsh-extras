@@ -49,7 +49,7 @@ dsh plugin --profile headless add D:/Document/Projects/dsh/dsh-plugin-dev/extras
 ## 运行
 
 ```powershell
-# mock 层（免 key，确定性回归；工作目录：dsh-plugin-dev/extras/modules/md）
+# mock 层（免 key，确定性回归；工作目录：dsh-plugin-dev/extras/modules/markdown）
 node ../eval/bin/dsh-eval.mjs run --profile headless --repo ../../deepseek-harness --mode mock eval/behavior/mock
 
 # real 层（需 DEEPSEEK_API_KEY 或 $DSH_HOME/.credentials.yaml）
