@@ -39,7 +39,13 @@ dsh plugin add @catheadowl/dsh-extras
   disabled: true
 ```
 
-带默认配置的模块可覆写（键见各模块文档）：
+带默认配置的模块可覆写。各行的全部配置键：
+
+| 行 | 配置键 |
+|---|---|
+| gates | `maxConsecutiveBlocks`（连续阻断上限，默认 3，耗尽后降级放行） |
+| prompt | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`（见下例） |
+| markdown / routes / subagent-at | 无插件配置键 |
 
 ```yaml
 - id: prompt

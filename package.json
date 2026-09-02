@@ -37,6 +37,7 @@
   },
   "files": [
     "cordis.patch.yml",
+    "docs/**/*.md",
     "modules/*/lib/**/*.js",
     "modules/*/lib/**/*.d.ts",
     "modules/*/package.json",
@@ -64,7 +65,7 @@
     "test:markdown": "cd modules/markdown && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs test/metadata-check.test.mjs",
     "build:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/prompt/tsconfig.json",
     "check-types:prompt": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/prompt/tsconfig.json",
-    "test:prompt": "cd modules/prompt && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
+    "test:prompt": "cd modules/prompt && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/face.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs",
     "build:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd -p modules/routes/tsconfig.json",
     "check-types:routes": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/routes/tsconfig.json",
     "test:routes": "cd modules/routes && node --test --test-isolation=none test/breadcrumb-description.test.mjs test/description-contract.test.mjs test/description.test.mjs test/navigation.test.mjs test/routes.test.mjs",

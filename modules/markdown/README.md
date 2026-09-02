@@ -55,7 +55,7 @@ pnpm run test:markdown    # 库 9 套 + plugin + doc-link-gate + metadata-check�
 
 `eval/` 目录用共享 eval 框架（开发仓库 `dsh-plugin-dev/eval/`）覆盖工具内三层 fallback
 （deterministic rebase / skip 非阻塞 / conflict 阻塞整单）。case 清单与 out-of-scope（L2–L4 路 B）
-见 [`eval/README.md`](eval/README.md)。
+见 `eval/README.md`（开发仓库行为 eval 目录，不随包发布，纯文本引用）。
 
 ```powershell
 # 从 dsh-plugin-dev/extras/modules/markdown

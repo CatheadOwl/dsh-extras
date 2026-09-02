@@ -24,11 +24,10 @@ gates 的差异化价值 = 把插件可以直接消费的**运行时事实**整�
 `explorer/session-change-set/`，gates 消费契约见
 `workunits/gates/spec/gate-change-set-consumption.md`）、
 工具事件流（未用，按类型路由）。
-真正要验证的是：插件开发者是否需要一个继 tool / skill 之后的 gate 承载空间，
-而不是每个插件各自监听 `agent/turn-stopping`、自建预算和反馈协议。演进主轴按「下一批
-要消费并框架化的运行时事实」组织，线头清单见开发仓库认知层
-`dsh-plugin-dev_cognition/gates/open-threads.md`
-（计划文件不进可发布的插件目录，故落认知层）。
+工具事件流（未用，按类型路由）。设计推演：插件开发者是否需要一个继 tool / skill
+之后的 gate 承载空间，而不是每个插件各自监听 `agent/turn-stopping`、自建预算和
+反馈协议（演进主线与线头清单在开发仓库，纯文本引用：`workunits/gates/README.md`、
+认知层 `open-threads.md`，不随包发布）。
 
 ## 架构：两种 gate 注册形态
 
@@ -152,7 +151,15 @@ import / `new URL(...)` 路径会被 `publish-readiness` gate 拦截。
 dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 ```
 
-装入 profile 后按 `docs/meeting-room/20260822-1436-local-ci-gates/` 两个 case 文件的"预期"节做行为验收：坏链接触发轮末续步修复、`/gates` 聚合、卸载后注册方不受影响等。注意：case 文档为讨论期档案，其中名称/路径为旧称（`ci_run`/`/ci` 现为 `gates_run`/`/gates`，`local-ci` 现为 `gates`，`vscode-plugins/codebase/coggit` 现为 `dsh-plugin-dev/coggit`）。
+装入 profile 后的行为验收（三步）：
+
+1. 制造一个坏 Markdown 内链 → 轮末被 `doc-link` gate 拦截并续步修复；
+2. `/gates` 聚合可见全部 gate（含 `coggit-misplaced` 等插件级注册项）；
+3. 卸载本包（或换未装 profile）→ 曾注册过 gate 的插件照常工作（软降级）。
+
+更早的讨论期验收档案（名称/路径为旧称：`ci_run`/`/ci` 现为 `gates_run`/`/gates`，
+`local-ci` 现为 `gates`）在开发仓库 `docs/meeting-room/20260822-1436-local-ci-gates/`
+（纯文本引用，不随包发布）。
 
 ## 已知限制 / 后续
 
