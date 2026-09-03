@@ -29,3 +29,27 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
   路径与 `@deepseek-ai/*` 宿主包在 **dev-time 接线**中合法——运行时由 dsh
   宿主提供，publish gate 携带对应豁免。repo 拆分时的随迁义务见开发仓库
   release-plan（纯文本引用）。本条是 PKG-1/2 的显式豁免，不是独立要求。
+- **PKG-6〈no-control-plane-narrative〉**：包内文档不承载开发仓控制面叙事
+  （状态板、TODO/roadmap、评审运行记录、workunit 故事）与开发仓专属操作
+  指示；引用开发仓证据只写名字。基线：should-fix。
+- **PKG-7〈no-committed-artifacts〉**：构建/运行产物不入 git——`lib/`、
+  `eval/.runs/`、`*.tgz`、sourcemap，以及编译器**就地发射**到 `src/` 的
+  `.js`/`.d.ts`（绕过 `lib/` 形态 ignore 规则的变体）均按 ignore 策略排除。
+  探针：`git ls-files | grep -E 'lib/|\.runs/|\.tgz|\.map$'`。基线：should-fix
+  （发布污染为 blocker）。
+- **PKG-8〈ssot-direction〉**：SSOT 方向——包消费者需要的实质（契约、配方、
+  类型语义）以**包内**为权威（模块文档自权威，开发仓对应 spec 冻结为决策
+  记录）；仅决策史（为什么、演进）留开发仓。反向：模块内实现实质不得滞留
+  开发仓文档。基线：should-fix。
+
+## intentional-design 豁免清单（防误报；finding 引用本清单即非 finding）
+
+评审者注意：以下为刻意设计，不是缺陷——
+
+- imperative 入口保留全限定 register 名（内部自洽，改名收益低）；
+- Context 增强（如 `ctx.promptMiddleware`）刻意不公开导出（软依赖设计）；
+- 单 path resolve 抛错丢同 provider 兄弟 path（继承 imperative 语义，文档已述）；
+- `eval/` 目录刻意不随包发布（`files` 不含）；引用它的文档必须纯文本化；
+- subagent/client 行保持相对路径 specifier（specifier 化未验证）；
+- dev-time 宿主 checkout/junction 接线是 host-borrow 例外（见 PKG-5）；
+- gates README 保留命名沿革注记（旧称对照），是刻意教学。

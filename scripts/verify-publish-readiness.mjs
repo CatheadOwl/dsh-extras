@@ -375,6 +375,23 @@ export async function hostClosureViolations(manifest, options = {}) {
   return closureReasons(hostPeers, closuresByTag)
 }
 
+// PKG seed locality: the package's AGENTS.md must carry the pointer to its
+// rules seed, and the seed must exist (AGENTS never carries rule bodies —
+// the pointer is the only discovery path for the dot-dir seed).
+function rulesSeedLocality(root) {
+  const violations = []
+  const agentsPath = join(root, 'AGENTS.md')
+  const seedRel = '.agent/rules/package-independence.md'
+  if (!existsSync(agentsPath)) return violations
+  if (!readFileSync(agentsPath, 'utf8').includes(seedRel)) {
+    violations.push(`PKG-seed: AGENTS.md does not point to the rules seed (${seedRel}) — restore the pointer line`)
+  }
+  if (!existsSync(join(root, seedRel))) {
+    violations.push(`PKG-seed: rules seed ${seedRel} referenced from AGENTS.md does not exist`)
+  }
+  return violations
+}
+
 export function check(root, options = {}) {
   root = resolve(root)
   const manifest = options.manifestOverride ?? JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -390,6 +407,7 @@ export function check(root, options = {}) {
     ...scriptsLocality(root, declared, options.extraScripts),
     ...docsLocality(root, options.extraMarkdown),
     ...metaLocality(root, options.extraSources),
+    ...rulesSeedLocality(root),
   ]
   return reasons.map(reason => ({
     reason,
