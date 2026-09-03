@@ -3,15 +3,17 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 
-import { check as checkPublishReadiness, closureReasons } from '../../../scripts/verify-publish-readiness.mjs'
+import { check as checkPublishReadiness, closureReasons, loadConfig } from '../../../scripts/verify-publish-readiness.mjs'
 
 const packageRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..') // extras package root
 
-test('publish-readiness gate passes for the current package', () => {
-  assert.deepEqual(checkPublishReadiness(packageRoot), [])
+test('publish-readiness gate passes for the current package', async () => {
+  // The real gate config (scripts/verify.config.mjs) — never a weakened
+  // default: the test must vouch for the gate that actually ships.
+  assert.deepEqual(checkPublishReadiness(packageRoot, {}, await loadConfig()), [])
 })
 
-test('publish-readiness gate catches non-registry dependencies and escaping doc links', () => {
+test('publish-readiness gate catches non-registry dependencies and escaping doc links', async () => {
   const violations = checkPublishReadiness(packageRoot, {
     manifestOverride: {
       private: true,
@@ -35,7 +37,7 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
     extraSources: [
       { path: 'modules/x/src/leak.ts', text: '// see ADR 0008 / spec「归一化规则」; tracked in TODO 20260831-posthoc\nexport const x = 1\n// spawn spec (ordinary noun) and const spec: AtRunSpec stay legal\n' },
     ],
-  })
+  }, await loadConfig())
   const reasons = violations.map(violation => violation.reason).join('\n')
   assert.match(reasons, /"private": true/u)
   assert.match(reasons, /dependencies must not contain host package @deepseek-ai\/cordis/u)

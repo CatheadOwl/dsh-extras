@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Package-level face gate for a multi-row bundle package (parameterized;
-// config in scripts/verify.config.mjs `packageFace` — byte-copy propagated
-// from the gate blueprint, never edited in place at the consumer).
+// config in scripts/verify.config.mjs `packageFace`).
+//
+// Managed face file: byte-identical across every consumer, edits are made at
+// the single source and re-propagated — never edit this copy in place (the
+// workspace gate-blueprint-drift rejects divergence).
 //
 // One entry, one config table, every module covered:
 //   - the manifest exports face is exactly the entries owned by this table;
@@ -20,7 +23,11 @@ import { loadTypeScript } from './lib/resolve-typescript.mjs'
 import { verifyPackageFace } from './lib/package-face.mjs'
 
 export async function loadFaceConfig() {
-  const module = await import(pathToFileURL(resolve(fileURLToPath(new URL('./verify.config.mjs', import.meta.url)))).href)
+  const configUrl = new URL('./verify.config.mjs', import.meta.url)
+  if (!existsSync(configUrl)) {
+    throw new Error('missing scripts/verify.config.mjs beside this entry — the face gate is parameterized and will not run on defaults (create it with a packageFace table)')
+  }
+  const module = await import(pathToFileURL(resolve(fileURLToPath(configUrl))).href)
   return module.default.packageFace
 }
 
