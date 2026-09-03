@@ -1,8 +1,12 @@
+---
+description: modules/routes 的行为细则——any_routes 工具与 breadcrumb-description-enricher 的遍历边界、depth 截断语义、路由视图规则、diagnostics 含义与开发循环。
+---
+
 # routes 工作细节
 
 `modules/routes` 的两个模型面（`any_routes` 工具与 breadcrumb-description-enricher）的
 行为细节：遍历边界、depth 截断语义、diagnostics 含义、路由视图规则，以及开发循环。
-模块入口见 [../modules/routes/README.md](../modules/routes/README.md)。
+模块入口见 [../README.md](../README.md)。
 
 ## 遍历边界（traversal boundaries）
 
@@ -14,7 +18,10 @@
 - **`routePath` 未命中时给提示**：产出 `pathMissMessage` 与 `pathHints` 候选；恰好
   唯一命中时自动改用该候选（结果里记为 `resolvedRoutePath`），不再提示。
 - **跳过的目录名**：默认 `excludeDirs`（`.git`、`node_modules`、`dist`、`build`、
-  `lib`、`out` 等），可被插件配置覆盖。
+  `lib`、`out` 等），可被插件配置覆盖，也可在调用时以逗号分隔字符串覆盖。
+- **禁用的文件名**：`excludeFiles`（默认 `AGENTS.md`、`CLAUDE.md`，大小写不敏感）
+  ——宿主已自动加载的 agent 指令文件不进路由视图，也不计入截断目录的
+  `[truncated: N]`，breadcrumb 也不采其描述；可被插件配置或调用参数覆盖。
 - **dot 条目**：`excludeDotEntries`（默认开）跳过名字以 `.` 开头的条目
   （如 `.github`、`.agents`）。
 - **`.gitignore`**：`respectGitignore`（默认开）沿途读取并继承 `.gitignore` 规则，
@@ -73,4 +80,4 @@ pnpm run test:routes         # node --test --test-isolation=none  (test/*.test.m
 `--test-isolation=none` 让测试保持 in-process——dsh 文件沙箱内以管道 stdio 派生
 子进程会被阻断，进程内执行是必要条件。
 
-若 PATH 上没有 `tsc`，用宿主提供的 tsc，见[包根 README 开发节](../README.md)。
+若 PATH 上没有 `tsc`，用宿主提供的 tsc，见[包根 README 开发节](../../../README.md)。

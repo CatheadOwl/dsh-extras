@@ -14,6 +14,7 @@ import {
 const OPTIONS = {
   root: '.',
   excludeDirs: [],
+  excludeFiles: [],
   excludeDotEntries: true,
   respectGitignore: false,
 }
@@ -137,8 +138,21 @@ test('provider rebuilds its turn-scoped description cache when turnId changes', 
   assert.equal(second.value, 'Docs route v2 > Nested route')
 })
 
-test('registers through the declarative registerRelates face', () => {
-  const registered = []
+test('an excluded README file name yields no crumbs from that layer', async (t) => {
+  const root = await makeFixture(t)
+  const result = await resolveBreadcrumbPath(
+    {
+      path: { path: 'docs/nested/item.md', kind: 'file' },
+      input: { cwd: root, signal: new AbortController().signal, turnId: 't1' },
+    },
+    { ...OPTIONS, excludeFiles: ['readme.md'] },
+  )
+
+  // All ancestor layers are README.md, so excluding the name empties the chain.
+  assert.equal(result, undefined)
+})
+
+test('registers through the declarative registerRelates face', () => {  const registered = []
   const ctx = {
     inject: (_keys, cb) => {
       cb({ promptMiddleware: { registerRelates: (provider) => registered.push(provider) } })

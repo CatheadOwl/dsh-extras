@@ -18,6 +18,7 @@ export async function buildAnyRoutes(
     depth: number
     format: RoutesFormat
     excludeDirs: readonly string[]
+    excludeFiles: readonly string[]
     excludeDotEntries: boolean
     maxFiles: number
     respectGitignore: boolean
@@ -52,6 +53,7 @@ export async function buildAnyRoutes(
   if (resolved.missed && requestedRoutePath) {
     pathHints = suggestPathHints(await collectRouteHintCandidates(root, {
       excludeDirs: options.excludeDirs,
+      excludeFiles: options.excludeFiles,
       excludeDotEntries: options.excludeDotEntries,
       maxFiles: options.maxFiles,
       maxDepth: options.depth,
@@ -68,6 +70,7 @@ export async function buildAnyRoutes(
   const entries = await collectMarkdownEntries(root, {
     scanRoot: resolved.scanRoot,
     excludeDirs: options.excludeDirs,
+    excludeFiles: options.excludeFiles,
     excludeDotEntries: options.excludeDotEntries,
     maxFiles: options.maxFiles,
     maxDepth: options.depth,

@@ -24,11 +24,11 @@ notes/x.md | 会话记录
 
 每行一个可读入口——选一条作为下一轮的 `routePath` 或直接读该文件。
 
-- `any_routes`: scan a Markdown knowledge base and return a routing view for choosing the next path to read — [docs/routes.md](../../docs/routes.md) covers the details.
-- `breadcrumb-description-enricher`: add breadcrumb descriptions from ancestor README nodes for each mentioned path — details in [docs/routes.md](../../docs/routes.md).
+- `any_routes`: scan a Markdown knowledge base and return a routing view for choosing the next path to read — [docs/routes.md](docs/routes.md) covers the details.
+- `breadcrumb-description-enricher`: add breadcrumb descriptions from ancestor README nodes for each mentioned path — details in [docs/routes.md](docs/routes.md).
 
 工作细节（遍历边界、depth 截断、diagnostics 语义、路由视图规则）与开发循环见
-[docs/routes.md](../../docs/routes.md)。
+[docs/routes.md](docs/routes.md)。
 
 ## Install into a dsh profile
 

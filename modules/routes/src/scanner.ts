@@ -10,11 +10,25 @@ import type { MarkdownRouteEntry, RouteDiagnostic } from './types.js'
 
 interface ScanOptions {
   excludeDirs: readonly string[]
+  /** Markdown file names (case-insensitive) excluded from routes, e.g. AGENTS.md. */
+  excludeFiles: readonly string[]
   /** Skip entries whose name starts with '.', e.g. .github, .agents, .gitignore. */
   excludeDotEntries: boolean
   maxFiles: number
   maxDepth: number
   respectGitignore: boolean
+}
+
+/**
+ * Agent-instruction files the host loads on its own; they carry no routing
+ * value (the agent already has them) so they never appear in route views.
+ */
+export const DEFAULT_EXCLUDE_FILES: readonly string[] = ['AGENTS.md', 'CLAUDE.md']
+
+export function isExcludedFileName(name: string, excludeFiles: readonly string[]): boolean {
+  if (excludeFiles.length === 0) return false
+  const lower = name.toLowerCase()
+  return excludeFiles.some((excluded) => excluded.toLowerCase() === lower)
 }
 
 /** A directory cut off by the scan depth limit; preserved as a truncated route entry. */
@@ -170,6 +184,7 @@ async function collectMarkdownFiles(
     }
 
     if (child.isFile() && child.name.toLowerCase().endsWith('.md')) {
+      if (isExcludedFileName(child.name, options.excludeFiles)) continue
       files.push(childPath)
     }
   }
@@ -197,6 +212,7 @@ async function describeTruncatedDir(dir: string, options: ScanOptions): Promise<
         if (options.excludeDirs.includes(child.name)) continue
         await walk(childPath, false)
       } else if (child.isFile() && child.name.toLowerCase().endsWith('.md')) {
+        if (isExcludedFileName(child.name, options.excludeFiles)) continue
         mdCount++
         if (isRoot && readmePath === null && child.name.toLowerCase() === 'readme.md') {
           readmePath = childPath

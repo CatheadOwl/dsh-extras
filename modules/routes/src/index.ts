@@ -6,6 +6,7 @@ import { registerBreadcrumbDescriptionProvider } from './breadcrumb-description.
 import { ANY_ROUTES_DESCRIPTION } from './tool-description.js'
 import { resolveRoot } from './path.js'
 import { buildAnyRoutes } from './routes.js'
+import { DEFAULT_EXCLUDE_FILES } from './scanner.js'
 import type { RoutesFormat } from './types.js'
 
 export interface Config {
@@ -19,6 +20,10 @@ export interface Config {
    * Directory names skipped during traversal.
    */
   excludeDirs?: string[]
+  /**
+   * Markdown file names (case-insensitive) excluded from routes — e.g. AGENTS.md, which the host already loads as agent instructions.
+   */
+  excludeFiles?: string[]
   /**
    * Whether traversal skips dot entries (names starting with '.') such as .github or .agents.
    */
@@ -51,6 +56,7 @@ export const inject = ['tools']
 export const Config: z<Config> = z.object({
   root: z.string().default('.'),
   excludeDirs: z.array(z.string()).default(DEFAULT_EXCLUDE_DIRS),
+  excludeFiles: z.array(z.string()).default([...DEFAULT_EXCLUDE_FILES]),
   excludeDotEntries: z.boolean().default(true),
   maxFiles: z.number().default(2000),
   respectGitignore: z.boolean().default(true),
@@ -59,6 +65,7 @@ export const Config: z<Config> = z.object({
 export function apply(ctx: Context, config: Config): void {
   const defaultRoot = config.root ?? '.'
   const defaultExcludeDirs = config.excludeDirs ?? DEFAULT_EXCLUDE_DIRS
+  const defaultExcludeFiles = config.excludeFiles ?? DEFAULT_EXCLUDE_FILES
   const defaultExcludeDotEntries = config.excludeDotEntries ?? true
   const defaultMaxFiles = config.maxFiles ?? 2000
   const defaultRespectGitignore = config.respectGitignore ?? true
@@ -66,6 +73,7 @@ export function apply(ctx: Context, config: Config): void {
   registerBreadcrumbDescriptionProvider(ctx, {
     root: defaultRoot,
     excludeDirs: defaultExcludeDirs,
+    excludeFiles: defaultExcludeFiles,
     excludeDotEntries: defaultExcludeDotEntries,
     respectGitignore: defaultRespectGitignore,
   })
@@ -89,7 +97,11 @@ export function apply(ctx: Context, config: Config): void {
       },
       excludeDirs: {
         type: 'string',
-        description: 'Directory names skipped during traversal. Defaults to the plugin config.',
+        description: 'Comma-separated directory names skipped during traversal. Defaults to the plugin config.',
+      },
+      excludeFiles: {
+        type: 'string',
+        description: 'Comma-separated Markdown file names (case-insensitive) excluded from routes, e.g. "AGENTS.md,CLAUDE.md". Defaults to the plugin config.',
       },
       excludeDotEntries: {
         type: 'boolean',
@@ -117,7 +129,8 @@ export function apply(ctx: Context, config: Config): void {
         routePath: args.routePath,
         depth,
         format,
-        excludeDirs: defaultExcludeDirs,
+        excludeDirs: commaSeparatedList(args.excludeDirs) ?? defaultExcludeDirs,
+        excludeFiles: commaSeparatedList(args.excludeFiles) ?? defaultExcludeFiles,
         excludeDotEntries: typeof args.excludeDotEntries === 'boolean' ? args.excludeDotEntries : defaultExcludeDotEntries,
         maxFiles,
         respectGitignore: typeof args.respectGitignore === 'boolean' ? args.respectGitignore : defaultRespectGitignore,
@@ -144,4 +157,10 @@ function renderJson(value: JsonValue): Array<{ type: 'text'; text: string }> {
 
 function integerOrDefault(value: unknown, fallback: number): number {
   return Number.isInteger(value) ? value as number : fallback
+}
+
+/** Splits a comma-separated tool argument into a name list; `undefined`/empty input keeps the plugin-config default. */
+function commaSeparatedList(value: unknown): string[] | undefined {
+  if (typeof value !== 'string' || value.trim() === '') return undefined
+  return value.split(',').map((item) => item.trim()).filter(Boolean)
 }

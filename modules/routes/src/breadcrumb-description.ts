@@ -3,11 +3,13 @@ import path from 'node:path'
 
 import { extractDescription } from './description.js'
 import { isGitignored, readInheritedGitignoreRules, type GitignoreRule } from './gitignore.js'
+import { isExcludedFileName } from './scanner.js'
 import { isPathUnderLexical, routePath } from './path.js'
 
 export interface BreadcrumbDescriptionOptions {
   root: string
   excludeDirs: readonly string[]
+  excludeFiles: readonly string[]
   excludeDotEntries: boolean
   respectGitignore: boolean
 }
@@ -182,6 +184,7 @@ async function collectBreadcrumbCrumbs(input: {
     // （常见脚手架残留），对 file/folder 目标一律不收集，与目标类型无关。
     if (path.resolve(directory) === path.resolve(input.scanRoot)) continue
     const readmePath = path.join(directory, README_FILE)
+    if (isExcludedFileName(README_FILE, input.options.excludeFiles)) continue
     if (input.options.respectGitignore && isGitignored(readmePath, false, input.gitignoreRules)) continue
     const description = await input.descriptions.get(readmePath)
     if (!description) continue

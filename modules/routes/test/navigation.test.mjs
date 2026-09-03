@@ -15,6 +15,7 @@ import { buildAnyRoutes } from '../lib/routes.js'
 
 const BASE_OPTIONS = {
   excludeDirs: [],
+  excludeFiles: [],
   excludeDotEntries: true,
   maxFiles: 100,
   respectGitignore: false,

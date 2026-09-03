@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { buildAnyRoutes } from '../lib/routes.js'
+import { DEFAULT_EXCLUDE_FILES } from '../lib/scanner.js'
 
 const BASE_OPTIONS = {
   excludeDirs: [],
+  excludeFiles: [],
   excludeDotEntries: true,
   maxFiles: 100,
   respectGitignore: false,
@@ -200,6 +202,39 @@ test('flat routes are sorted case-insensitively by route path', async (t) => {
   })
   const sorted = [...paths].sort((a, b) => a.localeCompare(b))
   assert.deepEqual(paths, sorted, `routes must be sorted by route path, got: ${JSON.stringify(result.routes)}`)
+})
+
+test('excluded file names (default AGENTS.md/CLAUDE.md) never appear in routes or truncated counts', async (t) => {
+  const root = await makeFixture(t)
+  const result = await buildAnyRoutes(root, {
+    depth: 0,
+    format: 'flat',
+    ...BASE_OPTIONS,
+    excludeFiles: DEFAULT_EXCLUDE_FILES,
+  })
+
+  assert.ok(
+    !result.routes.some((line) => line.includes('AGENTS.md')),
+    `AGENTS.md must be excluded from routes, got: ${JSON.stringify(result.routes)}`,
+  )
+  // explorer recursive .md = README + a + b + sub/README = 4; AGENTS.md at root is a root-level
+  // file so it does not change explorer's count — the count assertion guards the walk filter too.
+  assert.ok(result.routes.includes('[truncated: 4] explorer | Explorer — 目标 repo 探索层(证据 / 指南)'), JSON.stringify(result.routes))
+})
+
+test('excludeFiles matching is case-insensitive', async (t) => {
+  const root = await makeFixture(t)
+  const result = await buildAnyRoutes(root, {
+    depth: 0,
+    format: 'flat',
+    ...BASE_OPTIONS,
+    excludeFiles: ['agents.md'],
+  })
+
+  assert.ok(
+    !result.routes.some((line) => line.includes('AGENTS.md')),
+    `case-insensitive match must exclude AGENTS.md, got: ${JSON.stringify(result.routes)}`,
+  )
 })
 
 function findNode(nodes, targetPath) {
