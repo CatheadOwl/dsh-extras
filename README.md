@@ -1,5 +1,5 @@
 ---
-description: dsh-extras 发布包 README——一个 npm 包装多个运行时独立的 dsh 插件模块（gates/markdown/prompt/routes 首发四行），安装、模块、配置、API 面与开发指南
+description: dsh-extras 发布包 README——一个 npm 包装多个运行时独立的 dsh 插件模块（gates/markdown/prompt/routes 四行），安装、模块、配置、API 面与开发指南
 ---
 
 # @catheadowl/dsh-extras
@@ -64,8 +64,7 @@ dsh plugin add @catheadowl/dsh-extras
   `GateDefinition` / `GateViolation` 类型）。
 
 各模块自己的次级消费面（如 markdown 的仓库级 `gates.yml` 回退）见对应模块文档。
-Web Settings Tab（gates / prompt）由包内嵌套锚点包
-`@catheadowl/dsh-extras-client` 合成装载，不需要单独安装。
+Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单独安装。
 
 模块间依赖拓扑与对外消费面（exports 对账）见 [docs/dependencies.md](docs/dependencies.md)。
 
@@ -82,10 +81,16 @@ pnpm run verify:publish-readiness  # 发布卫生校验（docs locality 等）
 构建借用宿主 checkout 的工具链（`deepseek-harness/node_modules/.bin` 下的
 tsc / tsdown，见 package.json scripts）——克隆本包仓库后需先准备好一份 dsh
 检出；开发期宿主 peer 解析 = 把 `node_modules/@deepseek-ai/*` 按 junction 接到
-宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态；
-重接与健康自查的配方按名引用开发仓手册 plugin-dev 07 §4.7，可执行入口
-relink-dsh-peers，要求 pwsh）。各模块的行为 eval（意图/回归用例）位于
-`modules/<m>/eval/`，框架与运行方式见各模块 eval README。
+宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态）。
+各模块的行为 eval（意图/回归用例）位于 `modules/<m>/eval/`，框架与运行方式见
+各模块 eval README。
+
+## 已知限制
+
+- 需要 dsh CLI（本包是插件载体，不是独立应用）；运行时 peer 全部由宿主闭包提供。
+- Settings Tab 目前仅 gates / prompt 两行有（随嵌套锚点包合成装载，不单独发布）。
+- gates 连续阻断上限（`maxConsecutiveBlocks`，默认 3）耗尽后**降级放行**——是
+  安全阀不是正确性保证；markdown / routes 行无插件配置键。
 
 ## License
 

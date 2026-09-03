@@ -49,22 +49,22 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
   + 预算/超时/反馈/remedy                once 账本 + 聚合/预算/渲染
       ▲ 注册 gate                           ▲ 注册 provider
       │                                      │
-  coggit 插件（coggit-misplaced）         routes 行（breadcrumb 面包屑注入）
-                                         coggit 插件（cognition-link 注入）
+  消费方插件 A（gate 注册）         routes 行（breadcrumb 面包屑注入）
+                                         消费方插件 B（relates 注入）
 ```
 
 承载侧的三种声明形态（软→硬谱系，均**不构成对基座的编译依赖**）：
 
 | 形态 | 做法 | 例子 |
 |---|---|---|
-| 软依赖（典型） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | coggit 对 `ctx.gates`、`ctx.promptMiddleware` |
-| 硬 import 注册入口 | 消费方 import 基座的 `register` 子路径（见 §5 对账表），内部仍走软依赖接线 | coggit 的类型依赖 `gates/register`；provider 注册入口 `prompt/register` |
+| 软依赖（典型） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | 消费方插件对 `ctx.gates`、`ctx.promptMiddleware` |
+| 硬 import 注册入口 | 消费方 import 基座的 `register` 子路径（见 §5 对账表），内部仍走软依赖接线 | 类型依赖 `gates/register`；provider 注册入口 `prompt/register` |
 | 声明式注册面 | 只写 `resolve` + `kind`，框架物化为 provider 并复用整套骨架 | routes 的 breadcrumb（`registerRelates`） |
 
 配套约束：
 
 - **注册必须 return disposer**——基座注册表是纯 Map，disposer 是唯一回滚通道。
-- **基座行关闭时承载方软降级**：不装 gates 时 coggit 照常工作（少一个 gate）；
+- **基座行关闭时承载方软降级**：不装 gates 时消费方插件照常工作（少一个 gate）；
   不装 prompt 行时 routes 的 breadcrumb 注入静默不生效（`any_routes` 不受影响）。
 - 基座自己也消费宿主接缝（§1），且**不内置业务逻辑**：gates/prompt 只实现
   承载层，cognition、面包屑等业务都在承载方。
@@ -78,7 +78,7 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
 关掉任何一行，其余行行为不变。这是「单包多行」的发布形态基础——每行独立
 fiber、按行 id 单关、模块上下架走包版本更新。
 
-## 4. 模块内嵌纯库（原独立库吸收）
+## 4. 模块内嵌纯库
 
 基座行与工具行各内嵌不发布的纯库——它们是**包内折叠**，不是依赖边：
 
@@ -88,18 +88,18 @@ fiber、按行 id 单关、模块上下架走包版本更新。
 | prompt | `src/parse` | fuzzy/parse/resolve 纯库（路径引用解析） |
 | prompt | `src/tree` | gitignore-aware 工作区枚举 |
 
-抽取规则：被吸收的库不预发布；出现第二个**外部**消费者时再独立成包。
+抽取规则：内嵌库不预发布；出现第二个**外部**消费者时再独立成包。
 
 ## 5. 消费面 × exports 对账（public contract 清单）
 
 包的对外消费面（`exports` 子路径）与消费者对账——**新增模块或新增对外基座时
 必须过这张表**（接线三处同改：`exports` + `scripts/verify-package-face.mjs`
 的 SUBENTRIES / FACADE_EXPORTS + 所属模块 README；命名遵循模块前缀语法，
-设计记录见原仓 ADR 0003）。
+设计记录见 ADR 0003，开发仓名称引用）。
 
 | 消费面 | 类别 | 消费者 | 状态 |
 |---|---|---|---|
-| `gates/register` | 基座注册面（`ctx.gates` 的硬 import 形态） | 其他插件（coggit） | ✓ |
+| `gates/register` | 基座注册面（`ctx.gates` 的硬 import 形态） | 其他插件 | ✓ |
 | `prompt/register` | 基座注册面（`ctx.promptMiddleware` 的硬 import 形态；imperative `registerPromptMiddlewareProvider` + 声明式 `registerRelatesProvider` 双入口） | 其他插件（结构类型软依赖亦可） | ✓ |
 | `markdown/gate-check` | 配置面（`gates.yml` `module:` 回退） | 单仓项目配置 | ✓（niche，文档在 [modules/markdown](../modules/markdown/README.md)） |
 | `gates` / `markdown` / `prompt` / `routes` | 组合行 loader 入口（行名 specifier） | cordis.patch.yml | ✓ |
