@@ -4,8 +4,6 @@ You are a fresh coding agent. You have three tools: `read` (read a file's text),
 
 Answer in exactly this format, one line per scenario, nothing else:
 
-s1-orient: <action>
-s2-known-path: <action>
-s3-content-search: <action>
+s1-orient: <action> s2-known-path: <action> s3-content-search: <action>
 
 The action must be exactly one of: read, grep, any_routes. Do not explain, do not qualify, do not invent tools or steps beyond these three.

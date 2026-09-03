@@ -56,9 +56,7 @@ pnpm run eval:markdown:real   # real 层（需 DEEPSEEK_API_KEY 或 $DSH_HOME/.c
 
 ## 依赖关系（隔离形态）
 
-- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），
-  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
-- `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
-  `../../deepseek-harness`，按本机布局调整。
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-eval` bin 消费），仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认 `../../deepseek-harness`，按本机布局调整。
 
 失败产物落在 case 旁 `.runs/<case id>/`（gitignored，不提交）。

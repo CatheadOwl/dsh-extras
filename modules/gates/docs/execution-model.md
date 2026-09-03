@@ -4,9 +4,7 @@ description: gates 插件的运行时执行模型：stop/manual 触发时机、b
 
 # 执行模型：触发时机、级别与反馈
 
-> 前置阅读：[../README.md](../README.md) 的「架构：两种 gate 注册形态」。
-> 本文只讲**运行时行为**；怎么加 gate 见 [adding-a-repo-gate](adding-a-repo-gate.md)
-> 与 [adding-a-plugin-gate](adding-a-plugin-gate.md)。
+> 前置阅读：[../README.md](../README.md) 的「架构：两种 gate 注册形态」。本文只讲**运行时行为**；怎么加 gate 见 [adding-a-repo-gate](adding-a-repo-gate.md) 与 [adding-a-plugin-gate](adding-a-plugin-gate.md)。
 
 ## 时机两档
 
@@ -26,22 +24,13 @@ description: gates 插件的运行时执行模型：stop/manual 触发时机、b
 
 ## 用户开关（配置面）
 
-Settings → Plugins → Gates（Web）渲染当前工作区的**扁平 gate 列表**，每个 gate 按其声明的
-`on` 显示**两个独立开关**——**轮末**（`stop` 维：固定、强制，轮次关闭时自动跑）与
-**手动**（`manual` 维：agent 自行选择，`gates_run`/`/gates` 时跑）。开关双列表由
-**浏览器 localStorage** 持久化（key `dsh.gates.disabled`，JSON `{stop, manual}` 双 id 列表），
-host 侧只有内存镜像：页面加载（每次打开/刷新该标签页）与每次拨动开关时，UI 把整个双列表推给
-`gates/setDisabled`，host 据此按维度执行过滤。被关掉的那一维**不进入对应执行路径**：
+Settings → Plugins → Gates（Web）渲染当前工作区的**扁平 gate 列表**，每个 gate 按其声明的 `on` 显示**两个独立开关**——**轮末**（`stop` 维：固定、强制，轮次关闭时自动跑）与 **手动**（`manual` 维：agent 自行选择，`gates_run`/`/gates` 时跑）。开关双列表由 **浏览器 localStorage** 持久化（key `dsh.gates.disabled`，JSON `{stop, manual}` 双 id 列表），host 侧只有内存镜像：页面加载（每次打开/刷新该标签页）与每次拨动开关时，UI 把整个双列表推给 `gates/setDisabled`，host 据此按维度执行过滤。被关掉的那一维**不进入对应执行路径**：
 
 - 关**轮末**维：`service.runnableDefinitions(root, 'stop')` 直接过滤，轮末不再跑它；
-- 关**手动**维：`gates_run` / `/gates` 的 run-all 同样过滤；显式单跑一个被关手动维的
-  gate（`gates_run {gate}` / `/gates <id>`）**fail loud**——报"已在设置中禁用手动运行"，
-  不静默放行（开关即契约，无静默覆盖）；
+- 关**手动**维：`gates_run` / `/gates` 的 run-all 同样过滤；显式单跑一个被关手动维的 gate（`gates_run {gate}` / `/gates <id>`）**fail loud**——报"已在设置中禁用手动运行"，不静默放行（开关即契约，无静默覆盖）；
 - `on` 是作者声明上界：gate 未声明某 trigger 就不显示该维开关，用户只能收窄、不能扩宽。
 
-host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（标签页打开/刷新）即重推，
-恢复原状。不开 GUI 的 headless 运行没有开关状态，全部 gate 照常跑。列表按 gate id
-全局生效（不按工作区分），id 已不存在的项无害（匹配不到任何 gate）。
+host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（标签页打开/刷新）即重推，恢复原状。不开 GUI 的 headless 运行没有开关状态，全部 gate 照常跑。列表按 gate id 全局生效（不按工作区分），id 已不存在的项无害（匹配不到任何 gate）。
 
 ## 执行链（stop 档）
 
@@ -58,23 +47,12 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 
 要点：
 
-- **预算**：每个 agent 独立的连续阻断计数（`WeakMap<Agent, number>`），
-  默认上限 3（Config `maxConsecutiveBlocks`）；通过后归零，耗尽后归零重启
-  循环。宿主 Stop hook 没有此守卫（`TODO(stop-loop-guard)`），gates 自始内建。
-- **超时**：Config 声明的 gate 默认 `timeoutMs: 120_000`；超时按
-  `failed` + 归因错误收敛（"检查失败不崩宿主"），command 形态超时还会
-  `kill` 子进程。插件注册的 gate 可自带 `timeoutMs`。
-- **advisory**：`level: 'advisory'` 的 gate 在 `stop` 档照常执行、照常
-  报告，但**永不触发 steer**——适合"想知道但不拦"的检查。
-- **defer**：`level: 'defer'` 的 gate 在 `stop` 档失败时**不触发 steer**（旁路）：
-  按 gate 声明的 `fixer` 离线修——`subagent` 变体派一个继承会话上下文的子 agent、
-  `command` 变体同步跑修复脚本；无 `fixer` 或 `command` 修复失败则记录在进程内脏状态。
-  turn 立即关闭，下次轮末照常重扫，直到通过。
-  适合「必须补、但不必现在打断主会话」的检查。
+- **预算**：每个 agent 独立的连续阻断计数（`WeakMap<Agent, number>`），默认上限 3（Config `maxConsecutiveBlocks`）；通过后归零，耗尽后归零重启循环。宿主 Stop hook 没有此守卫（`TODO(stop-loop-guard)`），gates 自始内建。
+- **超时**：Config 声明的 gate 默认 `timeoutMs: 120_000`；超时按 `failed` + 归因错误收敛（"检查失败不崩宿主"），command 形态超时还会 `kill` 子进程。插件注册的 gate 可自带 `timeoutMs`。
+- **advisory**：`level: 'advisory'` 的 gate 在 `stop` 档照常执行、照常报告，但**永不触发 steer**——适合"想知道但不拦"的检查。
+- **defer**：`level: 'defer'` 的 gate 在 `stop` 档失败时**不触发 steer**（旁路）：按 gate 声明的 `fixer` 离线修——`subagent` 变体派一个继承会话上下文的子 agent、`command` 变体同步跑修复脚本；无 `fixer` 或 `command` 修复失败则记录在进程内脏状态。turn 立即关闭，下次轮末照常重扫，直到通过。适合「必须补、但不必现在打断主会话」的检查。
 
-> **结果归宿**：gates 是无状态插件——每轮重评估即唯一 truth source。
-> defer/advisory 失败记录在进程内脏状态（`state.dirt` / `state.blocks`），
-> 下一轮重扫时自愈。不写 session event，不写文件台账。
+> **结果归宿**：gates 是无状态插件——每轮重评估即唯一 truth source。defer/advisory 失败记录在进程内脏状态（`state.dirt` / `state.blocks`），下一轮重扫时自愈。不写 session event，不写文件台账。
 
 ## defer 旁路：设计原理
 
@@ -88,54 +66,26 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 
 > **去向已收敛**：上表是当前实现。
 
-**为什么需要 defer**：像 `md-metadata`（「写 md 必须带 `description` frontmatter」）
-这类纪律检查，用 blocking 会让每次触碰 md 都强行续步、打断主会话、体验差——它
-「必须补、但不必现在打断」。defer 不触发续步，turn 立即关闭。
+**为什么需要 defer**：像 `md-metadata`（「写 md 必须带 `description` frontmatter」）这类纪律检查，用 blocking 会让每次触碰 md 都强行续步、打断主会话、体验差——它「必须补、但不必现在打断」。defer 不触发续步，turn 立即关闭。
 
-**旁路执行（fixer）**：defer 只是「不打断」；「最终被修」由 gate 可选的 `fixer`
-承担。`fixer` 是两变体 union，契约以**本节为 SSOT**（原始设计记录存于开发仓库
-gate-fixer spec，纯文本引用）：
+**旁路执行（fixer）**：defer 只是「不打断」；「最终被修」由 gate 可选的 `fixer` 承担。`fixer` 是两变体 union，契约以**本节为 SSOT**（原始设计记录存于开发仓库 gate-fixer spec，纯文本引用）：
 
-- **`subagent`**（语义修复，LLM + 继承父上下文）：`fixer: { kind: 'subagent', prompt, request? }`。
-  turn-stopping 会 `ctx.subagents.start(request?.provider ?? 'fork', { parent, prompt + 失败文件清单, maxDepth: 1, persona?, toolFilter?, agentOptions? })`
-  派一个 fork subagent——它继承主会话到上一轮 `turn/end` 的已完成轮次（带着项目上下文），
-  再 `read` 失败文件、按 `prompt` 离线补修，主轮立即关闭。`request` 是作者透传给 seam 的
-  叠加字段（`provider`/`persona`/`toolFilter`/`agentOptions`）；`parent`/`signal`/`label`/
-  `maxDepth:1` 由 gates 注入、作者不可改。**subagent 档失败直接进快照**：失败信息直接进
-  subagent 的 prompt，重扫循环由内存脏窗口驱动。为什么用 subagent 而不是
-  脚本：`description` 这类修复是**语义**任务，不能机械提取，只能由带上下文的 LLM 写。
-- **`command`**（确定性修复，脚本）：`fixer: { kind: 'command', command }`。turn-stopping
-  同步内联（await，带超时，cwd=会话工作区根，复用 `runCommand`）；不做 fire-and-forget
-  （那是 subagent 的语义）。非零退出 = 修复失败 → 保持脏窗口，下轮快照照常重扫。
+- **`subagent`**（语义修复，LLM + 继承父上下文）：`fixer: { kind: 'subagent', prompt, request? }`。turn-stopping 会 `ctx.subagents.start(request?.provider ?? 'fork', { parent, prompt + 失败文件清单, maxDepth: 1, persona?, toolFilter?, agentOptions? })` 派一个 fork subagent——它继承主会话到上一轮 `turn/end` 的已完成轮次（带着项目上下文），再 `read` 失败文件、按 `prompt` 离线补修，主轮立即关闭。`request` 是作者透传给 seam 的叠加字段（`provider`/`persona`/`toolFilter`/`agentOptions`）；`parent`/`signal`/`label`/ `maxDepth:1` 由 gates 注入、作者不可改。**subagent 档失败直接进快照**：失败信息直接进 subagent 的 prompt，重扫循环由内存脏窗口驱动。为什么用 subagent 而不是脚本：`description` 这类修复是**语义**任务，不能机械提取，只能由带上下文的 LLM 写。
+- **`command`**（确定性修复，脚本）：`fixer: { kind: 'command', command }`。turn-stopping 同步内联（await，带超时，cwd=会话工作区根，复用 `runCommand`）；不做 fire-and-forget（那是 subagent 的语义）。非零退出 = 修复失败 → 保持脏窗口，下轮快照照常重扫。
 
-**进程内状态**：defer 失败的脏窗口（`hasPassed`、`dirt`、`blocks`）存在进程内
-`Map<root, GateState>`，不写 session event，不写文件。进程重启后脏状态丢失，
-下一轮重扫会重新发现违规并派 fixer——多派一次 fixer 是可接受的代价。
+**进程内状态**：defer 失败的脏窗口（`hasPassed`、`dirt`、`blocks`）存在进程内 `Map<root, GateState>`，不写 session event，不写文件。进程重启后脏状态丢失，下一轮重扫会重新发现违规并派 fixer——多派一次 fixer 是可接受的代价。
 
-**服务面复用**：修复派发不是 turn-stopping 驱动的私有步骤，而是 `ctx.gates` 服务方法
-`repair(root, failures, {agent, signal?})`（「离线自愈」半边）与 `runAndRepair(root, {...})`
-（「检查 + 离线自愈」一步）——驱动只调 `repair`，其他依赖 gates 的 CI 可直调同一服务面，
-不必复制派发逻辑。
+**服务面复用**：修复派发不是 turn-stopping 驱动的私有步骤，而是 `ctx.gates` 服务方法 `repair(root, failures, {agent, signal?})`（「离线自愈」半边）与 `runAndRepair(root, {...})`（「检查 + 离线自愈」一步）——驱动只调 `repair`，其他依赖 gates 的 CI 可直调同一服务面，不必复制派发逻辑。
 
-**协作模式**：defer 失败**不重置脏窗口**（`hasPassed` 保持 false、`dirt` 不清），
-所以下个轮末该 gate 必然重扫；fixer 子 agent 在独立 session 里改文件（不进父 session
-的变更集），但 gate 从磁盘重读文件内容，因此「子修完 → 下轮重扫读到已修 → 通过」。子修失败
-则下轮仍失败、重派一个子（每轮一次，有界）。无 fixer 的 defer 通过后下一轮快照自然转绿。
+**协作模式**：defer 失败**不重置脏窗口**（`hasPassed` 保持 false、`dirt` 不清），所以下个轮末该 gate 必然重扫；fixer 子 agent 在独立 session 里改文件（不进父 session 的变更集），但 gate 从磁盘重读文件内容，因此「子修完 → 下轮重扫读到已修 → 通过」。子修失败则下轮仍失败、重派一个子（每轮一次，有界）。无 fixer 的 defer 通过后下一轮快照自然转绿。
 
-**递归护栏**：fixer 子 agent 继承父 preset（含 gates），它自己轮末也会跑 gate；
-`maxDepth: 1` 把子限制为深度 1——子再派孙（深度 2）会被 `SubagentDepthError` 拒绝、
-落快照兜底，不会无限套娃。子自己跑 gate 是低成本自校验：修对了其 gate 通过。
+**递归护栏**：fixer 子 agent 继承父 preset（含 gates），它自己轮末也会跑 gate；`maxDepth: 1` 把子限制为深度 1——子再派孙（深度 2）会被 `SubagentDepthError` 拒绝、落快照兜底，不会无限套娃。子自己跑 gate 是低成本自校验：修对了其 gate 通过。
 
-**当前边界（缺口）**：消费面缺口与 fixer「多次失败降级/冷却」均跟踪于开发仓库
-workunit TODO（gate-consumption-surface、gate-fixer-cooldown）。另外 `level`
-词汇表在插件加载时定死：加 `level: defer` 需重启 host（`gates.yml` 本身按 mtime
-热读不受此限）。
+**当前边界（缺口）**：消费面缺口与 fixer「多次失败降级/冷却」均跟踪于开发仓库 workunit TODO（gate-consumption-surface、gate-fixer-cooldown）。另外 `level` 词汇表在插件加载时定死：加 `level: defer` 需重启 host（`gates.yml` 本身按 mtime 热读不受此限）。
 
 ## 结果归宿
 
-gates 是无状态插件。每轮重评估即唯一 truth source，defer/advisory 失败
-记录在进程内脏状态（`state.dirt` / `state.blocks`），下一轮重扫时自愈。
-不写 session event，不写文件台账。ADR 0007 决策 1/2 已降级（详见该 ADR 勘误）。
+gates 是无状态插件。每轮重评估即唯一 truth source，defer/advisory 失败记录在进程内脏状态（`state.dirt` / `state.blocks`），下一轮重扫时自愈。不写 session event，不写文件台账。ADR 0007 决策 1/2 已降级（详见该 ADR 勘误）。
 
 ## 反馈形状
 
@@ -152,86 +102,53 @@ Violations:
   fix: <remedy guidance | operation id>
 ```
 
-契约字段：`GateResult { gateId, status, durationMs, violations, error? }`，
-`GateViolation { file?, line?, reason, remedy? }`，`remedy` 两档：
+契约字段：`GateResult { gateId, status, durationMs, violations, error? }`，`GateViolation { file?, line?, reason, remedy? }`，`remedy` 两档：
 
 - `{ kind: 'manual', guidance }`——声明手改合法且怎么改（为什么安全要写清）；
-- `{ kind: 'operation', operation }`——指向修复 tool，**只许 operation id**
-  （hint 中性化：不许工具名/命令名/URI）。
+- `{ kind: 'operation', operation }`——指向修复 tool，**只许 operation id**（hint 中性化：不许工具名/命令名/URI）。
 
-gate 的 `check` **只读**：只检测与报告，不亲自修。修复在外部三选一：模型按
-指引手改（blocking）、operation 指向的 tool、或 `fixer`（defer 档派 subagent 或
-command 离线修）。
+gate 的 `check` **只读**：只检测与报告，不亲自修。修复在外部三选一：模型按指引手改（blocking）、operation 指向的 tool、或 `fixer`（defer 档派 subagent 或 command 离线修）。
 
 ## 增量短路（W2 已落地）
 
-上游术语与事实模型见开发仓库 session-change-set 事实层记录（纯文本引用）；
-会话变更集的**消费契约以本节为 SSOT**（原始决策记录存于开发仓库
-gate-change-set-consumption spec，冻结为决策记录）。
+上游术语与事实模型见开发仓库 session-change-set 事实层记录（纯文本引用）；会话变更集的**消费契约以本节为 SSOT**（原始决策记录存于开发仓库 gate-change-set-consumption spec，冻结为决策记录）。
 
 **消费契约**：
 
-- module gate 的通用形状 `check(root, changes?)` 可接收 `GateChangeSet`；
-  `runGate` / `runGates` 会把同一份 `changes` 传给每个 gate 的 `check`。
-- `GateChangeSet.paths`：精确写路径集合，当前来源是 `write` / `edit` 的
-  `file_path`。`GateChangeSet.opaque`：出现过不可定位或未知写时为 true，
-  表示 `paths` 不完整。`GateChangeSet` 是本插件的消费层类型名，
-  不是 dsh 上游内建 API。
-- command gate：stop 档有变更集时经环境变量 `GATE_CHANGES` 传入同一份 JSON；
-  manual 入口没有该变量。
-- `relevantPath` / `relevant`：只在精确脏窗口里用于逐 gate 复用上次
-  passed 结果。
+- module gate 的通用形状 `check(root, changes?)` 可接收 `GateChangeSet`；`runGate` / `runGates` 会把同一份 `changes` 传给每个 gate 的 `check`。
+- `GateChangeSet.paths`：精确写路径集合，当前来源是 `write` / `edit` 的 `file_path`。`GateChangeSet.opaque`：出现过不可定位或未知写时为 true，表示 `paths` 不完整。`GateChangeSet` 是本插件的消费层类型名，不是 dsh 上游内建 API。
+- command gate：stop 档有变更集时经环境变量 `GATE_CHANGES` 传入同一份 JSON；manual 入口没有该变量。
+- `relevantPath` / `relevant`：只在精确脏窗口里用于逐 gate 复用上次 passed 结果。
 
 **脏窗口边界**：
 
-- stop 档在 `agent/turn-stopping` 里维护脏窗口，状态按 `(agent, root)` 保存；
-  每个轮末只扫描上次处理位置之后的新 session events（逐 turn 增量）。
+- stop 档在 `agent/turn-stopping` 里维护脏窗口，状态按 `(agent, root)` 保存；每个轮末只扫描上次处理位置之后的新 session events（逐 turn 增量）。
 - 窗口语义是**自上次 clean pass 后累计**，不是「当前 turn 的临时集合」。
   clean pass 后清空脏窗口、记录可复用的 passed 结果。
 - blocking 或 defer 失败不清空脏窗口；修复后必须真跑确认。
-- 外部编辑器和其他进程写盘不进入 session events：首轮全扫与 manual 全扫兜底，
-  不把外部写伪装成可见路径。未知工具归不透明、强制全扫（正确性优先）。
-- `paths` 只表示精确可见写，不承诺覆盖删除、移动、shell 批量生成或
-  subagent 写盘。
+- 外部编辑器和其他进程写盘不进入 session events：首轮全扫与 manual 全扫兜底，不把外部写伪装成可见路径。未知工具归不透明、强制全扫（正确性优先）。
+- `paths` 只表示精确可见写，不承诺覆盖删除、移动、shell 批量生成或 subagent 写盘。
 
-脏状态按 **(agent, root) 二维**存，按 session event 索引增量扫；窗口是自上次 clean
-pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` 进入精确路径；
-只读白名单忽略；其余工具归不透明并强制全扫。首轮、manual 入口、不透明窗口都全扫；
-仅精确脏时允许声明了 `relevant` 且无关的 gate 复用上次 **passed** 结果；失败结果永不短路。
+脏状态按 **(agent, root) 二维**存，按 session event 索引增量扫；窗口是自上次 clean pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` 进入精确路径；只读白名单忽略；其余工具归不透明并强制全扫。首轮、manual 入口、不透明窗口都全扫；仅精确脏时允许声明了 `relevant` 且无关的 gate 复用上次 **passed** 结果；失败结果永不短路。
 
-`GateChangeSet` 只在 stop 档提供给 `check(root, changes?)`；command gate 通过
-`GATE_CHANGES` 读取同一份 JSON。`gates_run` / `/gates` 永远全扫，不传 `changes`，
-也不回写轮末脏状态。
+`GateChangeSet` 只在 stop 档提供给 `check(root, changes?)`；command gate 通过 `GATE_CHANGES` 读取同一份 JSON。`gates_run` / `/gates` 永远全扫，不传 `changes`，也不回写轮末脏状态。
 
 ## 归责过滤（W10 已落地）
 
-决策 ADR 0008；归责过滤的契约以**本节为 SSOT**（原始决策记录存于开发仓库
-gate-attribution-filter spec，纯文本引用）。
-`doc-link` 在 stop 档仍整仓 `checkRepository`，但把结果按「是否可归责到本会话」过滤，
-只返回可归责违规——平行会话/外部编辑的中间态不进入 steer：
+决策 ADR 0008；归责过滤的契约以**本节为 SSOT**（原始决策记录存于开发仓库 gate-attribution-filter spec，纯文本引用）。`doc-link` 在 stop 档仍整仓 `checkRepository`，但把结果按「是否可归责到本会话」过滤，只返回可归责违规——平行会话/外部编辑的中间态不进入 steer：
 
-- `opaque → 全算`：本轮出现不透明写（`bash`/`md_rename`/subagent，删除/移动都走这里），
-  违规全算本会话（fail-closed）；
+- `opaque → 全算`：本轮出现不透明写（`bash`/`md_rename`/subagent，删除/移动都走这里），违规全算本会话（fail-closed）；
 - `source ∈ 精确写集合`：本会话精确写的源文件留下断链；
-- `target ∈ 精确写集合`：本会话精确写了目标文档（改了标题），别处链向它的 `#fragment`
-  断掉。
+- `target ∈ 精确写集合`：本会话精确写了目标文档（改了标题），别处链向它的 `#fragment` 断掉。
 
-机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），
-政策归本包 [markdown 模块](../../markdown/README.md)（其 `src/gate-check.ts` 的归责谓词，
-原仓库级薄 shim 已归档）。manual 入口无
-`changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个
-违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。
+机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），政策归本包 [markdown 模块](../../markdown/README.md)（其 `src/gate-check.ts` 的归责谓词，原仓库级薄 shim 已归档）。manual 入口无 `changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。
 
 ## 成本模型
 
 - 无脏轮末：短路生效，开销为增量事件扫描（目标 <5ms）；
 - 实测参考（全扫时）：`doc-sync` 全仓 ~0.7s、`coggit-misplaced` ~0.3s；
-- 违规列表注入模型时截断为前 20 条（`...and N more`）；command 输出
-  截断为 4000 字符。
+- 违规列表注入模型时截断为前 20 条（`...and N more`）；command 输出截断为 4000 字符。
 
 ## 与 hooks 子系统的关系
 
-同一拦截点（`agent/turn-stopping`）上的对等实现：宿主
-`dsh-hooks-claude-code` 的 Stop hook 走配置文件 + 子进程 + 退出码；
-gates 走插件注册 + 类型化结果 + 自描述。时机词汇表共享，互不冲突；
-边界细节见 [../README.md](../README.md)。
+同一拦截点（`agent/turn-stopping`）上的对等实现：宿主 `dsh-hooks-claude-code` 的 Stop hook 走配置文件 + 子进程 + 退出码；gates 走插件注册 + 类型化结果 + 自描述。时机词汇表共享，互不冲突；边界细节见 [../README.md](../README.md)。

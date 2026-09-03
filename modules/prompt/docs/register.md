@@ -46,9 +46,7 @@ registerPromptMiddlewareProvider(ctx, {
 })
 ```
 
-两条纪律（与 gates 消费面同源）：注册入口内部走 `ctx.inject(['promptMiddleware'])` 条件注入，
-disposer 随你的 fiber 卸载自动回滚；provider 校验（name/词表/kind）在注册期 fail loud。
-公共契约如下：
+两条纪律（与 gates 消费面同源）：注册入口内部走 `ctx.inject(['promptMiddleware'])` 条件注入，disposer 随你的 fiber 卸载自动回滚；provider 校验（name/词表/kind）在注册期 fail loud。公共契约如下：
 
 <!-- generated: ts-api-reference:start -->
 | Symbol | Kind | Source | Summary |

@@ -1,13 +1,8 @@
 # Eval rubric — answer key
 
-This is the **grading standard** for the judge runs. The judge (`prompt.md`) never
-sees this file; it sees only the tool description + hop outputs. You, the human,
-compare each judge's three parts against this key.
+This is the **grading standard** for the judge runs. The judge (`prompt.md`) never sees this file; it sees only the tool description + hop outputs. You, the human, compare each judge's three parts against this key.
 
-The eval measures **semantic comprehension only** — "can a fresh model read the
-routing view and know which `routePath` to take next". Field *presence/shape* is
-already locked deterministically by `test/navigation.test.mjs`; do not re-grade
-it here.
+The eval measures **semantic comprehension only** — "can a fresh model read the routing view and know which `routePath` to take next". Field *presence/shape* is already locked deterministically by `test/navigation.test.mjs`; do not re-grade it here.
 
 ## Per-field key (expected understanding)
 
@@ -39,8 +34,7 @@ it here.
 
 ## Known intentional design — do NOT count these as errors
 
-A judge "red flag" is only a real finding if it is NOT one of the deliberate
-choices below. If a judge flags only these, the output is understood correctly.
+A judge "red flag" is only a real finding if it is NOT one of the deliberate choices below. If a judge flags only these, the output is understood correctly.
 
 1. **`[truncated: N]` counts recursive .md, not "lines shown" or "direct children"** — deliberate: N stays stable regardless of which scan root observes the folder. (hop-1 shows `explorer/_TEMPLATE` as `[truncated: 3]`; hop-2 shows it split as `[truncated: 2] …/evidence` + `[truncated: 1] …/guide`; 2 + 1 = 3.)
 2. **`depth` is relative to the route root, not the workspace root** — the same folder truncates when observed from above and expands when it is the route root (e.g. `compact` truncated in hop-1, expanded in hop-2). Deliberate; `anchor` names the reference point.

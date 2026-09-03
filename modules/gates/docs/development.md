@@ -23,10 +23,7 @@ node --test --test-isolation=none <package.json test 列出的文件>
 node scripts/register-reference.mjs --write
 ```
 
-组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 /
-blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块
-（W10 用例 import 其 lib/gate-check.js 构建产物）；不在 `pnpm verify` 内，
-新克隆 / 非本机不可跑：
+组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（W10 用例 import 其 lib/gate-check.js 构建产物）；不在 `pnpm verify` 内，新克隆 / 非本机不可跑：
 
 ```powershell
 node --test --test-isolation=none test/composition.test.mjs
@@ -36,22 +33,9 @@ node --test --test-isolation=none test/composition.test.mjs
 
 ## 宿主 junction 接线
 
-junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份）的
-`@deepseek-ai/{cordis,schemastery,dsh-tools,dsh-llm,dsh-agent,dsh-session,
-dsh-typert-protocol,dsh-invariants}` 指向 dsh 宿主检出（vendored 源码的
-`lib/types`/包目录，接线配方见包根 README 开发节；`dsh-commands`、`dsh-skill`、
-`dsh-subagent` 仅类型面，走 `import type {}`，插件 lib 运行时不需要 junction）。
-组合测试（`test/composition.test.mjs`）额外需要 `dsh-system-prompt`、
-`dsh-agent-loop`、`dsh-subagent`、`dsh-subagent-fork-in-process` 四个 junction，
-同样指向 host 包目录。Web 配置页（client half）的类型依赖走 tsconfig `paths`
-指向 host 包 `lib/types`；`react` / `@types/react` 以 junction 指向 vendored
-`.pnpm` 的版本化路径。
+junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份）的 `@deepseek-ai/{cordis,schemastery,dsh-tools,dsh-llm,dsh-agent,dsh-session, dsh-typert-protocol,dsh-invariants}` 指向 dsh 宿主检出（vendored 源码的 `lib/types`/包目录，接线配方见包根 README 开发节；`dsh-commands`、`dsh-skill`、`dsh-subagent` 仅类型面，走 `import type {}`，插件 lib 运行时不需要 junction）。组合测试（`test/composition.test.mjs`）额外需要 `dsh-system-prompt`、`dsh-agent-loop`、`dsh-subagent`、`dsh-subagent-fork-in-process` 四个 junction，同样指向 host 包目录。Web 配置页（client half）的类型依赖走 tsconfig `paths` 指向 host 包 `lib/types`；`react` / `@types/react` 以 junction 指向 vendored `.pnpm` 的版本化路径。
 
-校验脚本用的 TypeScript 走同一约定：包根 `node_modules/typescript`
-junction 指向宿主安装。脚本代码里**零宿主路径字面量**（包级
-`scripts/lib/resolve-typescript.mjs` 只认本地可解析的 `typescript` 与
-`DSH_TYPESCRIPT_PATH` 覆盖），越出包根的 import / `new URL(...)` 路径会被
-`publish-readiness` gate 拦截。
+校验脚本用的 TypeScript 走同一约定：包根 `node_modules/typescript` junction 指向宿主安装。脚本代码里**零宿主路径字面量**（包级 `scripts/lib/resolve-typescript.mjs` 只认本地可解析的 `typescript` 与 `DSH_TYPESCRIPT_PATH` 覆盖），越出包根的 import / `new URL(...)` 路径会被 `publish-readiness` gate 拦截。
 
 ## 自举 gates
 

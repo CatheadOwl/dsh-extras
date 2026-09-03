@@ -1,7 +1,6 @@
 # schema-intent rubric — answer key
 
-Each scenario has exactly one correct next action from { read, grep, any_routes }.
-The reviewer (a fresh model) must pick it from the schema + scenario alone.
+Each scenario has exactly one correct next action from { read, grep, any_routes }. The reviewer (a fresh model) must pick it from the schema + scenario alone.
 
 ## Per-scenario key
 
@@ -13,11 +12,5 @@ The reviewer (a fresh model) must pick it from the schema + scenario alone.
 
 ## Accepted intent (do NOT count these as defects)
 
-1. **The schema never hints the terminal `read` step.** Deliberate: the terminal
-   action is intent-dependent, and a "next do X" hint would be a next-hint (see
-   the upstream structured next-hint design note). The schema's answer is the
-   "never file content" boundary — it states what the tool does NOT return, not which
-   tool to call next.
-2. **The schema does not say where descriptions come from.** Deliberate: the tool is a
-   router; the model only needs "description may be present or absent" (`when present`),
-   not the extraction algorithm.
+1. **The schema never hints the terminal `read` step.** Deliberate: the terminal action is intent-dependent, and a "next do X" hint would be a next-hint (see the upstream structured next-hint design note). The schema's answer is the "never file content" boundary — it states what the tool does NOT return, not which tool to call next.
+2. **The schema does not say where descriptions come from.** Deliberate: the tool is a router; the model only needs "description may be present or absent" (`when present`), not the extraction algorithm.

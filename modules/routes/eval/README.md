@@ -40,10 +40,8 @@ pnpm run eval:routes:schema-intent  # 意图闭集评审
 
 ## 依赖关系（隔离形态）
 
-- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-review` bin 消费），
-  仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
-- 真实评审的 `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认
-  `../../deepseek-harness`，按本机布局调整；dry-run 不需要。
+- 框架 `@catheadowl/dsh-eval` 是 extras 的 **devDependency**（`dsh-review` bin 消费），仅开发态——不进运行时，也不随包发布（`eval/` 不在 `files` 清单）；
+- 真实评审的 `--repo` 指向已构建的 dsh 检出——开发期宿主借用，scripts 默认 `../../deepseek-harness`，按本机布局调整；dry-run 不需要。
 
 产物在 `comprehension/.runs/any-routes-comprehension/`：`observations.md`、`task.txt`、`run-N.txt` 和运行元数据。逐次答案人工对照 [`rubric.md`](comprehension/rubric.md)；多次一致才视为理解收敛，rubric 中已登记的 intentional design 不重复算缺陷。
 
