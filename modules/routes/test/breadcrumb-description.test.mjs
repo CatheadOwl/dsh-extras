@@ -152,7 +152,8 @@ test('an excluded README file name yields no crumbs from that layer', async (t) 
   assert.equal(result, undefined)
 })
 
-test('registers through the declarative registerRelates face', () => {  const registered = []
+test('registers through the declarative registerRelates face', () => {
+  const registered = []
   const ctx = {
     inject: (_keys, cb) => {
       cb({ promptMiddleware: { registerRelates: (provider) => registered.push(provider) } })
