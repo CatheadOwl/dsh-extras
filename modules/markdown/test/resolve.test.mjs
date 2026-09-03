@@ -14,6 +14,7 @@ import {
   githubSlug,
   posixRelative,
   resolveReference,
+  targetProbeCache,
 } from '../lib/links/index.js'
 
 const roots = []
@@ -165,6 +166,63 @@ describe('checkRepository', () => {
     mkdirSync(join(root, 'vendor', 'sub'), { recursive: true })
     writeFileSync(join(root, 'vendor', 'sub', 'inner.md'), '[missing](no.md)\n')
     assert.deepEqual(collectMarkdownSources(root).map(file => posixRelative(root, file)), ['README.md'])
+  })
+})
+
+describe('per-scan target probe cache', () => {
+  it('probe and no-probe resolveReference agree on repeated and missing targets', () => {
+    const root = fixture({
+      'README.md': '# Root\n',
+      'ok.md': '# Present\n',
+    })
+    const sourceFile = join(root, 'README.md')
+    const ref = url => ({ kind: 'link', line: 1, url, start: 0, end: url.length })
+    const probe = targetProbeCache()
+    for (const url of ['ok.md#Present', 'ok.md#Nope', 'no.md', '#frag', 'ok.md']) {
+      assert.deepEqual(
+        resolveReference(ref(url), sourceFile, root, probe),
+        resolveReference(ref(url), sourceFile, root),
+        url,
+      )
+    }
+  })
+
+  it('checkRepository with repeated links matches the per-reference verdicts (5:1 dedup shape)', () => {
+    const root = fixture({
+      'a.md': '[x](t.md#h) [x](t.md#h) [x](t.md#Nope) [x](t.md#Nope) [x](t.md) [x](gone.md) [x](gone.md)\n',
+      't.md': '# H\n',
+    })
+    assert.deepEqual(checkRepository(root).map(({ url, reason }) => [url, reason]), [
+      ['t.md#Nope', 'anchor does not exist'],
+      ['t.md#Nope', 'anchor does not exist'],
+      ['gone.md', 'target does not exist'],
+      ['gone.md', 'target does not exist'],
+    ])
+  })
+
+  it('the cache is per-scan, never cross-scan: a file deleted after one scan is reported missing by the next', () => {
+    const root = fixture({
+      'README.md': '[x](t.md)\n',
+      't.md': '# T\n',
+    })
+    assert.deepEqual(checkRepository(root), [])
+    rmSync(join(root, 't.md'))
+    assert.deepEqual(
+      checkRepository(root).map(({ url, reason }) => [url, reason]),
+      [['t.md', 'target does not exist']],
+    )
+  })
+
+  it('the stale-negative direction: a file created after a missing verdict is clean on the next scan', () => {
+    const root = fixture({
+      'README.md': '[x](t.md)\n',
+    })
+    assert.deepEqual(
+      checkRepository(root).map(({ url, reason }) => [url, reason]),
+      [['t.md', 'target does not exist']],
+    )
+    writeFileSync(join(root, 't.md'), '# T\n')
+    assert.deepEqual(checkRepository(root), [])
   })
 })
 

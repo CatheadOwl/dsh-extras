@@ -63,16 +63,64 @@ export function posixRelative(root: string, target: string): string {
   return relative(root, target).split(sep).join('/')
 }
 
-function existingPathInside(root: string, target: string): boolean {
-  return pathInside(root, target) && pathInside(realpathSync(root), realpathSync(target))
+/**
+ * Memoized `realpathSync` for the repository root. `existingPathInside` runs
+ * once per repository-inside reference, and an uncached root realpath turned
+ * that into thousands of redundant syscalls on Windows (~1s on a 3.8k-link
+ * scan). The worktree root never moves within a session — same caching
+ * premise as `gitTopLevel`'s memo — so one resolution per distinct root input
+ * is safe; a different input path gets its own key.
+ */
+const realRootCache = new Map<string, string>()
+
+function realRoot(root: string): string {
+  const key = resolve(root)
+  const cached = realRootCache.get(key)
+  if (cached !== undefined) return cached
+  const real = realpathSync(root)
+  // Register under both the input path and the real path so a later call with
+  // either form hits the same entry.
+  realRootCache.set(key, real)
+  realRootCache.set(real, real)
+  return real
 }
 
-function temporarilyUnverifiable(root: string, target: string): boolean {
-  if (existsSync(target)) return false
+function existingPathInside(root: string, target: string, probe?: TargetProbe): boolean {
+  if (!pathInside(root, target)) return false
+  const real = probe === undefined ? realpathSync(target) : probe(target).real
+  return real !== undefined && pathInside(realRoot(root), real)
+}
+
+function temporarilyUnverifiable(root: string, target: string, probe?: TargetProbe): boolean {
+  if (probe === undefined ? existsSync(target) : probe(target).exists) return false
   for (const gitlink of gitLinkPaths(root)) {
     if (pathInside(gitlink, target)) return true
   }
   return false
+}
+
+/**
+ * One per-scan existence/realpath probe. Scan targets repeat heavily (a
+ * 3.8k-reference scan resolves to ~750 distinct paths, 5:1), and per-reference
+ * `existsSync` + `realpathSync` dominates the resolve phase on Windows. A cache
+ * scoped to one `checkRepository` call — never module-level — keeps the verdict
+ * fresh across turns (files are created and deleted between gate runs). The
+ * frozen-worktree-within-a-scan premise is the one the scan already relies on
+ * when it reads each source exactly once; the `anchorCache()` factory created
+ * per `checkRepository` call is the precedent.
+ */
+export type TargetProbe = (absPath: string) => { exists: boolean; real?: string }
+
+export function targetProbeCache(): TargetProbe {
+  const cache = new Map<string, { exists: boolean; real?: string }>()
+  return absPath => {
+    const cached = cache.get(absPath)
+    if (cached !== undefined) return cached
+    const exists = existsSync(absPath)
+    const entry = { exists, real: exists ? realpathSync(absPath) : undefined }
+    cache.set(absPath, entry)
+    return entry
+  }
 }
 
 /** Every git-visible file (tracked + untracked-not-ignored), absolute and sorted. */
@@ -156,19 +204,22 @@ function fragmentPart(url: string): string | null {
  * Resolve one reference to an absolute path — the single resolution seam for
  * `checkRepository`. External targets are ignored; a fragment on an empty path
  * resolves to the source file; document-relative targets resolve against the
- * source directory (`/` is skipped, never root-relative).
+ * source directory (`/` is skipped, never root-relative). The optional `probe`
+ * is a per-scan existence/realpath cache (`targetProbeCache`); absent = direct
+ * syscalls per reference (the behavior every caller outside a full scan keeps).
  */
-export function resolveReference(reference: LinkReference, sourceFile: string, root: string): Resolution {
+export function resolveReference(reference: LinkReference, sourceFile: string, root: string, probe?: TargetProbe): Resolution {
   const url = reference.url
   if (isExternal(url)) return { ignored: true }
   const fragment = fragmentPart(url)
   const target = pathPart(url)
   const resolved = target === '' ? sourceFile : resolve(dirname(sourceFile), target)
-  if (!existsSync(resolved)) {
-    if (temporarilyUnverifiable(root, resolved)) return { ignored: true }
+  const exists = probe === undefined ? existsSync(resolved) : probe(resolved).exists
+  if (!exists) {
+    if (temporarilyUnverifiable(root, resolved, probe)) return { ignored: true }
     return { reason: 'target does not exist', fragment }
   }
-  if (!existingPathInside(root, resolved)) return { reason: 'outside repository', fragment }
+  if (!existingPathInside(root, resolved, probe)) return { reason: 'outside repository', fragment }
   return { abs: resolved, fragment }
 }
 
@@ -217,6 +268,7 @@ export interface CheckRepositoryOptions {
 export function checkRepository(root: string, options: CheckRepositoryOptions = {}): LinkViolation[] {
   const repoRoot = repositoryRoot(root)
   const anchorsOf = anchorCache()
+  const probe = targetProbeCache()
   const sources = collectMarkdownSources(repoRoot)
   const violations: LinkViolation[] = []
   const include = options.include
@@ -225,7 +277,7 @@ export function checkRepository(root: string, options: CheckRepositoryOptions = 
     const rel = posixRelative(repoRoot, sourceFile)
     const source = readFileSync(sourceFile, 'utf8')
     for (const reference of extractReferences(source)) {
-      const resolved = resolveReference(reference, sourceFile, repoRoot)
+      const resolved = resolveReference(reference, sourceFile, repoRoot, probe)
       if (resolved.ignored) continue
       if (include !== undefined && !include(
         canonicalPath(sourceFile, repoRoot),
