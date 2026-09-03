@@ -178,7 +178,7 @@ function npmScriptsLocality(manifest, root) {
         const token = match[0]
         const target = resolve(base, token)
         if (!inside(target, root) && !inside(target, hostRoot)) {
-          violations.push(`scripts.${name} references ${token} which resolves outside the package root (and is not a documented L0 host borrow) — keep dev-repo-only commands out of the shipped manifest`)
+          violations.push(`PKG-2: scripts.${name} references ${token} which resolves outside the package root (and is not a documented L0 host borrow) — keep dev-repo-only commands out of the shipped manifest`)
         }
       }
     }
@@ -215,7 +215,7 @@ function devRepoPathCitations(markdown, base, displayed, root, violations) {
     const target = resolve(base, token)
     const insideRoot = target === root || target.startsWith(root + '/') || target.startsWith(root + '\\')
     if (!insideRoot || !existsSync(target)) {
-      violations.push(`${relative(root, displayed).replaceAll('\\', '/')} cites dev-repo path ${token} which does not resolve to an existing in-package path — name the source instead of pathing it`)
+      violations.push(`PKG-1: ${relative(root, displayed).replaceAll('\\', '/')} cites dev-repo path ${token} which does not resolve to an existing in-package path — name the source instead of pathing it`)
     }
   }
 }
@@ -238,12 +238,12 @@ function docsLocality(root, extraMarkdown = []) {
       const pathPart = link.split('#', 1)[0]
       if (pathPart === '') continue
       if (pathPart.startsWith('/')) {
-        violations.push(`${relative(root, displayed).replaceAll('\\', '/')} links absolute repo path ${link} — published docs cannot reach the dev repository`)
+        violations.push(`PKG-1: ${relative(root, displayed).replaceAll('\\', '/')} links absolute repo path ${link} — published docs cannot reach the dev repository`)
         continue
       }
       const target = resolve(dirname(String(displayed)), pathPart)
       if (!target.startsWith(root + '/') && !target.startsWith(root + '\\')) {
-        violations.push(`${relative(root, displayed).replaceAll('\\', '/')} links outside the package root: ${link}`)
+        violations.push(`PKG-1: ${relative(root, displayed).replaceAll('\\', '/')} links outside the package root: ${link}`)
       }
     }
     devRepoPathCitations(text, dirname(String(displayed)), String(displayed), root, violations)
@@ -289,7 +289,7 @@ function metaLocality(root, extraSources = []) {
     for (const pattern of META_TERMS) {
       pattern.lastIndex = 0
       if (pattern.test(haystack)) {
-        violations.push(`${relative(root, file).replaceAll('\\', '/')} cites control-plane term ${pattern} — keep design attribution in the cognition layer, functional semantics in code`)
+        violations.push(`PKG-4: ${relative(root, file).replaceAll('\\', '/')} cites control-plane term ${pattern} — keep design attribution in the cognition layer, functional semantics in code`)
       }
     }
   }
