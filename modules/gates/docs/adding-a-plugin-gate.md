@@ -93,7 +93,7 @@ export function apply(ctx: Context): void {
 - `md-metadata`（同模块 `src/metadata-check.ts` + `src/index.ts`）：**defer + subagent
   fixer** 的插件级样板——会话被写 md 必须带非空 frontmatter `description`；检查是
   change-set 消费者（`changes` 为 null 直接放行），修复是语义判断故派子 agent 离线
-  写。原仓库级数据面（开发仓库根 `gates.yml` 的 `module:` 条目）已撤，声明随定义
+  写。原仓库级数据面（根 `gates.yml` 的 `module:` 条目）已撤，声明随定义
   一起进包。
 
 完整 evidence 与验收预期见会议纪要 `case-2-coggit-misplaced`。

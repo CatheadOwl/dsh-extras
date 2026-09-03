@@ -15,7 +15,7 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
   `doc-link` gate（插件级注册，`markdown/gate-check` 兼作 `gates.yml`
   `module:` 回退面）。工具与 gate 共享同一算法、同版本演进——单拷贝不变量，
   vendor 两份即两个漂移点。
-- **契约不在此**：库契约的唯一说法与提升决策史在开发仓库 workunits（纯文本引用）。
+- **契约不在此**：提升决策史见外部开发笔记（md-links workunit，名称引用）。
 
 ## 模块
 
@@ -30,7 +30,7 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
 | `git.ts` | 自写（宿主用 glob，非 git） | git 扫描缝：`gitTopLevel`/`gitLinkPaths`/`gitLsFiles`（gitignore 正确 + gitlink 边界；临时文件捕获规避沙箱管道 EPERM） |
 | `index.ts` | — | 公共 `exports` 重导出 |
 
-## 来源区分（fork vs 自写，开发仓 `workunits/md-links/ADR/0002-provenance-fork-vs-self-written.md`）
+## 来源区分（fork vs 自写；判定记录见外部开发笔记 fork-vs-self-written ADR，名称引用）
 
 - **fork（copy = fork，上游改动需手工重拷 + 重测）**：`markdown.ts`（fork 自上游
   `deepseek-harness/scripts/markdown.ts` 解析原语子集）、`anchors.ts`
@@ -40,7 +40,7 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
   非可复用 API，数据面需逐引用 `resolveReference`）、`git.ts`（宿主的 `uniqueRepoFiles` 是 `globSync`、
   非 git）。自写层的语义仍对齐上游（`/` 跳过、document-relative 解析、fail-closed `%zz`）。
 - **丢弃不迁**：md-fabric 的 regex `extractReferences`、regex 锚点版、wikilink、`/` 根相对解析，
-  由 fork 的上游原语取代（开发仓 `workunits/md-links/ADR/0002-provenance-fork-vs-self-written.md`）。
+  由 fork 的上游原语取代（判定依据同上：fork-vs-self-written ADR，名称引用）。
 
 ## 依赖放置
 
@@ -60,7 +60,7 @@ pnpm run test:markdown
 
 开发期解析说明：依赖声明已是 registry `^range`（发布态），嵌套仓库内**不要** `pnpm install`
 （会清掉手工 junction 且 peer 404）——开发循环靠既有 `node_modules` junction 过渡解析
-（声明与解析解耦，模型见开发仓 `handbooks/dsh-deps/resolution-ladder.md`）。
+（声明与解析解耦）。
 
 测试为 `node:test`（编译后 `lib/` 消费），覆盖 `markdown.test.mjs`（解析/定位/切分/标题）、
 `anchors.test.mjs`（slug/锚点/去重/缓存）与 `resolve.test.mjs`（AST 提取/解析对齐/整仓校验）。

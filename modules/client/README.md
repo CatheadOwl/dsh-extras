@@ -4,31 +4,23 @@ description: extras 的 client 锚点包——嵌套 manifest（自有 package.j
 
 # client 锚点包（嵌套 manifest）
 
-宿主 client-modules 的不变量是「一个声明 `dsh.client` 的包恰好一个 active Loader
-source」。extras 根若有五行 server 行又声明 `dsh.client`，五行全部经
-`nearestPackage` 归属到根 manifest → 五个 source → 组合错误（事故全案见
-`handbooks/Gremlins/20260901-2312-dsh-client-source-attribution/incident-web-boot-conflict.md`）。
+本模块是 extras 的 client 锚点包：把 gates/prompt 各模块的 Settings Tab 组合成
+单一浏览器 bundle，并通过自有嵌套 manifest 使这个合成 bundle 成为恰好一个
+Loader source。包内角色：extras 根保持 server-only（不声明 `dsh.client`），
+全部 client 面集中在本目录。
 
-解法：本目录持有**自己的嵌套 package.json**（`@catheadowl/dsh-extras-client`，
-`private`、不单独发布，随 extras tarball 走）：
+该归属机制曾引发 boot 冲突，设计动机见下。
 
-- 根 patch 的 `extras-client` 行（`./modules/client/lib/index.js`）经
-  `nearestPackage` 归属到嵌套 manifest → 表里以嵌套包名为键的**独立一行**；
-- 五个 server 行归属 extras 根（无 `dsh.client`）→ 完全绕开 client registry；
-- 一个嵌套包 = 恰好一个 client source，与宿主「多 client 包共存」的机制常态
-  （web-app 自挂 ~25 个 client 包）同构。
+## 随包契约清单
 
-- 入口：`src/client/index.ts`（组合 apply/inject，import 各模块 client 半）
-- 构建：`tsc`（占位 node 半 → `lib/index.js`）+ `tsdown`（client 预设，
-  cwd=本目录）→ `lib/client.js`；嵌套 manifest 的 `exports['./client']` 指向这里
-- `src/index.ts` 是占位 node 半（从不作为插件装载，无副作用），只为行的
-  文件归属与共享 tsdown 预设的 libEntry 存在
-- 类型检查走 `tsconfig.check.json`（含各模块 client 源）
+嵌套 `modules/client/package.json` 是随 extras tarball 发布的唯一 client 声明面：
 
-新增带 UI 的模块时：在其 `src/client/` 写半边，然后在本入口 import 并追加一行
-`apply`，同时把新增的外部依赖并进嵌套 manifest 的 `dsh.client.inject`。
+- `name`：`@catheadowl/dsh-extras-client`（非空，宿主按最近 manifest 归属 client
+  行的键）；
+- `version`：非空——空 `name`/`version` 即归属失败（宿主契约）；
+- `private`：`true`，不单独发布，随 extras tarball 走；
+- `exports['./client']`：`./lib/client.js`，合成 bundle 的装载入口；
+- `dsh.client.inject`：浏览器侧外部依赖清单（dsh 官方 UI 组件），由宿主在
+  装载时注入。
 
-嵌套 manifest 必须声明非空 `name` 与 `version`——宿主包解析按最近 manifest 归属
-client 行，空值即归属失败（扩展讨论见开发仓库 TODO
-20260902-extras-client-manifest-version-request-extension，纯文本引用）。
-终态 boot / bundle 验收记录见开发仓库 release-plan（纯文本引用，不随包发布）。
+设计与扩展指南见 [docs/development.md](docs/development.md)。

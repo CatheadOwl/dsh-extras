@@ -15,7 +15,7 @@ The reviewer (a fresh model) must pick it from the schema + scenario alone.
 
 1. **The schema never hints the terminal `read` step.** Deliberate: the terminal
    action is intent-dependent, and a "next do X" hint would be a next-hint (see
-   `handbooks/plugin-design/01-结构化next-hint.md`). The schema's answer is the
+   the upstream structured next-hint design note). The schema's answer is the
    "never file content" boundary — it states what the tool does NOT return, not which
    tool to call next.
 2. **The schema does not say where descriptions come from.** Deliberate: the tool is a

@@ -6,7 +6,7 @@ description: prompt-parse 纯库 — user prompt 路径提取的 API、使用范
 
 user prompt 路径提取纯库（fuzzy / parse / resolve），非插件、非服务、零 dsh
 运行时绑定，不单独发布（第二个外部消费者出现时再按抽取规则处理）。能力边界
-spec 见开发仓库 workunits（纯文本引用）。
+见 path-extraction-scope 设计记录（外部开发笔记，名称引用）。
 
 从一段 user prompt 文本里提取「可能是路径」的候选，并对每个候选做 fuzzy 匹配、返回候选路径列表。
 
@@ -16,7 +16,7 @@ spec 见开发仓库 workunits（纯文本引用）。
 **能力边界**：做得到（确定性，不是猜）—— tokenize + 归一化、名字 → 命中位置索引、`total` 三态（0/1/>1）。
 做不到（本质限制）—— 区分「指内容 vs 指位置」、把歧义命中（如 `guides`=8、`README`=365）缩到用户想要的那一个；
 那需要上下文，是消费者（LLM / 人）的活。本库是它的下游喂料器，不是「路径提取器」。详见
-spec「能力边界」（`workunits/prompt-parse/spec/path-extraction-scope.md`，开发仓库纯文本引用）。
+path-extraction-scope 设计记录的「能力边界」（外部开发笔记，名称引用）。
 
 ## API
 
@@ -56,8 +56,8 @@ const paths = mentions.flatMap((m) => m.resolved)
 | 形态 | 例子 | 匹配语义 |
 |---|---|---|
 | project-root 相对（裸格式） | `guides`、`notes/md-fabric` | 尾段匹配 + 裸词深度限定 + 歧义阈值（猜词机制） |
-| 根锚定（`/` 前缀，agent 引用根锚，术语辨析 Root-relative path（`docs/designs/Root-relative_path.md`，开发仓库纯文本引用）） | `/notes/md-fabric`、`/README.md` | **根锚定精确整段**：`/README.md` 只命中根级 `README.md`（全仓同名不再是障碍），`/md-fabric` 在根级不存在时 `total=0`（诚实信号，不尾段回退、不去扩展名） |
-| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@notes/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（ADR 0004），同一根锚定精确整段 |
+| 根锚定（`/` 前缀，agent 引用根锚，术语辨析见 Root-relative path 设计记录（外部开发笔记，名称引用）） | `/notes/md-fabric`、`/README.md` | **根锚定精确整段**：`/README.md` 只命中根级 `README.md`（全仓同名不再是障碍），`/md-fabric` 在根级不存在时 `total=0`（诚实信号，不尾段回退、不去扩展名） |
+| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@notes/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（决策出处 ADR 0004，名称引用），同一根锚定精确整段 |
 
 `candidatePaths`（project 路径列表，**文件 + 目录**）由消费者提供；本库不做文件系统扫描。目录候选建议带尾斜杠（`guides/`），这样尾斜杠 specifier（`kind:'dir'`）才能只取目录；否则回退全树（尽力而为）。附带：裸词 `guides` 去扩展名副作用仍会命中同名文件 `guides.md`。
 
@@ -81,7 +81,7 @@ v0 `ProjectRelativePathRecognizer` 提取：带 `/` 或 `\` 的 token、裸 `wor
 ## 边界 / 非目标
 
 - 不做文件系统扫描（`candidatePaths` 由消费者喂入）。
-- `candidatePaths` **必须 gitignore-aware**：不能复用宿主的 `WorkspaceFileSearch`（非 gitignore-aware、有界、top-20），接入层须自带枚举，见 spec「接入结论」。
+- `candidatePaths` **必须 gitignore-aware**：不能复用宿主的 `WorkspaceFileSearch`（非 gitignore-aware、有界、top-20），接入层须自带枚举（见 path-extraction-scope 设计记录的「接入结论」，名称引用）。
 - 不做决策（唯一/歧义/弃用）。
 - 不处理文件系统绝对路径（`C:\…`）——这是别的 seam / 消费者的职责。`/x/y` 不是文件系统绝对路径，是**仓库根相对**（文档链接标准）；`@x/y` 是** workspace 引用**（宿主 GUI 标准格式），两者本库都一等支持、归一化到同一根锚。
 

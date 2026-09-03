@@ -14,13 +14,11 @@ Markdown 引用——入链改写 + 出链 rebase，确定性、冲突交 agent�
 
 > **rename 工具保证「移动/改名后所有内部链接仍可解析」；doc-link gate 保证「轮末所有内部链接仍可解析」；不引入 runtime，git 工作树即状态。**
 
-数据面与事务内核在模块内 [`src/links/`](docs/links-lib.md)（原 md-links 纯库）；
+数据面与事务内核在模块内 [`src/links/`](docs/links-lib.md)；
 `md_rename` 是其上的薄 wrapper（「conflict → 报告，不猜」路由），`doc-link` 是其上的
 gate 面（[`src/gate-check.ts`](src/gate-check.ts)，归责谓词 + 锚点修复提示），
-`md-metadata` 是 change-set 消费型 gate 面（[`src/metadata-check.ts`](src/metadata-check.ts)，
-原开发仓库根 `scripts/md-metadata-lib.mjs`，2026-09-02 升插件级）。
-**单拷贝不变量**：工具与 gate 共享同一链接算法、同版本演进。路 B（git rename 检测 /
-内容相似度）属 gates 侧，非本模块 scope。
+`md-metadata` 是 change-set 消费型 gate 面（[`src/metadata-check.ts`](src/metadata-check.ts)）。
+**单拷贝不变量**：工具与 gate 共享同一链接算法、同版本演进。
 
 ## 模型面
 
@@ -39,37 +37,13 @@ gate 注册面文档：[docs/doc-link-gate.md](docs/doc-link-gate.md)。
 > 仓库级回退（同一份 `check` 实现；与插件级注册互斥）。适用条件与形态见
 > [docs/doc-link-gate.md](docs/doc-link-gate.md)「两种接入形态」。
 
-## 构建 / 测试（extras 包根 scripts）
-
-```powershell
-# 从 dsh-plugin-dev/extras
-pnpm run check-types:markdown
-pnpm run build:markdown
-pnpm run test:markdown    # 库 9 套 + plugin + doc-link-gate + metadata-check，共 101 case
-```
-
-测试 import 已构建 `lib/`，依赖经 extras 包根 `node_modules` junction 解析
-（`@deepseek-ai/*` → harness；mdast 解析栈 → host `.pnpm`）。
-
-## E2E 测试（headless behavior harness）
-
-`eval/` 目录用共享 eval 框架（开发仓库 `dsh-plugin-dev/eval/`）覆盖工具内三层 fallback
-（deterministic rebase / skip 非阻塞 / conflict 阻塞整单）。case 清单与 out-of-scope（L2–L4 路 B）
-见 `eval/README.md`（开发仓库行为 eval 目录，不随包发布，纯文本引用）。
-
-```powershell
-# 从 extras 包根（经 devDep `@catheadowl/dsh-eval` 的 dsh-eval bin）
-pnpm run eval:markdown:mock   # mock 层（免 key）
-pnpm run eval:markdown:real   # real 层（需 key）
-```
-
-前置：extras 包已装进被启动的 `headless` profile（`dsh plugin --profile headless add <extras 目录绝对路径>`）。
-
 ## 装入
 
-装 extras 包（`dsh plugin add <extras 目录绝对路径>`，或 `dsh plugin --profile web add`）；
-加载后 `md_rename` 出现在模型工具面、`doc-link` 与 `md-metadata` 进入轮末门禁。控制面见开发仓库
-`workunits/md-rename/README.md` 与 `workunits/md-links/README.md`。
+装 extras 包：`dsh plugin add @catheadowl/dsh-extras`（或本地目录变体
+`dsh plugin add <extras 目录绝对路径>`，以及 `dsh plugin --profile web add`）；
+加载后 `md_rename` 出现在模型工具面、`doc-link` 与 `md-metadata` 进入轮末门禁。
+
+构建、测试与 E2E 见 [docs/development.md](docs/development.md)。
 
 ## Model experience
 

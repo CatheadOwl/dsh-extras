@@ -11,7 +11,7 @@ description: 配方：在项目根 gates.yml 添加仓库级 gate（module/comma
 > **所有权模型**：`gates.yml` 归**项目**，gates 插件只是执行载体（与
 > hooks.json 归项目同构）。每次执行时从会话工作区根发现；没有该文件的
 > 工作区什么检查都不跑——检查永不跨工作区泄漏。方言为 gates 插件暂行定义
-> （宿主无内置 gate 配置方言，见 `explorer/hook-points/gates-followup.md`）。
+> （宿主无内置 gate 配置方言；上游跟进方向见 gates-followup 外部开发笔记）。
 
 ## 前提
 
@@ -111,7 +111,7 @@ LLM 写）：
 「仓库级 → 插件级」已发生两次：`doc-link`（2026-08-30）与 `md-metadata`（2026-09-02）
 均升格为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate（见
 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级声明会与插件 gate 撞名
-（重名注册即报错），本包开发仓库的根 `gates.yml` 因此当前无条目。
+（重名注册即报错），本仓库根 `gates.yml` 因此当前无条目。
 
 module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是
 它升格前的仓库级原样（`check(root, changes?)` 的导出形状、defer + subagent fixer
