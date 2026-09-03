@@ -1,3 +1,5 @@
 node_modules/
 modules/*/lib/
+modules/*/src/client/*.js
+modules/*/src/client/*.d.ts
 *.tgz

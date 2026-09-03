@@ -21,13 +21,12 @@ Routing-view rule: a **folder** is represented by the README one level down (`fo
 
 业务逻辑(扫描 / 投影 / 描述提取)都是普通函数,改完直接构建 + 跑 fixture 测试即可,不用重启 dsh;只有改了 `index.ts` 的注册形状 / `inject` / `cordis.patch.yml` / 插件名才需要 profile boot。分层验证顺序见 `handbooks/dsh-plugin-dev/09-插件开发调试专题.md`（开发仓库 handbooks/dsh-plugin-dev/09-插件开发调试专题.md，纯文本引用）。
 
-From inside the plugin directory:
+From the extras package root (module has no nested package.json — scripts live at the package root):
 
 ```bash
-cd dsh-plugin-dev/extras/modules/routes
-pnpm run check-types   # tsc --noEmit -p tsconfig.json
-pnpm run build         # tsc -p tsconfig.json  (src/ -> lib/)
-pnpm run test          # node --test --test-isolation=none  (auto-discovers test/*.test.mjs)
+pnpm run check-types:routes  # tsc --noEmit -p modules/routes/tsconfig.json
+pnpm run build:routes        # tsc -p modules/routes/tsconfig.json  (src/ -> lib/)
+pnpm run test:routes         # node --test --test-isolation=none  (test/*.test.mjs)
 ```
 
 `test/*.test.mjs` uses `node:test` over a temp fixture (no framework, no network), so it runs standalone after a build. `--test-isolation=none` keeps the tests in-process (required inside the dsh file sandbox, where spawning child processes with piped stdio is blocked).

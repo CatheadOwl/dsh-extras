@@ -128,8 +128,8 @@ export interface GateDefinition {
 }
 
 /**
- * One declarative gate entry (project `gates.yml` dialect; interim schema
- * tracked by workunits/gates W0). Exactly one of `module` / `command`.
+ * One declarative gate entry (project `gates.yml` dialect; interim schema).
+ * Exactly one of `module` / `command`.
  */
 export interface ConfigGateEntry {
   id: string

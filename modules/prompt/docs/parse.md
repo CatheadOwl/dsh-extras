@@ -14,7 +14,7 @@ spec 见开发仓库 workunits（纯文本引用）。
 唯一/太多/放弃、用几条、越界拦截、记忆绑定、event 注入、模型可见时机，都是消费者的事。
 
 **能力边界**：做得到（确定性，不是猜）—— tokenize + 归一化、名字 → 命中位置索引、`total` 三态（0/1/>1）。
-做不到（本质限制）—— 区分「指内容 vs 指位置」、把歧义命中（如 `gates`=8、`README`=365）缩到用户想要的那一个；
+做不到（本质限制）—— 区分「指内容 vs 指位置」、把歧义命中（如 `guides`=8、`README`=365）缩到用户想要的那一个；
 那需要上下文，是消费者（LLM / 人）的活。本库是它的下游喂料器，不是「路径提取器」。详见
 spec「能力边界」（`workunits/prompt-parse/spec/path-extraction-scope.md`，开发仓库纯文本引用）。
 
@@ -47,7 +47,7 @@ const paths = mentions.flatMap((m) => m.resolved)
 | `1 ≤ total < ambiguityThreshold` | `resolved` = 顶档：与顶命中在叶名精确度+depth 上并列的全部命中 |
 | `total ≥ ambiguityThreshold` | `resolved: []`（歧义太重，不给提示） |
 
-`matches` 与 `resolved` 都经**相关性排序**（三级、稳定）：①叶名精确命中优先 ②depth 升序（离根越近越前）③输入序。排序在 composer（`resolve.ts`），`suggestPathCandidates` 仍按输入序返回（纯、不关心相关性）。`resolved` 与 `cap` 解耦（`cap<1` 只让 `matches` 为空，不丢 `resolved`）。`resolved` 取「与顶命中在①②档并列」的整档，③输入序只排顺序、不淘汰并列——同名同深度并列（裸词 `md-fabric` → `workunits/md-fabric/` + `dsh-plugin-dev/md-fabric/`）两条都进，终选交给消费方。两例：裸词 `docs` 命中根级 `docs/` 与 `deepseek-harness/docs/`（叶名均精确，depth 分开）→ 顶档只有 `docs/`；裸词 `gates` 命中 `gates.yml`（浅层但去扩展名）与 `dsh-plugin-dev/gates/`（较深但叶名精确）→ 顶档 `dsh-plugin-dev/gates/`。
+`matches` 与 `resolved` 都经**相关性排序**（三级、稳定）：①叶名精确命中优先 ②depth 升序（离根越近越前）③输入序。排序在 composer（`resolve.ts`），`suggestPathCandidates` 仍按输入序返回（纯、不关心相关性）。`resolved` 与 `cap` 解耦（`cap<1` 只让 `matches` 为空，不丢 `resolved`）。`resolved` 取「与顶命中在①②档并列」的整档，③输入序只排顺序、不淘汰并列——同名同深度并列（裸词 `md-fabric` → `notes/md-fabric/` + `guides/md-fabric/`）两条都进，终选交给消费方。两例：裸词 `docs` 命中根级 `docs/` 与 `guides/docs/`（叶名均精确，depth 分开）→ 顶档只有 `docs/`；裸词 `widgets` 命中 `widgets.yml`（浅层但去扩展名）与 `guides/widgets/`（较深但叶名精确）→ 顶档 `guides/widgets/`。
 
 要全量 `{ matches, total }` 自决时，用底层原语（`parsePaths` → `suggestPathCandidates`），工具不替你决策。
 
@@ -55,15 +55,15 @@ const paths = mentions.flatMap((m) => m.resolved)
 
 | 形态 | 例子 | 匹配语义 |
 |---|---|---|
-| project-root 相对（裸格式） | `handbooks`、`workunits/md-fabric` | 尾段匹配 + 裸词深度限定 + 歧义阈值（猜词机制） |
-| 根锚定（`/` 前缀，agent 引用根锚，术语辨析 Root-relative path（`docs/designs/Root-relative_path.md`，开发仓库纯文本引用）） | `/workunits/md-fabric`、`/README.md` | **根锚定精确整段**：`/README.md` 只命中根级 `README.md`（全仓同名不再是障碍），`/md-fabric` 在根级不存在时 `total=0`（诚实信号，不尾段回退、不去扩展名） |
-| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@workunits/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（ADR 0004），同一根锚定精确整段 |
+| project-root 相对（裸格式） | `guides`、`notes/md-fabric` | 尾段匹配 + 裸词深度限定 + 歧义阈值（猜词机制） |
+| 根锚定（`/` 前缀，agent 引用根锚，术语辨析 Root-relative path（`docs/designs/Root-relative_path.md`，开发仓库纯文本引用）） | `/notes/md-fabric`、`/README.md` | **根锚定精确整段**：`/README.md` 只命中根级 `README.md`（全仓同名不再是障碍），`/md-fabric` 在根级不存在时 `total=0`（诚实信号，不尾段回退、不去扩展名） |
+| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@notes/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（ADR 0004），同一根锚定精确整段 |
 
-`candidatePaths`（project 路径列表，**文件 + 目录**）由消费者提供；本库不做文件系统扫描。目录候选建议带尾斜杠（`handbooks/`），这样尾斜杠 specifier（`kind:'dir'`）才能只取目录；否则回退全树（尽力而为）。附带：裸词 `handbooks` 去扩展名副作用仍会命中同名文件 `handbooks.md`。
+`candidatePaths`（project 路径列表，**文件 + 目录**）由消费者提供；本库不做文件系统扫描。目录候选建议带尾斜杠（`guides/`），这样尾斜杠 specifier（`kind:'dir'`）才能只取目录；否则回退全树（尽力而为）。附带：裸词 `guides` 去扩展名副作用仍会命中同名文件 `guides.md`。
 
 ## 归一化规则（v0）
 
-`parsePaths` 产出的 `normalized` 字段做了：`\` → `/`、去 token 首尾空白与配对引号、剥前导 `./`、剥尾随标点（`,` `;` 及句末单独 `.`，`..` 保留）、尾斜杠剥除标 `kind:'dir'`。`../` 保留（越界拦截是消费者的事）。**前导 `/` 保留**——它是 repository-root-relative 引用锚（agent 引用根锚），matcher 据此做根锚定精确整段匹配（`/handbooks/` → `normalized: '/handbooks'` + `kind:'dir'`）。**前导 `@` 折算为 `/`**——它是 workspace 引用锚（宿主 GUI `FILE_REFERENCE_PROMPT`），与 `/` 是同一根锚的两种拼写（`@workunits/md-fabric/` → `normalized: '/workunits/md-fabric'` + `kind:'dir'`）。
+`parsePaths` 产出的 `normalized` 字段做了：`\` → `/`、去 token 首尾空白与配对引号、剥前导 `./`、剥尾随标点（`,` `;` 及句末单独 `.`，`..` 保留）、尾斜杠剥除标 `kind:'dir'`。`../` 保留（越界拦截是消费者的事）。**前导 `/` 保留**——它是 repository-root-relative 引用锚（agent 引用根锚），matcher 据此做根锚定精确整段匹配（`/guides/` → `normalized: '/guides'` + `kind:'dir'`）。**前导 `@` 折算为 `/`**——它是 workspace 引用锚（宿主 GUI `FILE_REFERENCE_PROMPT`），与 `/` 是同一根锚的两种拼写（`@notes/md-fabric/` → `normalized: '/notes/md-fabric'` + `kind:'dir'`）。
 
 ## Recognizer 管线（可扩展）
 

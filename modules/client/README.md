@@ -28,6 +28,7 @@ source」。extras 根若有五行 server 行又声明 `dsh.client`，五行全�
 新增带 UI 的模块时：在其 `src/client/` 写半边，然后在本入口 import 并追加一行
 `apply`，同时把新增的外部依赖并进嵌套 manifest 的 `dsh.client.inject`。
 
-验收记录（2026-09 独立 DSH_HOME web profile 终态 boot）：boot 绿，boot graph 含
-`@catheadowl/dsh-extras-client` 行，bundle 200（含 Gates Tab + Prompt Middleware
-Tab 的 slot 注册/双语 locale/localStorage 镜像）。
+嵌套 manifest 必须声明非空 `name` 与 `version`——宿主包解析按最近 manifest 归属
+client 行，空值即归属失败（扩展讨论见开发仓库 TODO
+20260902-extras-client-manifest-version-request-extension，纯文本引用）。
+终态 boot / bundle 验收记录见开发仓库 release-plan（纯文本引用，不随包发布）。

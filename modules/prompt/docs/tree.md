@@ -15,7 +15,7 @@ async function enumerateWorkspacePaths(root: string, options?): Promise<string[]
 ```
 
 - `root`：workspace 根（绝对路径）。
-- 返回 project 相对路径；**目录带尾斜杠**（`handbooks/`），文件不带（`README.md`）。
+- 返回 project 相对路径；**目录带尾斜杠**（`guides/`），文件不带（`README.md`）。
 - 顺序确定性：逐目录按名排序、深度优先。
 
 ## 语义

@@ -1,11 +1,11 @@
 {
   "tool": {
     "name": "any_routes",
-    "description": "Build a routing view from Markdown descriptions under a directory: folders are represented by their README.md (its description, when present). Use before exploring an unfamiliar Markdown knowledge base to pick a folder route. Route lines are always workspace-root-relative full paths (e.g. `explorer/sandbox-containment/containment.md`), never relative to the selected route root, and are sorted case-insensitively by route path. Every line is either a Markdown file route (with ` | description` when the file has one) or a depth-truncated folder rendered as `[truncated: N] folder-path` (with ` | description` when the folder's README has one), where N is the folder's recursive .md count (the total that would expand on descent). `routeCount` counts route entries (files plus truncated folders), not raw .md files or structural tree nodes. Returns route paths and descriptions, never file content.",
+    "description": "Build a routing view from Markdown descriptions under a directory: folders are represented by their README.md (its description, when present). Use before exploring an unfamiliar Markdown knowledge base to pick a folder route. Route lines are always workspace-root-relative full paths (e.g. `guides/containment/containment.md`), never relative to the selected route root, and are sorted case-insensitively by route path. Every line is either a Markdown file route (with ` | description` when the file has one) or a depth-truncated folder rendered as `[truncated: N] folder-path` (with ` | description` when the folder's README has one), where N is the folder's recursive .md count (the total that would expand on descent). `routeCount` counts route entries (files plus truncated folders), not raw .md files or structural tree nodes. Returns route paths and descriptions, never file content.",
     "parameters": {
       "routePath": {
         "type": "string",
-        "description": "Optional folder route to scan from. \".\" scans from the root. Use slash-separated folder paths such as Topics, handbooks, or explorer/dsh-plugin-dev; do not pass a Markdown file route."
+        "description": "Optional folder route to scan from. \".\" scans from the root. Use slash-separated folder paths such as Topics, guides, or docs/authoring; do not pass a Markdown file route."
       },
       "depth": {
         "type": "integer",

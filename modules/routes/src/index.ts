@@ -76,7 +76,7 @@ export function apply(ctx: Context, config: Config): void {
     parameters: {
       routePath: {
         type: 'string',
-        description: 'Optional folder route to scan from. "." scans from the root. Use slash-separated folder paths such as Topics, handbooks, or explorer/dsh-plugin-dev; do not pass a Markdown file route.',
+        description: 'Optional folder route to scan from. "." scans from the root. Use slash-separated folder paths such as Topics, guides, or docs/authoring; do not pass a Markdown file route.',
       },
       depth: {
         type: 'integer',

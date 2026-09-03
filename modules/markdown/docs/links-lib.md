@@ -52,8 +52,10 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
 ## 命令
 
 ```bash
-cd dsh-plugin-dev/md-links
-pnpm run verify         # check-types && build && test
+# 从 extras 包根
+pnpm run check-types:markdown
+pnpm run build:markdown
+pnpm run test:markdown
 ```
 
 开发期解析说明：依赖声明已是 registry `^range`（发布态），嵌套仓库内**不要** `pnpm install`

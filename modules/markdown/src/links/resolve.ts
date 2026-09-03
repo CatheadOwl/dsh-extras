@@ -173,8 +173,7 @@ export function resolveReference(reference: LinkReference, sourceFile: string, r
 }
 
 /**
- * Lexical variant of `resolveReference` for post-hoc repair
- * (20260831-posthoc-repair-mode, plan-layer difference #1): resolves the same
+ * Lexical variant of `resolveReference` for post-hoc repair: resolves the same
  * URL grammar (external skip, fragment-on-empty-path, percent decoding) but
  * never gates on `existsSync` — the referenced old-path targets are already
  * physically gone, so existence would silently drop every in-link. The caller

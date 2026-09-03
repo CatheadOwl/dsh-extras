@@ -263,6 +263,7 @@ const META_TERMS = [
   /\bspec\s*[§:「]/u,
   /\bspec's\b/u,
   /\bworkunit spec\b/u,
+  /\bworkunits\/[a-z0-9-]+ [WT]\d+\b/u,
   /TODO \d{8}/u,
 ]
 

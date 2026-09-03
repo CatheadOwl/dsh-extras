@@ -58,9 +58,9 @@ pnpm run test:markdown    # 库 9 套 + plugin + doc-link-gate + metadata-check�
 见 `eval/README.md`（开发仓库行为 eval 目录，不随包发布，纯文本引用）。
 
 ```powershell
-# 从 dsh-plugin-dev/extras/modules/markdown
-node ../../../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../../../deepseek-harness --mode mock eval/behavior/mock  # mock 层（免 key）
-node ../../../../eval/bin/dsh-eval.mjs run --profile headless --repo ../../../../deepseek-harness eval/behavior/real               # real 层（需 key）
+# 从 extras 包根（经 devDep `@catheadowl/dsh-eval` 的 dsh-eval bin）
+pnpm run eval:markdown:mock   # mock 层（免 key）
+pnpm run eval:markdown:real   # real 层（需 key）
 ```
 
 前置：extras 包已装进被启动的 `headless` profile（`dsh plugin --profile headless add <extras 目录绝对路径>`）。

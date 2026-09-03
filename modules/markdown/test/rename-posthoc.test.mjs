@@ -13,8 +13,7 @@ import {
 } from '../lib/links/index.js'
 import { armGitTrace, disarmGitTrace, gitSpawnCounts, gitTraceTarget, totalSpawns } from './helpers/git-trace.mjs'
 
-// Post-hoc repair acceptance (workunits/md-rename TODO
-// 20260831-posthoc-repair-mode, cases 1–9): md_rename accepts an
+// Post-hoc repair acceptance: md_rename accepts an
 // already-happened rename — oldPath missing + newPath present + git evidence
 // — and repairs links only.
 

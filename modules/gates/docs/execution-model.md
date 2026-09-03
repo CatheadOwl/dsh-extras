@@ -93,7 +93,8 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 「必须补、但不必现在打断」。defer 不触发续步，turn 立即关闭。
 
 **旁路执行（fixer）**：defer 只是「不打断」；「最终被修」由 gate 可选的 `fixer`
-承担。`fixer` 是两变体 union（契约见开发仓库 `workunits/gates/spec/gate-fixer.md`）：
+承担。`fixer` 是两变体 union，契约以**本节为 SSOT**（原始设计记录存于开发仓库
+gate-fixer spec，纯文本引用）：
 
 - **`subagent`**（语义修复，LLM + 继承父上下文）：`fixer: { kind: 'subagent', prompt, request? }`。
   turn-stopping 会 `ctx.subagents.start(request?.provider ?? 'fork', { parent, prompt + 失败文件清单, maxDepth: 1, persona?, toolFilter?, agentOptions? })`
@@ -164,9 +165,34 @@ command 离线修）。
 
 ## 增量短路（W2 已落地）
 
-事实层 SSOT 见开发仓库 `explorer/session-change-set/`；
-gates 的消费契约见开发仓库 `workunits/gates/spec/gate-change-set-consumption.md`。
-本节只保留运行时摘要。
+上游术语与事实模型见开发仓库 session-change-set 事实层记录（纯文本引用）；
+会话变更集的**消费契约以本节为 SSOT**（原始决策记录存于开发仓库
+gate-change-set-consumption spec，冻结为决策记录）。
+
+**消费契约**：
+
+- module gate 的通用形状 `check(root, changes?)` 可接收 `GateChangeSet`；
+  `runGate` / `runGates` 会把同一份 `changes` 传给每个 gate 的 `check`。
+- `GateChangeSet.paths`：精确写路径集合，当前来源是 `write` / `edit` 的
+  `file_path`。`GateChangeSet.opaque`：出现过不可定位或未知写时为 true，
+  表示 `paths` 不完整。`GateChangeSet` 是本插件的消费层类型名，
+  不是 dsh 上游内建 API。
+- command gate：stop 档有变更集时经环境变量 `GATE_CHANGES` 传入同一份 JSON；
+  manual 入口没有该变量。
+- `relevantPath` / `relevant`：只在精确脏窗口里用于逐 gate 复用上次
+  passed 结果。
+
+**脏窗口边界**：
+
+- stop 档在 `agent/turn-stopping` 里维护脏窗口，状态按 `(agent, root)` 保存；
+  每个轮末只扫描上次处理位置之后的新 session events（逐 turn 增量）。
+- 窗口语义是**自上次 clean pass 后累计**，不是「当前 turn 的临时集合」。
+  clean pass 后清空脏窗口、记录可复用的 passed 结果。
+- blocking 或 defer 失败不清空脏窗口；修复后必须真跑确认。
+- 外部编辑器和其他进程写盘不进入 session events：首轮全扫与 manual 全扫兜底，
+  不把外部写伪装成可见路径。未知工具归不透明、强制全扫（正确性优先）。
+- `paths` 只表示精确可见写，不承诺覆盖删除、移动、shell 批量生成或
+  subagent 写盘。
 
 脏状态按 **(agent, root) 二维**存，按 session event 索引增量扫；窗口是自上次 clean
 pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` 进入精确路径；
@@ -179,8 +205,8 @@ pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` �
 
 ## 归责过滤（W10 已落地）
 
-决策 ADR 0008、契约
-`workunits/gates/spec/gate-attribution-filter.md`（开发仓库）。
+决策 ADR 0008；归责过滤的契约以**本节为 SSOT**（原始决策记录存于开发仓库
+gate-attribution-filter spec，纯文本引用）。
 `doc-link` 在 stop 档仍整仓 `checkRepository`，但把结果按「是否可归责到本会话」过滤，
 只返回可归责违规——平行会话/外部编辑的中间态不进入 steer：
 
@@ -191,7 +217,7 @@ pass 后累计，不是单 turn 临时集合。`write`/`edit` 的 `file_path` �
   断掉。
 
 机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），
-政策归开发仓库的 `dsh-plugin-dev/extras/modules/markdown` 模块（`src/gate-check.ts` 的归责谓词，
+政策归本包 [markdown 模块](../../markdown/README.md)（其 `src/gate-check.ts` 的归责谓词，
 原仓库级薄 shim 已归档）。manual 入口无
 `changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个
 违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。

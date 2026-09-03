@@ -136,9 +136,8 @@ export interface GitStatusRecord {
 
 /**
  * Worktree state as `git status --porcelain -z` records (1 spawn). Renames and
- * copies carry their original path as the next NUL-separated entry. This is the
- * post-hoc repair evidence data plane (workunits/md-rename TODO
- * 20260831-posthoc-repair-mode D1 tier ①): git witnessing that an old path was
+ * copies carry their original path as the next NUL-separated entry. This is
+ * the post-hoc repair evidence data plane: git witnessing that an old path was
  * tracked and is now gone (`R old→new` staged, or `D old` in either column).
  */
 export function gitStatusPorcelain(root: string): GitStatusRecord[] {
