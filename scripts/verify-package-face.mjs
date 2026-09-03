@@ -1,95 +1,39 @@
 #!/usr/bin/env node
-// Package-level face gate for the whole @catheadowl/dsh-extras bundle.
+// Package-level face gate for a multi-row bundle package (parameterized;
+// config in scripts/verify.config.mjs `packageFace` — byte-copy propagated
+// from the gate blueprint, never edited in place at the consumer).
 //
 // One entry, one config table, every module covered:
 //   - the manifest exports face is exactly the entries owned by this table;
 //   - each composition row's loader entry (modules/<name>/src/index.ts) may
-//     only export the dsh loader contract (name/inject/Config/apply);
-//   - public consumer subentries (./gates/register, ./prompt/register,
-//     ./markdown/gate-check) are frozen by facade allowlists;
-//   - deep imports bypassing @catheadowl/dsh-extras/gates/register are forbidden
-//     across all module sources and docs.
+//     only export the dsh loader contract (config `loaderContract`);
+//   - public consumer subentries (e.g. ./gates/register) are frozen by
+//     facade allowlists (config `facadeExports`);
+//   - deep imports bypassing the public register entries are forbidden
+//     across all module sources and docs (config `forbiddenImports`).
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { resolve } from 'node:path'
 
 import { loadTypeScript } from './lib/resolve-typescript.mjs'
 import { verifyPackageFace } from './lib/package-face.mjs'
 
-const OWN_NAME = '@catheadowl/dsh-extras'
-const LOADER_CONTRACT = ['name', 'inject', 'Config', 'apply']
-
-// Public consumer entries of the bundle: subpath -> source file (relative to
-// the package root). The four module loader entries are public subpaths
-// (row-name specifiers — plugin-release 03/05); modules without an exports
-// entry simply have no row here.
-const SUBENTRIES = {
-  './gates': 'modules/gates/src/index.ts',
-  './markdown': 'modules/markdown/src/index.ts',
-  './prompt': 'modules/prompt/src/index.ts',
-  './routes': 'modules/routes/src/index.ts',
-  './gates/register': 'modules/gates/src/register.ts',
-  './prompt/register': 'modules/prompt/src/register.ts',
-  './markdown/gate-check': 'modules/markdown/src/gate-check.ts',
+export async function loadFaceConfig() {
+  const module = await import(pathToFileURL(resolve(fileURLToPath(new URL('./verify.config.mjs', import.meta.url)))).href)
+  return module.default.packageFace
 }
 
-function absoluteSubentries(root) {
-  return Object.fromEntries(Object.entries(SUBENTRIES).map(([entry, source]) => [entry, join(root, source)]))
+function absoluteSubentries(root, subentries) {
+  return Object.fromEntries(Object.entries(subentries).map(([entry, source]) => [entry, join(root, source)]))
 }
-
-// Frozen facade for the register entry: the gates API face (w12). Adding a
-// public export requires updating this list (and regenerating docs/register.md).
-const FACADE_EXPORTS = {
-  './gates/register': [
-    'registerGate',
-    'GateChangeSet',
-    'GateDefinition',
-    'GateFixer',
-    'GateFixerCommand',
-    'GateFixerSubagent',
-    'GateFixerSubagentRequest',
-    'GateLevel',
-    'GateRemedy',
-    'GateRemedyManual',
-    'GateRemedyOperation',
-    'GateResult',
-    'GateStatus',
-    'GateTrigger',
-    'GateViolation',
-  ],
-  './prompt/register': [
-    'registerPromptMiddlewareProvider',
-    'registerRelatesProvider',
-    'PromptPathKind',
-    'ResolvedPromptPath',
-    'RelatesItem',
-    'PromptRelatesContribution',
-    'PromptMiddlewareInput',
-    'PromptMiddlewareProviderMode',
-    'PromptMiddlewareProvider',
-    'PromptMiddlewareProviderEntry',
-    'RelatesResolveContext',
-    'RelatesResolveResult',
-    'DeclarativeRelatesProvider',
-    'PromptMiddlewareTraceStatus',
-    'PromptMiddlewareTraceEvent',
-    'PromptMiddlewareConfig',
-    'PromptMiddlewareRunOptions',
-    'PromptRelatesGroup',
-    'PromptMiddlewareRunResult',
-    'PromptMiddlewareProviderView',
-  ],
-}
-
-const FORBIDDEN_IMPORTS = [
-  /from\s+['"]@catheadowl\/dsh-extras(?!\/(?:gates|prompt)\/register(?:\.js)?['"])[^'"]*['"]/u,
-]
 
 // Every composition-row module with a loader entry — each is checked against
 // the loader contract; the entry being present is itself required. Nested
-// packages (own package.json, e.g. the client anchor) are separate packages,
+// packages (own package.json, e.g. a client anchor) are separate packages,
 // not rows of this bundle, and are skipped.
-function moduleEntries(root) {
-  const modulesDir = join(root, 'modules')
+function moduleEntries(root, cfg) {
+  const modulesDir = join(root, cfg.modulesDir ?? 'modules')
   const modules = existsSync(modulesDir)
     ? readdirSync(modulesDir, { withFileTypes: true })
         .filter(entry => entry.isDirectory())
@@ -97,45 +41,47 @@ function moduleEntries(root) {
         .map(entry => entry.name)
     : []
   return modules
-    .map(name => [name, join(root, 'modules', name, 'src', 'index.ts')])
+    .map(name => [name, join(root, cfg.modulesDir ?? 'modules', name, 'src', 'index.ts')])
     .filter(([, entryPath]) => existsSync(entryPath))
 }
 
-function scanPaths(root, moduleNames) {
+function scanPaths(root, cfg, moduleNames) {
   return moduleNames.flatMap(name => [
-    join(root, 'modules', name, 'src'),
-    join(root, 'modules', name, 'docs'),
+    join(root, cfg.modulesDir ?? 'modules', name, 'src'),
+    join(root, cfg.modulesDir ?? 'modules', name, 'docs'),
   ]).filter(existsSync)
 }
 
-export async function check(root) {
+export async function check(root, cfg = undefined) {
+  if (cfg === undefined) cfg = await loadFaceConfig()
   const ts = await loadTypeScript()
-  const modules = moduleEntries(root)
+  const modules = moduleEntries(root, cfg)
+  const skip = new Set(cfg.skipModules ?? [])
   const violations = []
   // One package-level pass: manifest exports face, public subentry facades,
   // forbidden deep imports across all modules.
   violations.push(...await verifyPackageFace({
     package: join(root, 'package.json'),
     rootExport: null, // bundle shape: rows load via relative subpaths
-    allowedExports: Object.keys(SUBENTRIES),
-    rootEntry: join(root, 'modules/gates/src/index.ts'),
-    rootExports: LOADER_CONTRACT,
-    subentries: absoluteSubentries(root),
-    facadeExports: FACADE_EXPORTS,
-    forbiddenImports: FORBIDDEN_IMPORTS,
-    scanPaths: scanPaths(root, modules.map(([name]) => name)),
+    allowedExports: Object.keys(cfg.subentries),
+    rootEntry: join(root, cfg.rootEntry),
+    rootExports: cfg.loaderContract,
+    subentries: absoluteSubentries(root, cfg.subentries),
+    facadeExports: cfg.facadeExports,
+    forbiddenImports: cfg.forbiddenImports,
+    scanPaths: scanPaths(root, cfg, modules.map(([name]) => name)),
     ts,
   }))
   // Per-module pass: each composition row's loader entry stays on the loader
-  // contract (the package-level pass already covered gates itself).
+  // contract (the package-level pass already covered the skipped root row).
   for (const [name, entryPath] of modules) {
-    if (entryPath === join(root, 'modules/gates/src/index.ts')) continue
+    if (skip.has(name) || entryPath === join(root, cfg.rootEntry)) continue
     violations.push(...await verifyPackageFace({
       package: join(root, 'package.json'),
       rootExport: null,
-      allowedExports: Object.keys(SUBENTRIES),
+      allowedExports: Object.keys(cfg.subentries),
       rootEntry: entryPath,
-      rootExports: LOADER_CONTRACT,
+      rootExports: cfg.loaderContract,
       subentries: {},
       ts,
     }).then(reasons => reasons.map(reason => `[${name}] ${reason}`)))
@@ -144,14 +90,13 @@ export async function check(root) {
     reason,
     remedy: {
       kind: 'manual',
-      guidance: `Keep every composition row on the dsh loader contract and expose plugin-consumer symbols only through ${OWN_NAME} public entries.`,
+      guidance: `Keep every composition row on the dsh loader contract and expose plugin-consumer symbols only through ${cfg.ownName} public entries.`,
     },
   }))
 }
 
 if (process.argv[1] !== undefined && process.argv[1].endsWith('verify-package-face.mjs')) {
   const { fileURLToPath } = await import('node:url')
-  const { resolve } = await import('node:path')
   const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
   check(root).then((violations) => {
     for (const violation of violations) console.error(violation.reason)

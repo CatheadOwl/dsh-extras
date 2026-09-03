@@ -8,10 +8,18 @@
 // No hardcoded sibling-checkout paths here: the dev repository wires the host
 // compiler in through the filesystem (node_modules/typescript junction), the
 // same convention used for the @deepseek-ai/* peer junctions.
+import { isAbsolute } from 'node:path'
+import { pathToFileURL } from 'node:url'
 export async function loadTypeScript() {
   const override = process.env.DSH_TYPESCRIPT_PATH
   if (override) {
-    return import(new URL(override, `file://${process.cwd()}/`).href)
+    // Absolute paths (the common case: an explicit pointer) must go through
+    // pathToFileURL — `new URL('D:\...')` mis-parses the drive letter as a
+    // URL scheme on Windows.
+    const href = isAbsolute(override)
+      ? pathToFileURL(override).href
+      : new URL(override, `file://${process.cwd()}/`).href
+    return import(href)
   }
   try {
     return await import('typescript')

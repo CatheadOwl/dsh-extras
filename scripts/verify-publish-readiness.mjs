@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Publish-readiness clamp for the gates package.
+// Publish-readiness clamp — parameterized engine (per-package config in
+// scripts/verify.config.mjs beside this entry; byte-copy propagated from the
+// gate blueprint, never edited in place at the consumer).
 //
 // Rules (independently publishable = host provided at runtime, everything else
 // resolvable from a public registry, docs self-contained):
@@ -7,16 +9,16 @@
 //   2. dependencies: registry ranges only — no `link:`/`file:`/`workspace:`
 //      or path specifiers, and no `@deepseek-ai/*` host packages (those are
 //      peerDependencies, provided by the dsh host at runtime).
-//   3. devDependencies may use `link:` only for host packages (`@deepseek-ai/*`);
-//      public packages must use registry ranges in every dependency field.
-//   4. import coverage: every bare specifier imported from src/ must be declared
-//      in dependencies or peerDependencies (catches e.g. `react` used by the
-//      client half but only present in devDependencies).
-//   5. docs locality: markdown links in README.md, docs/ and eval/ must stay
-//      inside the package root and must not use absolute repo paths — the
-//      published docs cannot reach the surrounding dev repository. Plain-text
-//      relative path tokens that escape the package root are rejected for the
-//      same reason (unread outside the dev repo); host checkout borrows
+//   3. devDependencies may use non-registry specifiers only for the scopes the
+//      config allows (`devDepNonRegistryScopes`: host packages and/or own
+//      dev-time packages); public packages must use registry ranges.
+//   4. import coverage: every bare specifier imported from the configured
+//      `srcDirs` must be declared in dependencies or peerDependencies.
+//   5. docs locality: markdown links in README.md and the configured
+//      `docsRoots` must stay inside the package root and must not use
+//      absolute repo paths — the published docs cannot reach the dev repo.
+//      Plain-text relative path tokens that escape the package root are
+//      rejected for the same reason; host checkout borrows
 //      (deepseek-harness paths) stay exempt as everywhere else.
 //   6. npm scripts locality: path arguments in `scripts` entries must stay
 //      inside the package root; borrowing host checkout paths (L0) is allowed.
@@ -24,27 +26,40 @@
 //      terms (ADR/RFC/PRD/SPEC ids, spec docs, dated workunit TODOs) —
 //      comments carry functional semantics, design attribution lives in the
 //      cognition layer.
-//   8. host closure membership (network, main() only): every `@deepseek-ai/*`
-//      peerDependency must appear in the dependency closure the dsh CLI ships
-//      on some npm dist-tag — being published on npm is not enough, peer
-//      resolution happens inside the consumer's installed host tree, and a
-//      peer outside every closure kills the whole plugin tree on import
-//      (0.1.0 lesson: `dsh-sdk-client` published yet absent from every
-//      `@deepseek-ai/dsh` CLI closure). Opt out with DSH_SKIP_HOST_CLOSURE=1
-//      (offline builds); a registry fetch failure fails loud for the same
-//      reason.
+//   8. host closure membership (network, opt-in via `hostClosureCheck`):
+//      every `@deepseek-ai/*` peerDependency must appear in the dependency
+//      closure the dsh CLI ships on some npm dist-tag — a peer outside every
+//      closure kills the whole plugin tree on import. Opt out for the whole
+//      run with DSH_SKIP_HOST_CLOSURE=1 (offline builds); a registry fetch
+//      failure fails loud for the same reason.
+//   9. rules seed locality (opt-in via `rulesSeed` path): the package's
+//      AGENTS.md must carry the pointer to its rules seed, and the seed must
+//      exist.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, dirname, join, relative, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const HOST_SCOPE = '@deepseek-ai/'
-const OWN_SCOPE = '@catheadowl/'
-const OWN_NAME = '@catheadowl/dsh-extras'
 const NON_REGISTRY_SPECIFIER = /^(link|file|workspace|portal|cat|patch|git\+|https?:\/\/|[A-Za-z]:\\|\/|\.\/|\.\.\/)/u
 
-function manifestRules(manifest) {
+// Per-package config: scripts/verify.config.mjs beside this entry (consumer-
+// owned, not part of the propagated face). Keys used here: ownName,
+// devDepNonRegistryScopes, layout ('modules'|'root'), srcDirs, docsRoots,
+// hostClosureCheck, rulesSeed.
+const CONFIG_PATH = new URL('./verify.config.mjs', import.meta.url)
+
+export async function loadConfig() {
+  if (!existsSync(CONFIG_PATH)) {
+    throw new Error(`missing scripts/verify.config.mjs beside this entry — the publish gate is parameterized and will not run on defaults`)
+  }
+  const module = await import(pathToFileURL(fileURLToPath(CONFIG_PATH)).href)
+  return module.default
+}
+
+function manifestRules(manifest, cfg) {
   const violations = []
   if (manifest.private === true) violations.push('package.json has "private": true — remove it before publishing')
+  const devScopes = cfg.devDepNonRegistryScopes ?? []
   for (const field of ['dependencies', 'devDependencies']) {
     for (const [name, specifier] of Object.entries(manifest[field] ?? {})) {
       if (typeof specifier !== 'string') continue
@@ -52,18 +67,20 @@ function manifestRules(manifest) {
         if (name.startsWith(HOST_SCOPE)) violations.push(`dependencies must not contain host package ${name} — move it to peerDependencies (runtime is provided by the dsh host)`)
         if (NON_REGISTRY_SPECIFIER.test(specifier)) violations.push(`dependencies.${name} uses non-registry specifier "${specifier}" — publish needs a registry range`)
       }
-      else if (NON_REGISTRY_SPECIFIER.test(specifier) && !name.startsWith(HOST_SCOPE) && !name.startsWith(OWN_SCOPE)) {
-        violations.push(`devDependencies.${name} uses non-registry specifier "${specifier}" — only @deepseek-ai/* host packages and @catheadowl/* own dev-time packages may use link:/path/git specifiers`)
+      else if (NON_REGISTRY_SPECIFIER.test(specifier) && !devScopes.some(scope => name.startsWith(scope))) {
+        violations.push(`devDependencies.${name} uses non-registry specifier "${specifier}" — only ${devScopes.join(' / ')} dev-time packages may use link:/path/git specifiers`)
       }
     }
   }
   return violations
 }
 
-// Package content roots: one per `modules/<name>/` directory (extras layout),
-// plus the bare package root when it carries sources itself (single-package
-// layout used by fixtures and forks of this engine).
-function contentRoots(root) {
+// Package content roots: layout 'modules' = one per `modules/<name>/`
+// directory (bundle layout) plus the bare package root when it carries
+// sources/scripts/README of its own; layout 'root' = the bare package root
+// (single-package layout).
+function contentRoots(root, cfg) {
+  if (cfg.layout !== 'modules') return [root]
   const modules = join(root, 'modules')
   const roots = existsSync(modules)
     ? readdirSync(modules, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => join(root, 'modules', entry.name))
@@ -103,19 +120,23 @@ function importSpecifiers(text) {
   return found
 }
 
-function importCoverage(root, declared) {
+function importCoverage(root, declared, cfg) {
   const violations = []
-  for (const contentRoot of contentRoots(root)) for (const file of collectFiles(join(contentRoot, 'src'), ['.ts', '.tsx'])) {
-    for (const specifier of importSpecifiers(readFileSync(file, 'utf8'))) {
-      if (specifier.startsWith('.') || specifier.startsWith('node:')) continue
-      const name = packageName(specifier)
-      if (name === OWN_NAME) continue
-      // Type-only bare import satisfied by an @types mapping: a type import
-      // of bare package `mdast` passes when `@types/mdast` is declared — the
-      // same NodeNext resolution the compiler performs.
-      if (declared.has(`@types/${name}`)) continue
-      if (!declared.has(name)) {
-        violations.push(`${relative(root, file).replaceAll('\\', '/')} imports ${name} but it is declared in neither dependencies nor peerDependencies`)
+  for (const contentRoot of contentRoots(root, cfg)) {
+    for (const srcDir of cfg.srcDirs ?? ['src']) {
+      for (const file of collectFiles(join(contentRoot, srcDir), ['.ts', '.tsx', '.mjs'])) {
+        for (const specifier of importSpecifiers(readFileSync(file, 'utf8'))) {
+          if (specifier.startsWith('.') || specifier.startsWith('node:')) continue
+          const name = packageName(specifier)
+          if (cfg.ownName !== undefined && name === cfg.ownName) continue
+          // Type-only bare import satisfied by an @types mapping: a type import
+          // of bare package `mdast` passes when `@types/mdast` is declared — the
+          // same NodeNext resolution the compiler performs.
+          if (declared.has(`@types/${name}`)) continue
+          if (!declared.has(name)) {
+            violations.push(`${relative(root, file).replaceAll('\\', '/')} imports ${name} but it is declared in neither dependencies nor peerDependencies`)
+          }
+        }
       }
     }
   }
@@ -125,10 +146,10 @@ function importCoverage(root, declared) {
 // Scripts are dev-time code but still part of the shipped repository: their
 // imports and new URL(...) path literals must stay inside the package root,
 // and bare imports must be node builtins or declared dependencies.
-function scriptsLocality(root, declared, extraScripts = []) {
+function scriptsLocality(root, declared, cfg, extraScripts = []) {
   const violations = []
   const entries = [
-    ...contentRoots(root).flatMap(contentRoot => collectFiles(join(contentRoot, 'scripts'), ['.mjs', '.js'])),
+    ...contentRoots(root, cfg).flatMap(contentRoot => collectFiles(join(contentRoot, 'scripts'), ['.mjs', '.js'])),
     ...extraScripts.map(extra => ({ path: join(root, extra.path), text: extra.text })),
   ]
   for (const entry of entries) {
@@ -140,7 +161,7 @@ function scriptsLocality(root, declared, extraScripts = []) {
     for (const reference of relativeRefs) {
       if (!reference.startsWith('.')) {
         const name = packageName(reference)
-        if (!reference.startsWith('node:') && name !== OWN_NAME && !declared.has(name)) {
+        if (!reference.startsWith('node:') && name !== cfg.ownName && !declared.has(name)) {
           violations.push(`${displayed} imports ${name} but it is declared in neither dependencies nor peerDependencies`)
         }
         continue
@@ -202,7 +223,7 @@ function markdownLinks(markdown) {
 // `deepseek-harness` tokens are the documented host-borrow exemption. This
 // is the only citation form mechanically separable from functional example
 // data (namespace-shaped tokens double as parser fixtures, so those stay
-// judgment-side — see extras AGENTS.md).
+// judgment-side — see the package AGENTS.md).
 function devRepoPathCitations(markdown, base, displayed, root, violations) {
   const withoutFences = markdown.replace(/```[\s\S]*?```/gu, '')
   // Whole markdown links (text + target) are removed: links have their own
@@ -220,13 +241,12 @@ function devRepoPathCitations(markdown, base, displayed, root, violations) {
   }
 }
 
-function docsLocality(root, extraMarkdown = []) {
+function docsLocality(root, cfg, extraMarkdown = []) {
   const violations = []
   const targets = [
-    ...contentRoots(root).flatMap(contentRoot => [
+    ...contentRoots(root, cfg).flatMap(contentRoot => [
       join(contentRoot, 'README.md'),
-      ...collectFiles(join(contentRoot, 'docs'), ['.md']),
-      ...collectFiles(join(contentRoot, 'eval'), ['.md']),
+      ...(cfg.docsRoots ?? ['docs']).flatMap(docsRoot => collectFiles(join(contentRoot, docsRoot), ['.md'])),
     ]),
     ...extraMarkdown.map(entry => ({ path: join(root, entry.path), text: entry.text })),
   ]
@@ -254,10 +274,10 @@ function docsLocality(root, extraMarkdown = []) {
 // Dev-repo control-plane vocabulary (decision-record ids, spec citations,
 // dated workunit TODOs) must not appear in module source code: comments there
 // carry functional semantics only, design attribution lives in the cognition
-// layer. Scanned on the code layer (modules/<m>/src) only — docs/README/eval
-// may cite dev-repo evidence as plain text, and dev-repo path namespaces
-// double as example data in prompt/routes
-// sources, so they stay out of scope. Widen the token set by evidence only.
+// layer. Scanned on the configured srcDirs of each content root only —
+// docs/README may cite dev-repo evidence as plain text, and dev-repo path
+// namespaces double as example data in prompt/routes sources, so they stay
+// out of scope. Widen the token set by evidence only.
 const META_TERMS = [
   /\b(?:ADR|RFC|PRD|SPEC)[ -]?\d+/u,
   /\bspec\s*[§:「]/u,
@@ -276,10 +296,11 @@ function commentText(text) {
   return text.split(/\r?\n/u).filter(line => COMMENT_LINE.test(line)).join('\n')
 }
 
-function metaLocality(root, extraSources = []) {
+function metaLocality(root, cfg, extraSources = []) {
   const violations = []
   const entries = [
-    ...contentRoots(root).flatMap(contentRoot => collectFiles(join(contentRoot, 'src'), ['.ts', '.tsx', '.js', '.mjs'])),
+    ...contentRoots(root, cfg).flatMap(contentRoot =>
+      (cfg.srcDirs ?? ['src']).flatMap(srcDir => collectFiles(join(contentRoot, srcDir), ['.ts', '.tsx', '.js', '.mjs']))),
     ...extraSources.map(extra => ({ path: join(root, extra.path), text: extra.text })),
   ]
   for (const entry of entries) {
@@ -375,13 +396,14 @@ export async function hostClosureViolations(manifest, options = {}) {
   return closureReasons(hostPeers, closuresByTag)
 }
 
-// PKG seed locality: the package's AGENTS.md must carry the pointer to its
-// rules seed, and the seed must exist (AGENTS never carries rule bodies —
-// the pointer is the only discovery path for the dot-dir seed).
-function rulesSeedLocality(root) {
+// PKG seed locality (config `rulesSeed`): the package's AGENTS.md must carry
+// the pointer to its rules seed, and the seed must exist (AGENTS never carries
+// rule bodies — the pointer is the only discovery path for the dot-dir seed).
+function rulesSeedLocality(root, cfg) {
   const violations = []
+  if (cfg.rulesSeed === undefined || cfg.rulesSeed === null) return violations
   const agentsPath = join(root, 'AGENTS.md')
-  const seedRel = '.agent/rules/package-independence.md'
+  const seedRel = cfg.rulesSeed
   if (!existsSync(agentsPath)) return violations
   if (!readFileSync(agentsPath, 'utf8').includes(seedRel)) {
     violations.push(`PKG-seed: AGENTS.md does not point to the rules seed (${seedRel}) — restore the pointer line`)
@@ -392,8 +414,9 @@ function rulesSeedLocality(root) {
   return violations
 }
 
-export function check(root, options = {}) {
+export function check(root, options = {}, cfg = undefined) {
   root = resolve(root)
+  if (cfg === undefined) cfg = defaultConfig()
   const manifest = options.manifestOverride ?? JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   const declared = new Set([
     ...Object.keys(manifest.dependencies ?? {}),
@@ -401,13 +424,13 @@ export function check(root, options = {}) {
     ...Object.keys(manifest.peerDependencies ?? {}),
   ])
   const reasons = [
-    ...manifestRules(manifest),
+    ...manifestRules(manifest, cfg),
     ...npmScriptsLocality(manifest, root),
-    ...importCoverage(root, declared),
-    ...scriptsLocality(root, declared, options.extraScripts),
-    ...docsLocality(root, options.extraMarkdown),
-    ...metaLocality(root, options.extraSources),
-    ...rulesSeedLocality(root),
+    ...importCoverage(root, declared, cfg),
+    ...scriptsLocality(root, declared, cfg, options.extraScripts),
+    ...docsLocality(root, cfg, options.extraMarkdown),
+    ...metaLocality(root, cfg, options.extraSources),
+    ...rulesSeedLocality(root, cfg),
   ]
   return reasons.map(reason => ({
     reason,
@@ -418,11 +441,27 @@ export function check(root, options = {}) {
   }))
 }
 
+// Sync fallback config so `check()` stays callable without awaiting
+// loadConfig() in unit tests that exercise the generic engine; production
+// entry points always pass the loaded config.
+export function defaultConfig() {
+  return {
+    ownName: undefined,
+    devDepNonRegistryScopes: ['@deepseek-ai/', '@catheadowl/'],
+    layout: 'root',
+    srcDirs: ['src'],
+    docsRoots: ['docs'],
+    hostClosureCheck: false,
+    rulesSeed: null,
+  }
+}
+
 export async function main() {
-  const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..') // extras package root
+  const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
+  const cfg = await loadConfig()
   const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
-  const violations = check(root)
-  if (process.env.DSH_SKIP_HOST_CLOSURE !== '1') {
+  const violations = check(root, {}, cfg)
+  if (cfg.hostClosureCheck === true && process.env.DSH_SKIP_HOST_CLOSURE !== '1') {
     try {
       violations.push(...await hostClosureViolations(manifest))
     }
