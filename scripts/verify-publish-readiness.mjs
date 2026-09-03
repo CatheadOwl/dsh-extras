@@ -24,6 +24,15 @@
 //      terms (ADR/RFC/PRD/SPEC ids, spec docs, dated workunit TODOs) —
 //      comments carry functional semantics, design attribution lives in the
 //      cognition layer.
+//   8. host closure membership (network, main() only): every `@deepseek-ai/*`
+//      peerDependency must appear in the dependency closure the dsh CLI ships
+//      on some npm dist-tag — being published on npm is not enough, peer
+//      resolution happens inside the consumer's installed host tree, and a
+//      peer outside every closure kills the whole plugin tree on import
+//      (0.1.0 lesson: `dsh-sdk-client` published yet absent from every
+//      `@deepseek-ai/dsh` CLI closure). Opt out with DSH_SKIP_HOST_CLOSURE=1
+//      (offline builds); a registry fetch failure fails loud for the same
+//      reason.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -286,6 +295,85 @@ function metaLocality(root, extraSources = []) {
   return violations
 }
 
+const DSH_HOST_PACKAGE = '@deepseek-ai/dsh'
+const REGISTRY = 'https://registry.npmjs.org/'
+// Browser-half peers resolve inside the prebuilt web frontend the dsh CLI
+// ships (the `dsh-client-*` packages are compiled into the frontend bundle,
+// not installed as runtime dependencies), so npm-closure membership is the
+// wrong dimension for them — rule 8 judges host-half (Node) peers only.
+const CLIENT_FACE_PEER = /^@deepseek-ai\/dsh-client-/u
+
+// Pure half of rule 8 (unit-testable, no network): given the host peers the
+// manifest declares and the per-dist-tag dependency closures of the dsh CLI,
+// a peer absent from every closure cannot be resolved inside any consumer's
+// installed host tree.
+export function closureReasons(hostPeers, closuresByTag) {
+  const violations = []
+  const tags = Object.entries(closuresByTag).map(([tag, deps]) => `${tag} (${deps.size} deps)`)
+  if (tags.length === 0) return violations
+  for (const peer of hostPeers) {
+    const covered = Object.values(closuresByTag).some(deps => deps.has(peer))
+    if (!covered) {
+      violations.push(`peerDependency ${peer} is not in any ${DSH_HOST_PACKAGE} CLI dependency closure (checked dist-tags: ${tags.join(', ')}) — a published-but-out-of-closure peer kills the whole plugin tree on import for registry consumers`)
+    }
+  }
+  return violations
+}
+
+// Network half of rule 8: transitive dependency closure of the dsh CLI per
+// dist-tag, walked breadth-first over abbreviated packuments (name-level,
+// concurrency-capped). Version pick per node: the exact version named in the
+// specifier when the registry has it (host pins publish together, so the
+// `^0.1.x-rcN` spec usually names an existing version), else the package's
+// `latest` dist-tag, else the newest known version — name-level membership is
+// the honest first-pass verdict; exact-version closure walks need a lockfile.
+export async function hostClosureViolations(manifest, options = {}) {
+  const hostPeers = Object.keys(manifest.peerDependencies ?? {}).filter(name => name.startsWith(HOST_SCOPE) && !CLIENT_FACE_PEER.test(name))
+  if (hostPeers.length === 0) return []
+  const registry = options.registry ?? REGISTRY
+  const packuments = new Map()
+  const packument = async name => {
+    if (!packuments.has(name)) {
+      const url = new URL(name.replace('/', '%2F'), registry)
+      const response = await fetch(url, { headers: { accept: 'application/vnd.npm.install-v1+json' } })
+      if (!response.ok) throw new Error(`registry fetch failed: ${response.status} ${url}`)
+      packuments.set(name, await response.json())
+    }
+    return packuments.get(name)
+  }
+  const pickVersion = (document, specifier) => {
+    const versions = document.versions ?? {}
+    const exact = specifier.replace(/^[~^]/u, '')
+    if (versions[exact] !== undefined) return exact
+    const latest = document['dist-tags']?.latest
+    if (latest !== undefined && versions[latest] !== undefined) return latest
+    return Object.keys(versions).at(-1)
+  }
+  const root = await packument(DSH_HOST_PACKAGE)
+  const closuresByTag = {}
+  for (const [tag, version] of Object.entries(root['dist-tags'] ?? {})) {
+    const deps = root.versions?.[version]?.dependencies
+    if (!deps) continue
+    const closure = new Set(Object.keys(deps))
+    const queue = Object.entries(deps)
+    while (queue.length > 0) {
+      const batch = queue.splice(0, 8)
+      const documents = await Promise.all(batch.map(([name, specifier]) => packument(name).then(document => [name, specifier, document])))
+      for (const [name, specifier, document] of documents) {
+        const picked = pickVersion(document, specifier)
+        for (const [depName, depSpecifier] of Object.entries(document.versions?.[picked]?.dependencies ?? {})) {
+          if (!closure.has(depName)) {
+            closure.add(depName)
+            queue.push([depName, depSpecifier])
+          }
+        }
+      }
+    }
+    closuresByTag[tag] = closure
+  }
+  return closureReasons(hostPeers, closuresByTag)
+}
+
 export function check(root, options = {}) {
   root = resolve(root)
   const manifest = options.manifestOverride ?? JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -311,13 +399,24 @@ export function check(root, options = {}) {
   }))
 }
 
-export function main() {
+export async function main() {
   const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..') // extras package root
+  const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   const violations = check(root)
-  for (const violation of violations) console.error(violation.reason)
+  if (process.env.DSH_SKIP_HOST_CLOSURE !== '1') {
+    try {
+      violations.push(...await hostClosureViolations(manifest))
+    }
+    catch (error) {
+      violations.push(`host closure membership check failed (${error.message}) — fix the registry access or set DSH_SKIP_HOST_CLOSURE=1 only for offline builds; a red closure check must never be silently green`)
+    }
+  }
+  for (const violation of violations) console.error(violation.reason ?? violation)
   return violations.length === 0 ? 0 : 1
 }
 
 if (process.argv[1] !== undefined && process.argv[1].endsWith('verify-publish-readiness.mjs')) {
-  process.exitCode = main()
+  main().then(code => {
+    process.exitCode = code
+  })
 }

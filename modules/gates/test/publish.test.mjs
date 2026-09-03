@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 
-import { check as checkPublishReadiness } from '../../../scripts/verify-publish-readiness.mjs'
+import { check as checkPublishReadiness, closureReasons } from '../../../scripts/verify-publish-readiness.mjs'
 
 const packageRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..') // extras package root
 
@@ -57,4 +57,23 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
   assert.doesNotMatch(reasons, /scripts\.build references/u)
   // Ordinary-noun / identifier uses of "spec" must not be flagged.
   assert.equal((reasons.match(/control-plane term/gu) ?? []).length, 3)
+})
+
+test('closure reasons flag peers absent from every dsh CLI dist-tag closure', () => {
+  const closuresByTag = {
+    latest: new Set(['@deepseek-ai/dsh-tools', '@deepseek-ai/dsh-session']),
+    alpha: new Set(['@deepseek-ai/dsh-tools', '@deepseek-ai/dsh-session', '@deepseek-ai/dsh-sdk-app']),
+  }
+  // In-closure peers pass on any tag.
+  assert.deepEqual(closureReasons(['@deepseek-ai/dsh-session'], closuresByTag), [])
+  // Published-but-out-of-closure peer (0.1.0 shape: dsh-sdk-client) is flagged
+  // with the dist-tags actually checked.
+  const violations = closureReasons(['@deepseek-ai/dsh-sdk-client'], closuresByTag)
+  assert.equal(violations.length, 1)
+  assert.match(violations[0], /peerDependency @deepseek-ai\/dsh-sdk-client is not in any @deepseek-ai\/dsh CLI dependency closure \(checked dist-tags: latest \(2 deps\), alpha \(3 deps\)\)/u)
+  // Mixed peers: only the uncovered one is flagged.
+  const mixed = closureReasons(['@deepseek-ai/dsh-tools', '@deepseek-ai/dsh-missing'], closuresByTag)
+  assert.deepEqual(mixed.map(violation => /peerDependency (\S+) /.exec(violation)?.[1]), ['@deepseek-ai/dsh-missing'])
+  // No tags resolved -> no verdicts (network half owns that failure mode).
+  assert.deepEqual(closureReasons(['@deepseek-ai/dsh-tools'], {}), [])
 })
