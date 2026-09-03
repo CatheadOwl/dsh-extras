@@ -1,5 +1,5 @@
 ---
-description: extras 包独立性 rules seed（PKG-1..5）——发布文档自包含、路径包内解析、中性示例命名空间等期望形态；生成时控制写作、评审时原样嵌入 dispatch prompt
+description: extras 包独立性 rules seed（PKG-1..9）——发布文档自包含、路径包内解析、中性示例命名空间、视角正确性等期望形态；生成时控制写作、评审时原样嵌入 dispatch prompt
 ---
 
 # extras · package-independence rules
@@ -41,6 +41,11 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
   类型语义）以**包内**为权威（模块文档自权威，开发仓对应 spec 冻结为决策
   记录）；仅决策史（为什么、演进）留开发仓。反向：模块内实现实质不得滞留
   开发仓文档。基线：should-fix。
+- **PKG-9〈provider-perspective〉**：视角正确性——承载面模块不枚举消费者
+  清单（消费者注册什么由各消费者自己的文档负责）；发布时点叙事（首发/
+  首批 lineup、升格/迁移沿革）不进活跃文档；验收示例不预设特定消费者在场。
+  探针：`grep -rnE '首发|首批|升格' <发布面>`（命中人工裁决）。基线：
+  should-fix。
 
 ## intentional-design 豁免清单（防误报；finding 引用本清单即非 finding）
 
