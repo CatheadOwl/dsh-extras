@@ -120,7 +120,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@catheadowl/dsh-eval": "file:../eval",
+    "@catheadowl/dsh-eval": "^0.1.0",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "react": "^18.2.0",

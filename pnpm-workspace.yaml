@@ -2,3 +2,6 @@ packages:
   - .
 
 autoInstallPeers: false
+
+minimumReleaseAgeExclude:
+  - '@catheadowl/dsh-eval@0.1.0'

@@ -15,7 +15,7 @@ import { defineReviewExperiment } from '@catheadowl/dsh-eval'
 const here = dirname(fileURLToPath(import.meta.url))
 const fixture = JSON.parse(readFileSync(join(here, 'fixtures.json'), 'utf8'))
 const prompt = readFileSync(join(here, 'prompt.md'), 'utf8')
-const BASE_OPTIONS = { excludeDirs: [], excludeDotEntries: true, maxFiles: 100, respectGitignore: false }
+const BASE_OPTIONS = { excludeDirs: [], excludeFiles: [], excludeDotEntries: true, maxFiles: 100, respectGitignore: false }
 
 function buildFixture(files) {
   const root = mkdtempSync(join(tmpdir(), 'any-routes-review-'))
