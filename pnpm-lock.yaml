@@ -24,6 +24,9 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
+      '@catheadowl/dsh-eval':
+        specifier: file:../eval
+        version: file:../eval
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
@@ -38,6 +41,10 @@ importers:
         version: 5.9.2
 
 packages:
+
+  '@catheadowl/dsh-eval@file:../eval':
+    resolution: {directory: ../eval, type: directory}
+    hasBin: true
 
   '@types/debug@4.1.13':
     resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
@@ -258,6 +265,8 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@catheadowl/dsh-eval@file:../eval': {}
 
   '@types/debug@4.1.13':
     dependencies:
