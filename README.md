@@ -81,8 +81,10 @@ pnpm run verify:publish-readiness  # 发布卫生校验（docs locality 等）
 
 构建借用宿主 checkout 的工具链（`deepseek-harness/node_modules/.bin` 下的
 tsc / tsdown，见 package.json scripts）——克隆本包仓库后需先准备好一份 dsh
-检出，并把 `node_modules/@deepseek-ai/*` peer 按 junction 接到宿主（Windows
-开发态的既有接线方式）。各模块的行为 eval（意图/回归用例）位于
+检出；开发期宿主 peer 解析 = 把 `node_modules/@deepseek-ai/*` 按 junction 接到
+宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态；
+重接与健康自查的配方按名引用开发仓手册 plugin-dev 07 §4.7，可执行入口
+relink-dsh-peers，要求 pwsh）。各模块的行为 eval（意图/回归用例）位于
 `modules/<m>/eval/`，框架与运行方式见各模块 eval README。
 
 ## License
