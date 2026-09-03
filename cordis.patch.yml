@@ -2,10 +2,12 @@
 # Row names: package subpath specifiers (@catheadowl/dsh-extras/<module>) for
 # the four published modules — each is a public contract (package.json
 # `exports` must declare the same subpath; see plugin-release 03/05).
-# The subagent row ships with the first release (unblocked 2026-09-03) and the
-# extras-client row is the nested client anchor: both intentionally keep
-# relative paths (bare/nested names break loader resolution — release-plan
-# experiments; subagent specifier-ization unverified, revisit opportunistically).
+# The subagent row is WITHHELD again as of 0.1.1: its runtime peer
+# @deepseek-ai/dsh-sdk-client is a host workspace-only package (dep of
+# subagent-dsh-sdk) and never appears in any dsh installation closure, so the
+# row's import kills the whole plugin tree for registry consumers (0.1.0
+# lesson, verified by clean-install smoke). Revisit when the host ships
+# dsh-sdk-client in the install closure.
 - insert:
     - id: gates
       name: '@catheadowl/dsh-extras/gates'
@@ -21,7 +23,5 @@
         renderBudgetChars: 4000
     - id: routes
       name: '@catheadowl/dsh-extras/routes'
-    - id: subagent-at
-      name: './modules/subagent/lib/index.js'
     - id: extras-client
       name: './modules/client/lib/index.js'

@@ -25,7 +25,10 @@ dsh plugin add @catheadowl/dsh-extras
 | markdown | `markdown` | `md_rename` 工具（搬移并改写 Markdown 内链）+ `doc-link` gate + 内置链接事务库 | [modules/markdown/README.md](modules/markdown/README.md) |
 | prompt | `prompt` | prompt 注入服务（declarative provider + 内置 parse/tree 库），向会话注入项目知识 | [modules/prompt/README.md](modules/prompt/README.md) |
 | routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
-| subagent | `subagent-at` | `subagent_at` 工具（带血缘的子代理定向派发，per-call `cwd`）+ `dsh-sdk-at` provider（行 id 避让宿主 `subagent`） | [modules/subagent/README.md](modules/subagent/README.md) |
+
+> subagent 模块（`subagent_at` 工具）随包携带但**未启用**：其运行时 peer
+> `@deepseek-ai/dsh-sdk-client` 是宿主 workspace 专属包，不在任何 dsh 安装闭包内，
+> 启用会使整个插件树无法加载（0.1.0 事故）。待宿主将其纳入安装闭包后启用。
 
 每个模块是 cordis 组合里的独立一行（fiber）：不共享状态，关掉任何一行，
 其余模块行为不变。
