@@ -20,7 +20,7 @@ dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 装入 profile 后的行为验收（三步）：
 
 1. 制造一个坏 Markdown 内链 → 轮末被 `doc-link` gate 拦截并续步修复；
-2. `/gates` 聚合可见全部 gate（含 `coggit-misplaced` 等插件级注册项）；
+2. `/gates` 聚合可见全部 gate（含各注册方插件注册的插件级条目）；
 3. 卸载本包（或换未装 profile）→ 曾注册过 gate 的插件照常工作（软降级）。
 
 ## 架构：两种 gate 注册形态
@@ -58,8 +58,7 @@ inject 回调必须返回 `register` 的 disposer（纯 Map 注册表的唯一�
 | `agent/turn-stopping` 驱动 | `on:'stop'` 的 blocking gate 失败即 `steer` 续步；连续阻断上限（默认 3）耗尽后降级放行 |
 
 插件级注册用**条件注入**（软依赖）：`ctx.inject(['gates'], c =>
-c.gates.register({...}))`——未装本插件时注册方照常工作。先例：
-`@catheadowl/dsh-coggit` 的 `coggit-misplaced` gate。
+c.gates.register({...}))`——未装本插件时注册方照常工作。
 
 ## gate 契约
 
@@ -73,22 +72,18 @@ reference 见 [docs/register.md](docs/register.md)（register-docs-fresh gate
 import，通用 `check(root, changes?)`）或 `command`（shell，非零退出即失败）；
 详见 [docs/adding-a-repo-gate.md](docs/adding-a-repo-gate.md)。
 
-## 首发 gate
+## gate 面归各注册方
 
-- `doc-link`（**插件级**，同包 markdown 模块注册）：Markdown 链接完整性，
-  数据面复用 markdown 模块内 links 事务库（`checkRepository`），git 扫描真实仓库全扫 < 1s；
-  通用检查（任何有 Markdown 的仓库都成立）——装一次 extras，profile 下所有工作区自动
-  获得轮末 + 手动门禁，无需每项目 shim / `gates.yml` 条目。`doc-style` 已随全自由（free-relative）废弃。
-- `coggit-misplaced`（`@catheadowl/dsh-coggit` 注册）：镜像对齐检查，数据面
-  `listMisplacedCognition()`（列出前自动 reconcile）；手挪文件即修复。
-- `md-metadata`（**插件级**，同 markdown 模块注册，`level: defer` 旁路档）：本轮被写
-  md 必须带非空 frontmatter `description`；数据面在 markdown 模块
-  `src/metadata-check.ts`，消费变更集输入。
+本插件只提供承载面，不自带任何 gate：装完后有哪些 gate，取决于装了哪些注册方
+插件与项目自己的声明——清单由各注册方的文档负责。同包 markdown 模块注册
+`doc-link` 与 `md-metadata`（见 [markdown 模块](../markdown/README.md)）；
+仓库自带检查经根 `gates.yml` 声明（见
+[docs/adding-a-repo-gate.md](docs/adding-a-repo-gate.md)）。
 
 ## 已知限制 / 后续
 
-- 调度为串行；`needs`/`after` 图与并发是演进项（抄宿主
-  `run-gates.ts` 形状）。
+- 调度为串行；`needs`/`after` 图与并发是演进项（形状对齐宿主
+  `run-gates.ts`）。
 - 增量短路已落地：上次干净通过后，无脏变更的轮末整体跳过扫描；
   轮级/gate 级运行行为见 [docs/execution-model.md](docs/execution-model.md)。
   已知边界：事件流看不见编辑器/外部进程改动，由首轮全扫 + 手动全扫兜底；
@@ -105,7 +100,7 @@ import，通用 `check(root, changes?)`）或 `command`（shell，非零退出�
 - 轮末驱动已接 `signal`（取消时未跑 gate 记 `skipped`）与 gate 级超时（防挂死命令卡住轮次关闭）；进程内 module 检查本身无法抢占中断，靠超时收敛。
 - `yaml` 是本插件自有的 registry 依赖（`^2.9.0`）；不要为它恢复指向宿主 `.pnpm` 内部路径的 `link:` 声明（发布场景不可解析，包级 `scripts/verify-publish-readiness.mjs` 会拦截）。
 - `gates-config` 是解析失败/配置冲突专用 gate 的保留 id：插件注册或项目声明同名 gate 会 fail loud；插件 gate 与项目 gate 撞名会以 `gates-config` blocking gate 暴露。
-- W8 时代的裸 id 数组（全关语义）在读取用户开关时自动迁移为两维全关。
+- 早期版本的裸 id 数组（全关语义）在读取用户开关时自动迁移为两维全关。
 
 ## 开发
 
