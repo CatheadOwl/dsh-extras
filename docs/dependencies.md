@@ -32,7 +32,6 @@ dsh 是微内核 harness：插件在 Cordis fiber 树上运行，能力以**服�
 | markdown | `ctx.tools`（`md_rename`）、`agent/turn-stopping`（doc-link gate 的 defer 档旁路） |
 | prompt | `agent/pre-step` 检查点（driver 挂载点）、Typert Remote / Web 配置面 |
 | routes | `ctx.tools`（`any_routes`）+ prompt 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
-| subagent | `ctx.subagents`（宿主委派面，per-call `cwd` 启动子运行时） |
 | client（锚点包） | Web 插槽（`settings.plugins.tab`）——聚合 §2 两个基座的 Settings Tab |
 
 这些边**朝向宿主**，随 dsh base bundle 提供，不在本包的依赖记账范围。
@@ -106,5 +105,4 @@ fiber、按行 id 单关、模块上下架走包版本更新。
 | `gates` / `markdown` / `prompt` / `routes` | 组合行 loader 入口（行名 specifier） | cordis.patch.yml | ✓ |
 
 非 exports 的对外协作形态（无需接线）：`ctx.gates` / `ctx.promptMiddleware`
-service key 软依赖（`ctx.inject` 结构类型，零 import）。subagent 无对外基座
-（用宿主 `ctx.subagents`）。
+service key 软依赖（`ctx.inject` 结构类型，零 import）。

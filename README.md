@@ -26,12 +26,6 @@ dsh plugin add @catheadowl/dsh-extras
 | prompt | `prompt` | prompt 注入服务（declarative provider + 内置 parse/tree 库），向会话注入项目知识 | [modules/prompt/README.md](modules/prompt/README.md) |
 | routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
 
-> subagent 模块（`subagent_at` 工具）随包携带但**未启用**：其运行时 peer
-> `@deepseek-ai/dsh-sdk-client` 虽公开发布于 npm，但**不在任何 dsh CLI 安装闭包内**
-> （latest 0.1.1-rc.2 与 alpha 0.1.2-alpha.5 的依赖表均已核实），启用会使整个
-> 插件树无法加载（0.1.0 事故）。待宿主将其纳入安装闭包后启用（注意其 npm
-> `latest` dist-tag 停在 `0.0.1-rc.1`，即使将来引用也需显式对准 alpha tag）。
-
 每个模块是 cordis 组合里的独立一行（fiber）：不共享状态，关掉任何一行，
 其余模块行为不变。
 
@@ -50,7 +44,7 @@ dsh plugin add @catheadowl/dsh-extras
 |---|---|
 | gates | `maxConsecutiveBlocks`（连续阻断上限，默认 3，耗尽后降级放行） |
 | prompt | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`（见下例） |
-| markdown / routes / subagent-at | 无插件配置键 |
+| markdown / routes | 无插件配置键 |
 
 ```yaml
 - id: prompt
