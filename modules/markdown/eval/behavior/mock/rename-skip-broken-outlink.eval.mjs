@@ -24,9 +24,8 @@ export default {
   },
   // This case's end state deliberately keeps a broken link; the turn-close
   // doc-link gate would splice trailing feedback steps past the script's
-  // terminal text. Disabling the gates row holds the script's last step as
-  // the final text, so finalText keeps its deterministic meaning.
-  disableRows: ['gates'],
+  // terminal text. The gates row stays disabled (package config default),
+  // holding the script's last step as the final text.
   script: {
     steps: [
       toolCallStep('md_rename', { oldPath: 'docs/guide.md', newPath: 'guide.md' }),

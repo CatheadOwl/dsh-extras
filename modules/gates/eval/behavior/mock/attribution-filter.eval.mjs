@@ -40,6 +40,10 @@ const BROKEN_B = '[broken](task-b-missing.md)\n'
 export default {
   id: 'gates-mock-attribution-filter-isolation',
   mode: 'mock',
+  // Gate-interaction case: the package config disables the gates row by
+  // default (non-git eval workspaces); an explicit empty list re-enables
+  // everything — this case EXISTS to observe the gate's steer.
+  disableRows: [],
   task: 'eval driver: write task-a.md, then finish — the repo doc-link gate must steer only that file',
   async prepare(workspace) {
     // A git repo so the doc-link scan (`git ls-files --cached --others`) has a
