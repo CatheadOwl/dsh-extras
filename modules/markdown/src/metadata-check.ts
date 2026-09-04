@@ -19,9 +19,18 @@
  * surface on their next precise write or a manual git review. A `null`
  * change set (manual `/gates` run) returns no violations: the gate is a
  * change-set consumer, not a full-repo scanner.
+ *
+ * Git-boundary exemption: the gate never reaches into another repository
+ * nested under the workspace root — a session-written Markdown file whose
+ * nearest `.git` root sits strictly below the workspace is skipped, because
+ * that content belongs to a repository keeping its own conventions (a
+ * vendored submodule's SSOT lives upstream). This mirrors the boundary the
+ * module's scan-based faces (`md_rename`, `doc-link`) already keep by asking
+ * git for the file list; this face is fed from the session event log instead,
+ * so it probes `.git` itself (see `insideNestedGitRoot`).
  */
-import { readFileSync } from 'node:fs'
-import { relative, resolve, sep } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 
 import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 
@@ -103,16 +112,49 @@ function withinRoot(rootAbs: string, target: string): boolean {
   return targetKey === rootKey || targetKey.startsWith(rootKey + sep)
 }
 
+/**
+ * Whether `targetAbs` lives inside a git repository nested *under* `rootAbs`.
+ * Walks from the file's own directory up to the workspace root looking for a
+ * `.git` entry — a directory, or the `gitdir:` file submodules and linked
+ * worktrees use — and reports "nested" only when the nearest one sits strictly
+ * below the root. A `.git` at the root itself (or none at all) keeps the file
+ * under this workspace's policy: unchanged behavior. `probe` memoizes the
+ * per-directory verdict across the paths of one change set so sibling writes
+ * pay one `existsSync` per ancestor instead of one per file.
+ */
+function insideNestedGitRoot(rootAbs: string, targetAbs: string, probe: Map<string, boolean>): boolean {
+  const rootKey = rootAbs.toLowerCase()
+  let dir = dirname(targetAbs)
+  for (;;) {
+    if (!withinRoot(rootAbs, dir)) break // defensive; the walk always reaches the root
+    // Memo keyed by the exact dir spelling: a lowercased key would let two
+    // case-distinct siblings on a case-sensitive filesystem share one verdict.
+    let hasGit = probe.get(dir)
+    if (hasGit === undefined) {
+      hasGit = existsSync(join(dir, '.git'))
+      probe.set(dir, hasGit)
+    }
+    if (hasGit) return dir.toLowerCase() !== rootKey // nested iff the .git sits strictly below the root
+    if (dir.toLowerCase() === rootKey) break // reached the root with no nested .git found
+    const parent = dirname(dir)
+    if (parent === dir) break // filesystem root guard
+    dir = parent
+  }
+  return false
+}
+
 /** Generic gate surface: check the session change set for `.md` files lacking a description. */
 export function check(root: string, changes?: GateChangeSet): GateViolation[] {
   const violations: GateViolation[] = []
   if (changes == null || !Array.isArray(changes.paths)) return violations
 
   const rootAbs = resolve(root)
+  const gitProbe = new Map<string, boolean>()
   for (const path of changes.paths) {
     if (typeof path !== 'string' || path === '' || !path.toLowerCase().endsWith('.md')) continue
     const abs = resolve(root, path)
     if (!withinRoot(rootAbs, abs)) continue
+    if (insideNestedGitRoot(rootAbs, abs, gitProbe)) continue
 
     let source: string
     try {

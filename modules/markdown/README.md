@@ -18,7 +18,7 @@ description: extras 的 markdown 模块——同一 fiber 的三个模型面：`
 |---|---|---|
 | `md_rename` 工具 | 写 integrity | 显式 `oldPath → newPath`（工作区根相对）→ `planRename` 冲突则报告拒改 / 否则 `applyRenamePlan`（`git mv` + 写回 edit） |
 | `doc-link` gate | 轮末/手动检查 | 全量 + 轮末归责过滤（只报本轮可归责文件的坏链）；gates 缺席时软加载不注册 |
-| `md-metadata` gate | 轮末/手动检查（defer） | change-set 消费：本轮被写 md 缺非空 `description` 即失败；不打断 turn，派 subagent fixer 离线补写，下轮重扫到通过 |
+| `md-metadata` gate | 轮末/手动检查（defer） | change-set 消费：本轮被写 md 缺非空 `description` 即失败；不打断 turn，派 subagent fixer 离线补写，下轮重扫到通过。**嵌套 git root 内容豁免**：最近 `.git` 祖先（目录或 `gitdir:` 文件）在 workspace 根之下的 md（vendored submodule / 独立检出）不检查——别家仓库的纪律自理，与 git-scan 面同界 |
 
 文档入口：[docs/README.md](docs/README.md)——库契约文档：[docs/links-lib.md](docs/links-lib.md)（API/边界/fork 同步义务）；gate 注册面文档：[docs/doc-link-gate.md](docs/doc-link-gate.md)。
 

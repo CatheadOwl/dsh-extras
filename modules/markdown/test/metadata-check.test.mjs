@@ -116,6 +116,62 @@ describe('md-metadata check', () => {
   })
 })
 
+describe('md-metadata nested-git exemption', () => {
+  it('skips md inside a nested git root (`.git` directory)', () => {
+    const root = fixture({ 'vendored/README.md': '# upstream repo, own conventions\n' })
+    mkdirSync(join(root, 'vendored', '.git'), { recursive: true })
+    assert.deepEqual(check(root, changes(['vendored/README.md'])), [])
+  })
+
+  it('skips md inside a nested git root declared by a `gitdir:` `.git` file', () => {
+    const root = fixture({ 'lib/sub/README.md': '# submodule checkout\n' })
+    writeFileSync(join(root, 'lib', 'sub', '.git'), 'gitdir: ../../.git/modules/sub\n')
+    assert.deepEqual(check(root, changes(['lib/sub/README.md'])), [])
+  })
+
+  it('skips md deep under a nested root while still flagging workspace md in the same change set', () => {
+    const root = fixture({
+      'vendored/deep/docs/a.md': '# nested\n',
+      'notes/b.md': '# workspace note without description\n',
+    })
+    mkdirSync(join(root, 'vendored', '.git'), { recursive: true })
+    const violations = check(root, changes(['vendored/deep/docs/a.md', 'notes/b.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'notes/b.md')
+  })
+
+  it('still flags workspace md when the root itself is the git root', () => {
+    const root = fixture({ 'README.md': '# root readme without description\n' })
+    mkdirSync(join(root, '.git'), { recursive: true })
+    const violations = check(root, changes(['README.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'README.md')
+  })
+
+  it('resolves precedence when the root is a git root and a nested git root exists below', () => {
+    const root = fixture({
+      'vendored/deep/x.md': '# nested\n',
+      'README.md': '# workspace root readme without description\n',
+    })
+    mkdirSync(join(root, '.git'), { recursive: true })
+    mkdirSync(join(root, 'vendored', '.git'), { recursive: true })
+    const violations = check(root, changes(['vendored/deep/x.md', 'README.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'README.md')
+  })
+
+  it('skips md under a nested root whose `.git` file content is not a `gitdir:` pointer', () => {
+    const root = fixture({ 'vendored/README.md': '# nested\n' })
+    writeFileSync(join(root, 'vendored', '.git'), 'unrelated content\n')
+    assert.deepEqual(check(root, changes(['vendored/README.md'])), [])
+  })
+
+  it('keeps flagging md when neither the root nor any subdirectory is a git root', () => {
+    const root = fixture({ 'docs/a.md': '# plain\n' })
+    assert.equal(check(root, changes(['docs/a.md'])).length, 1)
+  })
+})
+
 describe('md-metadata registerGate wiring', () => {
   it('registers a defer gate with a subagent fixer when the gates service is present', async () => {
     const gates = []

@@ -124,7 +124,10 @@ const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
     + 'A defer-level failure never blocks the session: the fixer is dispatched, the turn closes immediately, and '
     + 'the gate rescans at the next turn-stop until it passes. Known boundary: files produced through opaque '
     + 'tools (bash/subagents) or external editors are invisible to the session change set; they surface only '
-    + 'when later written directly by the session or caught in a manual git review.',
+    + 'when later written directly by the session or caught in a manual git review. Markdown inside a git '
+    + 'repository nested under the workspace root (a vendored submodule or any directory with its own `.git`) '
+    + 'is exempt: that content follows its own repository conventions and SSOT, the same git boundary the '
+    + 'module\'s scan-based faces (`md_rename`, `doc-link`) already keep.',
   on: ['stop', 'manual'],
   level: 'defer',
   // Incremental shortcut: only dirty .md paths can change this gate's result.
