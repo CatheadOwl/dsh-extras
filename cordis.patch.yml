@@ -1,7 +1,7 @@
 # @catheadowl/dsh-extras — one row per module, added by `- insert:`.
 # Row names: package subpath specifiers (@catheadowl/dsh-extras/<module>) for
 # the four published modules — each is a public contract (package.json
-# `exports` must declare the same subpath; see plugin-release 03/05).
+# `exports` must declare the same subpath).
 - insert:
     - id: gates
       name: '@catheadowl/dsh-extras/gates'

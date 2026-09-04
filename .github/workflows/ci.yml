@@ -1,0 +1,35 @@
+# CI for @catheadowl/dsh-extras
+#
+# Target-state pipeline. Two build-face prerequisites are tracked in the
+# release plan and activate here once they land:
+#   1. host-borrow retirement — `build:*` currently borrows tsc/tsdown from a
+#      dsh host checkout (`deepseek-harness/node_modules/.bin`); until the
+#      toolchain becomes a devDependency, the build step needs that checkout
+#      wired next to this repo.
+#   2. the module unit tests run against built `lib/` output.
+# The verify gates (package face / publish readiness / README i18n pairing) and
+# the release-hygiene checks run on every push once the build face is wired.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --no-frozen-lockfile
+      # Release hygiene + bilingual README pairing (no host checkout needed):
+      - run: pnpm verify:publish-readiness
+      - run: pnpm verify:readme-i18n
+      # Build + per-module tests require the host-borrow wiring (see header);
+      # they are part of the target pipeline and run once that lands:
+      # - run: pnpm build
+      # - run: pnpm test:gates && pnpm test:markdown && pnpm test:prompt && pnpm test:routes
+      # - run: pnpm verify:package-face

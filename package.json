@@ -37,6 +37,8 @@
   },
   "files": [
     "cordis.patch.yml",
+    "README.zh.md",
+    "THIRD_PARTY_NOTICES.md",
     "docs/**/*.md",
     "modules/*/lib/**/*.js",
     "modules/*/lib/**/*.d.ts",
@@ -80,7 +82,8 @@
     "check-types:client": "..\\..\\deepseek-harness\\node_modules\\.bin\\tsc.cmd --noEmit -p modules/client/tsconfig.check.json",
     "verify:package-face": "node scripts/verify-package-face.mjs",
     "verify:publish-readiness": "node scripts/verify-publish-readiness.mjs",
-    "prepack": "pnpm run build && pnpm run verify:package-face && pnpm run verify:publish-readiness"
+    "verify:readme-i18n": "node scripts/verify-readme-i18n.mjs",
+    "prepack": "pnpm run build && pnpm run verify:package-face && pnpm run verify:publish-readiness && pnpm run verify:readme-i18n"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",

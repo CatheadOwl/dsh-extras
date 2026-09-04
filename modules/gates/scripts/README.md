@@ -4,7 +4,7 @@ description: gates 自举校验脚本说明——包级共享引擎（extras/scr
 
 # scripts/
 
-gates 的**自举校验薄入口**。自 ADR 0001（开发仓库 `workunits/extras/ADR/0001-package-level-bootstrap-gates.md`，纯文本引用）起，通用引擎与包级 gate 上移到包根 `dsh-plugin-dev/extras/scripts/`，本目录只保留 gates 专属的两个入口。它们是项目开发资产，不进入发布包运行时（根 `package.json` 的 `files` 只含 `modules/*/` 产物）。
+gates 的**自举校验薄入口**。自「extras 包级自举 gates」的原始决策记录（ADR 按名，存于开发仓库）定下分层起，通用引擎与包级 gate 上移到包根 `dsh-plugin-dev/extras/scripts/`，本目录只保留 gates 专属的两个入口。它们是项目开发资产，不进入发布包运行时（根 `package.json` 的 `files` 只含 `modules/*/` 产物）。
 
 ## 目录结构
 
@@ -63,6 +63,6 @@ check(root) => [{ reason: string, remedy: { kind: 'manual', guidance: string } }
 
 ## 参考
 
-- 包级化决策与适用性规则：开发仓库 `workunits/extras/ADR/0001-package-level-bootstrap-gates.md`（纯文本引用，不随包发布解析）。
+- 包级化决策与适用性规则：extras 包级自举 gates 的原始决策记录（ADR 按名，存于开发仓库）。
 - 宿主项目的对应实践（docs 生成与漂移校验、package 入口校验）见开发仓库 `deepseek-harness/docs/AGENTS.md` 与 `deepseek-harness/docs/development.md`（纯文本引用）。
 - gate 机制本身（`gates.yml` module 形态、`check(root)` 契约）见 [../docs/adding-a-repo-gate.md](../docs/adding-a-repo-gate.md)。

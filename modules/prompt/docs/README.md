@@ -8,3 +8,4 @@ description: prompt 模块文档导航入口——注入契约、注册消费面
 - [register](register.md) —— 插件消费面（`@catheadowl/dsh-extras/prompt/register`）注册示例与公共 API reference
 - [parse](parse.md) —— prompt-parse 解析库契约
 - [tree](tree.md) —— workspace-tree 目录枚举库契约（vendored `ignore`）
+- [development](development.md) —— 维护指南：本机命令、组合测试前置
