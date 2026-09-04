@@ -8,7 +8,7 @@ description: gates 插件维护指南——消费面变更、构建与测试阶�
 
 修改 `package.json` exports、root entry、`src/register.ts`、`gates_run` schema 或 client 入口时，先更新 [register.md](register.md) 与对应测试，再重建产物。root entry 只保留 `name`、`inject`、`Config`、`apply`；新增公共类型必须从 `src/register.ts` 导出并由 generated reference 覆盖。
 
-依据：宿主 package 入口与 NodeNext consumer 校验见开发仓库 `deepseek-harness/docs/development.md`；插件消费面规则见外部开发笔记（11-plugin-consumer-face）。
+依据：宿主 package 入口与 NodeNext consumer 校验见开发仓库 `deepseek-harness/docs/development.md`；插件消费面规则见外部开发笔记（plugin-consumer-face，名称引用）。
 
 ## 构建与测试
 
@@ -23,7 +23,7 @@ node --test --test-isolation=none <package.json test 列出的文件>
 node scripts/register-reference.mjs --write
 ```
 
-组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（W10 用例 import 其 lib/gate-check.js 构建产物）；不在 `pnpm verify` 内，新克隆 / 非本机不可跑：
+组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（有用例 import 其 `lib/gate-check.js` 构建产物）；不在 `pnpm verify` 内，新克隆 / 非本机不可跑：
 
 ```powershell
 node --test --test-isolation=none test/composition.test.mjs
@@ -55,4 +55,4 @@ junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份�
 - `gates_run` 是模型可见公共面；schema、输出与描述按 agent tool 契约维护。
 - root implementation exports 已移除，不添加兼容 alias。
 
-依据：宿主模型工具契约见开发仓库 `deepseek-harness/docs/cookbook/adding-a-tool.md`；测试选择见外部开发笔记（12-plugin-consumer-face-test-sop）。
+依据：宿主模型工具契约见开发仓库 `deepseek-harness/docs/cookbook/adding-a-tool.md`；测试选择见外部开发笔记（plugin-consumer-face-test-sop，名称引用）。

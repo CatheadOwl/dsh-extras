@@ -71,16 +71,16 @@ pnpm run test:prompt    # 库(parse/tree) + 框架 + wire + client-storage
 cd modules\prompt ; node --test --test-isolation=none test/composition.test.mjs
 ```
 
-## 模块内库（原纯库吸收）
+## 模块内库
 
 文档入口：[docs/README.md](docs/README.md)。
 
-- `src/parse/`（原 `@catheadowl/dsh-prompt-parse`）：fuzzy/parse/resolve 纯库，契约文档 [docs/parse.md](docs/parse.md)；
-- `src/tree/`（原 `@catheadowl/dsh-workspace-tree`）：gitignore-aware 枚举（vendored `ignore`），契约文档 [docs/tree.md](docs/tree.md)。两库不再单独发布（抽取规则：第二个外部消费者出现时再抽）。
+- `src/parse/`：fuzzy/parse/resolve 纯库，契约文档 [docs/parse.md](docs/parse.md)；
+- `src/tree/`：gitignore-aware 枚举（vendored `ignore`），契约文档 [docs/tree.md](docs/tree.md)。两库不再单独发布（抽取规则：第二个外部消费者出现时再抽）。
 
 ## 边界
 
-- `src/parse` 是模块内纯库，不升格为插件（吸收自原 prompt-parse 包）。
+- `src/parse` 是模块内纯库，不作为插件形态提供。
 - `ctx.fileReferences` 仍是 host/file candidate seam，不被替代。
 - breadcrumb-description 已由 extras 的 routes 模块经 `registerRelates` 声明式落地（`createBreadcrumbDescriptionProvider` / `resolveBreadcrumbPath`）。声明式契约见 [docs/contract.md](docs/contract.md)。
 - v0 不做 prompt rewrite / blocking / provider 注册参数编辑 UI（priority / kind / mode 在配置面只读展示，编辑是另一个问题域）。provider 开关配置面已落地（见上文）。

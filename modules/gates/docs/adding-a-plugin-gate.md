@@ -10,9 +10,9 @@ description: 插件通过 registerGate 注册 gate 的配方——@catheadowl/ds
 
 公共 import、类型与 generated API 表见 [register](register.md)。本页保留任务配方与验证步骤。
 
-1. **硬包依赖 + 软服务依赖**：`package.json` 的 `dependencies` 声明 `@catheadowl/dsh-extras`（`link:` 同层 gates），import `{ registerGate } from '@catheadowl/dsh-extras/gates/register'`（ADR 0003 硬导入面，取代早期的结构 `*Like` 镜像 + 手写 `ctx.inject` + `declare module` 仪式）。`registerGate` 内部走 `ctx.inject(['gates'], …)` 条件注入——profile 未装 gates 时你的插件照常加载、只是不注册。**禁止**把 `gates` 写进插件自己的硬 `inject` 数组。
+1. **硬包依赖 + 软服务依赖**：`package.json` 的 `dependencies` 声明 `@catheadowl/dsh-extras`（`link:` 同层 gates），import `{ registerGate } from '@catheadowl/dsh-extras/gates/register'`（硬导入面，设计记录，开发仓名称引用，取代早期的结构 `*Like` 镜像 + 手写 `ctx.inject` + `declare module` 仪式）。`registerGate` 内部走 `ctx.inject(['gates'], …)` 条件注入——profile 未装 gates 时你的插件照常加载、只是不注册。**禁止**把 `gates` 写进插件自己的硬 `inject` 数组。
 2. **类型面只 import type**：`GateDefinition` / `GateViolation` 等从 `@catheadowl/dsh-extras/gates/register` **type-only** import（编译期擦除），运行时只留 `registerGate` 一个符号——两个包各自独立编译，不互相捆绑。
-3. **disposer 由 `registerGate` 接进 fiber 生命周期**：`registerGate` 把 `register` 的 disposer 作为 `ctx.inject(['gates'], …)` 回调的返回值交还 Cordis fiber（fiber 卸载时自动清理；gates 注册表是纯 Map、无 effect 跟踪，disposer 是**唯一**回滚通道）。若手写 `ctx.inject` 仪式（早期形态），丢弃回调返回值 → 热重载重名报错、卸载后 gate 永久残留（有 repro 实证，见会议纪要 Q4/code review 记录）。
+3. **disposer 由 `registerGate` 接进 fiber 生命周期**：`registerGate` 把 `register` 的 disposer 作为 `ctx.inject(['gates'], …)` 回调的返回值交还 Cordis fiber（fiber 卸载时自动清理；gates 注册表是纯 Map、无 effect 跟踪，disposer 是**唯一**回滚通道）。若手写 `ctx.inject` 仪式（早期形态），丢弃回调返回值 → 热重载重名报错、卸载后 gate 永久残留。
 
 ## 模板（照抄改三处）
 
@@ -61,8 +61,5 @@ export function apply(ctx: Context): void {
 
 ## 实例
 
-- `coggit-misplaced`（coggit 插件 `src/gates.ts`）：镜像对齐检查，数据面 `listMisplacedCognition()`，remedy manual（registry reconcile-on-read 保证手挪无漂移）。
-- `doc-link`（同包 markdown 模块）：**通用** Markdown 链接完整性 gate——数据面是 markdown 模块内 links 事务库，插件只持有政策（rationale / level / `relevantPath` / W10 归责谓词）。这是「仓库级 → 插件级」升格样板：检查本身项目无关，装一次、整个 profile 的所有工作区自动获得门禁（原每项目 `gates.yml` `module:` 薄 shim 已归档；需要仓库级声明时可把 `module:` 指向本插件的 `./markdown/gate-check` 面）。
-- `md-metadata`（同模块 `src/metadata-check.ts` + `src/index.ts`）：**defer + subagent fixer** 的插件级样板——会话被写 md 必须带非空 frontmatter `description`；检查是 change-set 消费者（`changes` 为 null 直接放行），修复是语义判断故派子 agent 离线写。原仓库级数据面（根 `gates.yml` 的 `module:` 条目）已撤，声明随定义一起进包。
-
-完整 evidence 与验收预期见会议纪要 `case-2-coggit-misplaced`。
+- `doc-link`（同包 markdown 模块）：**通用** Markdown 链接完整性 gate——数据面是 markdown 模块内 links 事务库，插件只持有政策（rationale / level / `relevantPath` / 归责谓词，见 [execution-model](execution-model.md) 的归责过滤节）。检查本身项目无关，装一次、整个 profile 的所有工作区自动获得门禁；需要仓库级声明时可把 `module:` 指向本插件的 `./markdown/gate-check` 面。
+- `md-metadata`（同模块 `src/metadata-check.ts` + `src/index.ts`）：**defer + subagent fixer** 的插件级样板——会话被写 md 必须带非空 frontmatter `description`；检查是 change-set 消费者（`changes` 为 null 直接放行），修复是语义判断故派子 agent 离线写。仓库级声明随定义一起进包。

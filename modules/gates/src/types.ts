@@ -88,7 +88,7 @@ export interface GateResult {
 }
 
 /**
- * Session-recorded change set handed to a gate's `check` (the W2 dirt window,
+ * Session-recorded change set handed to a gate's `check` (the incremental dirt window,
  * exposed as an input rather than only an internal shortcut hint). `paths` are
  * precise writes from `write`/`edit` tool calls since the last clean pass;
  * `opaque` is true when any unknown/possibly-writing tool ran, in which case
@@ -116,7 +116,7 @@ export interface GateDefinition {
   /** Hard cap for one check run; the runner fails the gate on expiry. */
   timeoutMs?: number
   /**
-   * Optional relevance matcher for the incremental shortcut (W2): on a turn
+   * Optional relevance matcher for the incremental shortcut: on a turn
    * whose only dirt is precise paths, a gate whose matcher matches none of
    * them may reuse its last passed result. Absent matcher = always rescan.
    */

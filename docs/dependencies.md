@@ -73,7 +73,7 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
 
 ## 5. 消费面 × exports 对账（public contract 清单）
 
-包的对外消费面（`exports` 子路径）与消费者对账——**新增模块或新增对外基座时必须过这张表**（接线三处同改：`exports` + `scripts/verify-package-face.mjs` 的 SUBENTRIES / FACADE_EXPORTS + 所属模块 README；命名遵循模块前缀语法，设计记录见 ADR 0003，开发仓名称引用）。
+包的对外消费面（`exports` 子路径）与消费者对账——**新增模块或新增对外基座时必须过这张表**（接线三处同改：`exports` + `scripts/verify-package-face.mjs` 的 SUBENTRIES / FACADE_EXPORTS + 所属模块 README；命名遵循模块前缀语法，设计记录见开发仓库，名称引用）。
 
 | 消费面 | 类别 | 消费者 | 状态 |
 |---|---|---|---|

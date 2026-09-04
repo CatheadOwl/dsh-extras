@@ -17,7 +17,7 @@ description: gates 插件的运行时执行模型：stop/manual 触发时机、b
 
 `stop` 档挂在每个轮末，但四层过滤保证"平时无察觉"：
 
-1. **增量短路**（W2）：上次干净通过后，本轮无脏变更 → 整个扫描跳过；
+1. **增量短路**：上次干净通过后，本轮无脏变更 → 整个扫描跳过；
 2. 只跑 `on` 含 `stop` 的 gate；
 3. 全通过 → 静默返回，零输出、零续步；
 4. 仅 `level: 'blocking'` 的失败会阻断（见下）。
@@ -81,11 +81,11 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 
 **递归护栏**：fixer 子 agent 继承父 preset（含 gates），它自己轮末也会跑 gate；`maxDepth: 1` 把子限制为深度 1——子再派孙（深度 2）会被 `SubagentDepthError` 拒绝、落快照兜底，不会无限套娃。子自己跑 gate 是低成本自校验：修对了其 gate 通过。
 
-**当前边界（缺口）**：消费面缺口与 fixer「多次失败降级/冷却」均跟踪于开发仓库 workunit TODO（gate-consumption-surface、gate-fixer-cooldown）。另外 `level` 词汇表在插件加载时定死：加 `level: defer` 需重启 host（`gates.yml` 本身按 mtime 热读不受此限）。
+**当前边界（缺口）**：多次失败降级/冷却与部分消费面缺口为已知边界，暂未实现。另外 `level` 词汇表在插件加载时定死：加 `level: defer` 需重启 host（`gates.yml` 本身按 mtime 热读不受此限）。
 
 ## 结果归宿
 
-gates 是无状态插件。每轮重评估即唯一 truth source，defer/advisory 失败记录在进程内脏状态（`state.dirt` / `state.blocks`），下一轮重扫时自愈。不写 session event，不写文件台账。ADR 0007 决策 1/2 已降级（详见该 ADR 勘误）。
+gates 是无状态插件。每轮重评估即唯一 truth source，defer/advisory 失败记录在进程内脏状态（`state.dirt` / `state.blocks`），下一轮重扫时自愈。不写 session event，不写文件台账。
 
 ## 反馈形状
 
@@ -109,7 +109,7 @@ Violations:
 
 gate 的 `check` **只读**：只检测与报告，不亲自修。修复在外部三选一：模型按指引手改（blocking）、operation 指向的 tool、或 `fixer`（defer 档派 subagent 或 command 离线修）。
 
-## 增量短路（W2 已落地）
+## 增量短路
 
 上游术语与事实模型见开发仓库 session-change-set 事实层记录（纯文本引用）；会话变更集的**消费契约以本节为 SSOT**（原始决策记录存于开发仓库 gate-change-set-consumption spec，冻结为决策记录）。
 
@@ -133,20 +133,20 @@ gate 的 `check` **只读**：只检测与报告，不亲自修。修复在外�
 
 `GateChangeSet` 只在 stop 档提供给 `check(root, changes?)`；command gate 通过 `GATE_CHANGES` 读取同一份 JSON。`gates_run` / `/gates` 永远全扫，不传 `changes`，也不回写轮末脏状态。
 
-## 归责过滤（W10 已落地）
+## 归责过滤
 
-决策 ADR 0008；归责过滤的契约以**本节为 SSOT**（原始决策记录存于开发仓库 gate-attribution-filter spec，纯文本引用）。`doc-link` 在 stop 档仍整仓 `checkRepository`，但把结果按「是否可归责到本会话」过滤，只返回可归责违规——平行会话/外部编辑的中间态不进入 steer：
+归责过滤的契约以**本节为 SSOT**（原始决策记录存于开发仓库 gate-attribution-filter spec，纯文本引用）。`doc-link` 在 stop 档仍整仓 `checkRepository`，但把结果按「是否可归责到本会话」过滤，只返回可归责违规——平行会话/外部编辑的中间态不进入 steer：
 
 - `opaque → 全算`：本轮出现不透明写（`bash`/`md_rename`/subagent，删除/移动都走这里），违规全算本会话（fail-closed）；
 - `source ∈ 精确写集合`：本会话精确写的源文件留下断链；
 - `target ∈ 精确写集合`：本会话精确写了目标文档（改了标题），别处链向它的 `#fragment` 断掉。
 
-机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），政策归本包 [markdown 模块](../../markdown/README.md)（其 `src/gate-check.ts` 的归责谓词，原仓库级薄 shim 已归档）。manual 入口无 `changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。
+机制归 md-links（`checkRepository` 的可选 `include` 谓词缝 + `canonicalPath` 规范路径），政策归本包 [markdown 模块](../../markdown/README.md)（其 `src/gate-check.ts` 的归责谓词）。manual 入口无 `changes` → 不过滤 → 整仓全量，即「阶段性清理」快照。驱动层零改动：`check` 少返回几个违规，`collectBlockingFailures` + 预算状态机的 steer 自然跟着少。
 
 ## 成本模型
 
 - 无脏轮末：短路生效，开销为增量事件扫描（目标 <5ms）；
-- 实测参考（全扫时）：`doc-sync` 全仓 ~0.7s、`coggit-misplaced` ~0.3s；
+- 实测参考（全扫时）：同类整仓扫描 gate ~1s 量级、轻量 gate ~0.3s 量级；
 - 违规列表注入模型时截断为前 20 条（`...and N more`）；command 输出截断为 4000 字符。
 
 ## 与 hooks 子系统的关系

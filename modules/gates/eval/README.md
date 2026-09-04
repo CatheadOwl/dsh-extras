@@ -4,7 +4,7 @@ description: gates 的 agent-eval 行为 case——behavior mock 层用单 agent
 
 # gates · eval
 
-gates 只有一个 behavior mock case：把 W10 归责过滤的「driver 级 steer」断言下沉到 eval behavior 层。host 级并行隔离测试仍在 [`test/composition.test.mjs`](../test/composition.test.mjs)；本 case 用**单 agent 等价形** 在 headless CLI 里复现同一核心性质。
+gates 只有一个 behavior mock case：把归责过滤的「driver 级 steer」断言下沉到 eval behavior 层。host 级并行隔离测试仍在 [`test/composition.test.mjs`](../test/composition.test.mjs)；本 case 用**单 agent 等价形** 在 headless CLI 里复现同一核心性质。
 
 ## case
 
@@ -39,7 +39,7 @@ pnpm run eval:gates
 
 ## 覆盖边界
 
-单 agent 等价形覆盖 spec 测试基准第 7 条（开发仓库 `workunits/gates/spec/gate-attribution-filter.md`）的核心性质（`source ∈ W` + 隔离）。归责过滤其余子句各有 `composition.test.mjs` 的 driver 级兜底：
+单 agent 等价形覆盖 spec 测试基准第 7 条（开发仓库 gate-attribution-filter spec，名称引用）的核心性质（`source ∈ W` + 隔离）。归责过滤其余子句各有 `composition.test.mjs` 的 driver 级兜底：
 
 - **真并发**（两 agent 同写一个工作树）——`composition.test.mjs` 已覆盖；归责过滤是 `(工作树, 变更集) → steer 集` 纯函数，并发不是机制。
 - **`opaque → true` 子句**——`composition.test.mjs` 有「不透明工具全 steer」driver 测。

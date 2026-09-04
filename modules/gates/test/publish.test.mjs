@@ -30,6 +30,11 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
     extraMarkdown: [
       { path: 'docs/escape.md', text: '[spec](../../../workunits/gates/spec/gate-fixer.md) and [abs](/deepseek-harness/docs) plus plain-text `../../../workunits/gates/TODO/x.md`' },
       { path: 'docs/inside.md', text: 'see `../README.md` (exists in-package) — must not be flagged' },
+      // Docs meta locality fixture: control-plane ids and lineage verbs in
+      // published docs are PKG-6/PKG-9 violations; accepted by-name
+      // provenance (no ids, no lineage verbs) and inline-code citations must
+      // stay unflagged.
+      { path: 'docs/meta-leak.md', text: '决策 ADR 0007；（W2）已落地；跟踪于 workunit TODO；原仓库级薄 shim 已归档。Accepted: original design record, by name（原始决策记录，纯文本引用）；inline `workunits/gates/spec/x.md` and fenced ```ADR 0008``` stay legal.\n' },
     ],
     extraScripts: [
       { path: 'scripts/escape.mjs', text: "import { x } from '../../handbooks/dsh-plugin-dev/scripts/verify-package-face.mjs'\nconst ts = new URL('../../../deepseek-harness/node_modules/typescript/lib/typescript.js', import.meta.url)\nimport yaml from 'yaml'" },
@@ -55,10 +60,16 @@ test('publish-readiness gate catches non-registry dependencies and escaping doc 
   assert.doesNotMatch(reasons, /devDependencies\.@catheadowl\/dsh-eval/u)
   assert.match(reasons, /devDependencies\.left-pad uses non-registry specifier/u)
   assert.match(reasons, /modules\/x\/src\/leak\.ts cites control-plane term/u)
+  // Docs meta locality: one violation per matching term pattern (3×PKG-6 + 1×PKG-9).
+  assert.match(reasons, /PKG-6: docs\/meta-leak\.md cites control-plane term .* in published docs/u)
+  assert.match(reasons, /PKG-9: docs\/meta-leak\.md cites control-plane term .* in published docs/u)
+  assert.equal((reasons.match(/docs\/meta-leak\.md cites control-plane term/gu) ?? []).length, 4)
   // L0 host borrows must NOT be flagged (documented exception).
   assert.doesNotMatch(reasons, /scripts\.build references/u)
   // Ordinary-noun / identifier uses of "spec" must not be flagged.
-  assert.equal((reasons.match(/control-plane term/gu) ?? []).length, 3)
+  // (Scoped per fixture file — the real package face has its own count that
+  // shrinks as actual violations are fixed, and the first test vouches for it.)
+  assert.equal((reasons.match(/leak\.ts cites control-plane term/gu) ?? []).length, 3)
 })
 
 test('closure reasons flag peers absent from every dsh CLI dist-tag closure', () => {

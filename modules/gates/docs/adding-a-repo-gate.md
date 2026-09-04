@@ -91,9 +91,9 @@ gates:
 
 ## 实例与教学示例
 
-「仓库级 → 插件级」已发生两次：`doc-link`（2026-08-30）与 `md-metadata`（2026-09-02）均升格为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate（见 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级声明会与插件 gate 撞名（重名注册即报错），本仓库根 `gates.yml` 因此当前无条目。
+`doc-link` 与 `md-metadata` 均已作为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate 提供（见 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级声明会与插件 gate 撞名（重名注册即报错）。
 
-module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是它升格前的仓库级原样（`check(root, changes?)` 的导出形状、defer + subagent fixer 的声明语法），**完整可跑的参考实现**在同包 [`examples/md-metadata/module-form.mjs`](../examples/md-metadata/module-form.mjs)（冻结标本：原仓库级数据面原样迁入，不随活代码演进；活的数据面在 markdown 模块 `src/metadata-check.ts`，插件级注册见其 `src/index.ts`）。要为自己的仓库声明等价检查时，把标本拷进仓库、`module:` 指过去，并换一个不撞名的 `id`。
+module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是仓库级声明原样（`check(root, changes?)` 的导出形状、defer + subagent fixer 的声明语法），**完整可跑的参考实现**在同包 [`examples/md-metadata/module-form.mjs`](../examples/md-metadata/module-form.mjs)（冻结标本：仓库级数据面原样迁入，不随活代码演进；活的数据面在 markdown 模块 `src/metadata-check.ts`，插件级注册见其 `src/index.ts`）。要为自己的仓库声明等价检查时，把标本拷进仓库、`module:` 指过去，并换一个不撞名的 `id`。
 
 `gates.yml` 解析失败时不会静默：会以一个专用 `gates-config` blocking gate 报错，驱动修复配置文件本身。
 
@@ -109,4 +109,4 @@ module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片�
 
 - **module 受 Node import 缓存**：会话期间改 gate 模块不生效，需重启（`gates.yml` 本身不受此限，按 mtime 重载）。
 - 慢检查优先优化自身或声明 `relevant`（精确脏轮可跳过无关检查，无脏轮整体短路）；仍慢则调 `level: advisory`。
-  增量短路已落地（W2），见 [execution-model.md](execution-model.md)。
+  增量短路已实现，见 [execution-model.md](execution-model.md)。

@@ -51,7 +51,7 @@ const paths = mentions.flatMap((m) => m.resolved)
 |---|---|---|
 | project-root 相对（裸格式） | `guides`、`notes/md-fabric` | 尾段匹配 + 裸词深度限定 + 歧义阈值（猜词机制） |
 | 根锚定（`/` 前缀，agent 引用根锚，术语辨析见 Root-relative path 设计记录（外部开发笔记，名称引用）） | `/notes/md-fabric`、`/README.md` | **根锚定精确整段**：`/README.md` 只命中根级 `README.md`（全仓同名不再是障碍），`/md-fabric` 在根级不存在时 `total=0`（诚实信号，不尾段回退、不去扩展名） |
-| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@notes/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（决策出处 ADR 0004，名称引用），同一根锚定精确整段 |
+| 根锚定（`@` 前缀，宿主 GUI workspace 引用，SSOT `FILE_REFERENCE_PROMPT`） | `@notes/md-fabric/`、`@README.md`、`@"docs/design notes.md"` | 与 `/` 拼写等价：`@` 在归一化折算为 `/`（决策出处见开发仓库（名称引用）），同一根锚定精确整段 |
 
 `candidatePaths`（project 路径列表，**文件 + 目录**）由消费者提供；本库不做文件系统扫描。目录候选建议带尾斜杠（`guides/`），这样尾斜杠 specifier（`kind:'dir'`）才能只取目录；否则回退全树（尽力而为）。附带：裸词 `guides` 去扩展名副作用仍会命中同名文件 `guides.md`。
 

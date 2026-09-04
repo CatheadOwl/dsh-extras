@@ -31,7 +31,10 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
   release-plan（纯文本引用）。本条是 PKG-1/2 的显式豁免，不是独立要求。
 - **PKG-6〈no-control-plane-narrative〉**：包内文档不承载开发仓控制面叙事
   （状态板、TODO/roadmap、评审运行记录、workunit 故事）与开发仓专属操作
-  指示；引用开发仓证据只写名字。基线：should-fix。
+  指示；引用开发仓证据只写名字（不带 id 与控制面词汇）。
+  探针：`pnpm run verify:publish-readiness`（源码注释域 META_TERMS + 发布
+  文档域 DOC_META_TERMS——ADR/RFC/PRD id、W 线 id、workunit 引用）。
+  基线：should-fix。
 - **PKG-7〈no-committed-artifacts〉**：构建/运行产物不入 git——`lib/`、
   `eval/.runs/`、`*.tgz`、sourcemap，以及编译器**就地发射**到 `src/` 的
   `.js`/`.d.ts`（绕过 `lib/` 形态 ignore 规则的变体）均按 ignore 策略排除。
@@ -44,8 +47,9 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
 - **PKG-9〈provider-perspective〉**：视角正确性——承载面模块不枚举消费者
   清单（消费者注册什么由各消费者自己的文档负责）；发布时点叙事（首发/
   首批 lineup、升格/迁移沿革）不进活跃文档；验收示例不预设特定消费者在场。
-  探针：`grep -rnE '首发|首批|升格' <发布面>`（命中人工裁决）。基线：
-  should-fix。
+  探针：`pnpm run verify:publish-readiness`（docs 域沿革动词 DOC_META_TERMS：
+  升格/已归档/原仓库级/薄 shim）+ `grep -rnE '首发|首批' <发布面>`（命中
+  人工裁决）。基线：should-fix。
 
 ## intentional-design 豁免清单（防误报；finding 引用本清单即非 finding）
 
@@ -57,4 +61,7 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
 - `eval/` 目录刻意不随包发布（`files` 不含）；引用它的文档必须纯文本化；
 - subagent/client 行保持相对路径 specifier（specifier 化未验证）；
 - dev-time 宿主 checkout/junction 接线是 host-borrow 例外（见 PKG-5）；
-- gates README 保留命名沿革注记（旧称对照），是刻意教学。
+- gates README 保留命名沿革注记（旧称对照），是刻意教学；
+- 「原始决策记录存于开发仓库…（纯文本引用）/ 名称引用」类出处句式是
+  PKG-6/PKG-8 的接受形态——豁免条件是不带决策记录 id 与沿革动词；
+  fenced 代码块与内联代码里的 token（fixture/标识符）由探针豁免。

@@ -33,7 +33,7 @@ export function apply(ctx: Context): void {
 <!-- generated: ts-api-reference:start -->
 | Symbol | Kind | Source | Summary |
 |---|---|---|---|
-| GateChangeSet | interface | src/types.ts | Session-recorded change set handed to a gate's `check` (the W2 dirt window, exposed as an input rather than only an internal shortcut hint). |
+| GateChangeSet | interface | src/types.ts | Session-recorded change set handed to a gate's `check` (the incremental dirt window, exposed as an input rather than only an internal shortcut hint). |
 | GateDefinition | interface | src/types.ts | One registered gate. |
 | GateFixer | type | src/types.ts | Repair strategy for a defer-level failure: a contextual subagent or a deterministic command. |
 | GateFixerCommand | interface | src/types.ts | Deterministic repair: run a shell command with the workspace root as cwd, synchronously with a timeout. |

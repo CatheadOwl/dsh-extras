@@ -8,7 +8,7 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
 
 - **第三方依赖**：4 个 mdast 包（`mdast-util-from-markdown` / `mdast-util-gfm` / `micromark-extension-gfm` / `@types/mdast`）声明为 registry `^range`；开发期解析靠指向 dsh 宿主检出的 `node_modules` junction（接线方式见包根 README 开发节）。
 - **消费者（包内）**：rename 工具 `md_rename`（`ctx.tools` 薄 wrapper）与 `doc-link` gate（插件级注册，`markdown/gate-check` 兼作 `gates.yml` `module:` 回退面）。工具与 gate 共享同一算法、同版本演进——单拷贝不变量，vendor 两份即两个漂移点。
-- **契约不在此**：提升决策史见外部开发笔记（md-links workunit，名称引用）。
+- **契约不在此**：提升决策史见外部开发笔记（md-links，名称引用）。
 
 ## 模块
 
