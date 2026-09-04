@@ -1,0 +1,3 @@
+# Patch artifacts must stay byte-exact LF: CRLF conversion breaks `git apply`
+# context matching for consumers cloning this repository.
+*.patch -text
