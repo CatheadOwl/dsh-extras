@@ -1,7 +1,3 @@
----
-description: dsh-extras 发布包中文主页——一个 npm 包装多个运行时独立的 dsh 插件模块（gates/markdown/prompt/routes 四行），安装、模块、配置、API 面与开发指南
----
-
 # @catheadowl/dsh-extras
 
 [English](README.md) | 中文

@@ -1,7 +1,3 @@
----
-description: dsh-extras package homepage — one npm package of runtime-independent dsh plugin modules (gates / markdown / prompt / routes rows): install, modules, config, API face, and development
----
-
 # @catheadowl/dsh-extras
 
 English | [中文](README.zh.md)
