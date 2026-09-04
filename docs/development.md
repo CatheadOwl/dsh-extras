@@ -28,6 +28,24 @@ pnpm run verify:publish-readiness  # release hygiene checks (docs locality, host
 
 各模块的行为 eval（意图/回归用例）位于 `modules/<m>/eval/`；框架与运行方式见各模块 eval README（不随包发布，名称引用）。
 
+## tsdown 树外补丁（client 构建前置）
+
+`build:client` 调用宿主共享 preset `clientBundle`，而宿主的 `workspaceManifest` 按宿主包布局（`packages/*/*/package.json`）查清单，树外插件**查不到是结构必然**（上游缺陷档案 tsdown-out-of-tree-manifest，按名引用）。不打补丁则 `build:client` 必败，症状：
+
+```text
+ERROR Error: tsdown: no packages/*/*/package.json declares the name @catheadowl/dsh-extras
+```
+
+补丁文件：[patch/tsdown-out-of-tree-fallback.patch](../patch/tsdown-out-of-tree-fallback.patch)——在 `workspaceManifest` 的 glob 未命中后回退 `outOfTreeManifest`（从构建 cwd 向上找最近的、`name` 匹配的 `package.json`；树内行为零变化）。每次更新宿主检出后重放：
+
+```powershell
+git -C <host-checkout> apply patch/tsdown-out-of-tree-fallback.patch
+```
+
+**作用域**：只作用于本仓库的 `build:client` 编译期，不进产物、不构成消费者的任何前置条件（tarball 只带 `lib/` 产物，运行时 Loader 只 import 产物）。
+
+**退役条件**：上游 `packages/client/tsdown.client.ts` 的 manifest 查找支持树外包（不打补丁 `build:client` 直接成功）即可删除补丁与本节。
+
 ## host-closure 网络检查
 
 `verify:publish-readiness` 的 host-closure 检查走 npm registry 网络（每请求 10s 超时）；网络不稳时用 Node 内建代理支持：`$env:NODE_USE_ENV_PROXY='1'; $env:HTTPS_PROXY='http://<proxy>'`（Node ≥ 24）。离线构建可设 `DSH_SKIP_HOST_CLOSURE=1` 跳过该检查（红检查永不静默转绿）。

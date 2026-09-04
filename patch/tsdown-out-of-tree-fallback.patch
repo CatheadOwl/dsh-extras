@@ -1,0 +1,39 @@
+diff --git a/packages/client/tsdown.client.ts b/packages/client/tsdown.client.ts
+index d6d8bad550..45556f47d9 100644
+--- a/packages/client/tsdown.client.ts
++++ b/packages/client/tsdown.client.ts
+@@ -357,9 +357,34 @@ function workspaceManifest(id: string): WorkspaceManifest {
+     manifestCache.set(id, manifest)
+     return manifest
+   }
++  // Out-of-tree plugin (dsh plugin add <path>): the workspace glob cannot see
++  // it, so fall back to the nearest ancestor package.json from the build cwd —
++  // a single-package build runs with the plugin directory as cwd. Name matching
++  // keeps an ancestor mis-resolution impossible; in-tree builds never reach
++  // here (the glob hit above returns first).
++  const outOfTree = outOfTreeManifest(id)
++  if (outOfTree !== undefined) {
++    manifestCache.set(id, outOfTree)
++    return outOfTree
++  }
+   throw new Error(`tsdown: no packages/*/*/package.json declares the name ${id}`)
+ }
+ 
++/** Nearest ancestor package.json from the build cwd declaring `id`. */
++function outOfTreeManifest(id: string): WorkspaceManifest | undefined {
++  let dir = resolvePath(process.cwd())
++  for (;;) {
++    const manifestPath = resolvePath(dir, 'package.json')
++    if (existsSync(manifestPath)) {
++      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as WorkspaceManifest
++      if (manifest.name === id) return manifest
++    }
++    const parent = dirname(dir)
++    if (parent === dir) return undefined
++    dir = parent
++  }
++}
++
+ /**
+  * External patterns for one package's Node half: its own production sections,
+  * subpaths included.
