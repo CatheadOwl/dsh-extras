@@ -5,3 +5,6 @@ autoInstallPeers: false
 
 minimumReleaseAgeExclude:
   - '@catheadowl/dsh-eval@0.1.0'
+
+overrides:
+  '@catheadowl/dsh-eval': link:../eval

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
+overrides:
+  '@catheadowl/dsh-eval': link:../eval
+
 importers:
 
   .:
@@ -25,8 +28,8 @@ importers:
         version: 2.9.0
     devDependencies:
       '@catheadowl/dsh-eval':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: link:../eval
+        version: link:../eval
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
@@ -41,12 +44,6 @@ importers:
         version: 5.9.2
 
 packages:
-
-  '@catheadowl/dsh-eval@0.1.0':
-    resolution: {integrity: sha512-rv+qjA/5ml0+SuHVKFRc4hfK4gnyo9VrKUkCX7K6MgZUvYl4cdIz2VGG4JXjyTyoSB9vC2L546YiAK2sL909sQ==}
-    hasBin: true
-    peerDependencies:
-      '@deepseek-ai/dsh-llm': '*'
 
   '@types/debug@4.1.13':
     resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
@@ -267,8 +264,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@catheadowl/dsh-eval@0.1.0': {}
 
   '@types/debug@4.1.13':
     dependencies:
