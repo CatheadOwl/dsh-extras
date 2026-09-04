@@ -6,7 +6,7 @@ description: dsh-extras 发布包中文主页——一个 npm 包装多个运行
 
 [English](README.md) | 中文
 
-一个 npm 包，多个**运行时独立**的 [dsh](https://github.com/deepseek-ai/deepseek-harness) 插件模块：质量门禁、Markdown 链接治理、prompt 注入、知识库路由——`dsh plugin add` 一次全装，每个模块独立开关，不需要的行关掉即可，互不影响。
+一个 npm 包，多个**运行时独立**的 [dsh](https://github.com/deepseek-ai/deepseek-harness) 插件模块：质量门禁、Markdown 链接治理、prompt 注入、知识库路由——`dsh plugin add` 一次全装，每个模块是组合里可独立开关的一行（按行 id 标识），不需要的行关掉即可，互不影响。
 
 ## 安装
 
@@ -68,22 +68,20 @@ Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单�
 ## 开发
 
 ```powershell
-# 从本目录（extras 包根）
+# 从仓库根目录
 pnpm run build                  # 四模块 lib + client bundle
 pnpm run test:gates             # 各模块单测（test:markdown / test:prompt / test:routes）
 pnpm run verify:package-face    # exports / facade 校验
 pnpm run verify:publish-readiness  # 发布卫生校验（docs locality、host closure 等）
 ```
 
-host closure 校验会走网络遍历 npm registry（每请求 10s 超时）；直连 registry 不稳定的环境用 Node 内建代理支持走代理：`$env:NODE_USE_ENV_PROXY='1'; $env:HTTPS_PROXY='http://<proxy>'`（Node ≥ 24）。离线构建可 `DSH_SKIP_HOST_CLOSURE=1` 跳过（红检查不允许静默转绿）。
-
-构建借用宿主 checkout 的工具链（`deepseek-harness/node_modules/.bin` 下的 tsc / tsdown，见 package.json scripts）——克隆本包仓库后需先准备好一份 dsh 检出；开发期宿主 peer 解析 = 把 `node_modules/@deepseek-ai/*` 按 junction 接到宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态）。各模块的行为 eval（意图/回归用例）位于 `modules/<m>/eval/`，框架与运行方式见各模块 eval README。
+开发细节——宿主 checkout 摆放、工具链借用、peer junction 接线、host-closure 网络检查——见 [docs/development.md](docs/development.md)。
 
 ## 已知限制
 
 - 需要 dsh CLI（本包是插件载体，不是独立应用）；运行时 peer 全部由宿主闭包提供。
 - 根 README 双语（英文主 + 中文），模块页与深度 docs 以中文为主。
-- Settings Tab 目前仅 gates / prompt 两行有（随嵌套锚点包合成装载，不单独发布）。
+- Settings Tab 目前仅 gates / prompt 两行有（随内置 client 子包 `modules/client` 合成装载，不单独发布）。
 - gates 连续阻断上限（`maxConsecutiveBlocks`，默认 3）耗尽后**降级放行**——是安全阀不是正确性保证；markdown / routes 行无插件配置键。
 
 ## License

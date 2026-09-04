@@ -4,8 +4,7 @@
 # clean clone with `pnpm i` and no dsh host checkout. Build (tsc/tsdown), the
 # type closure, and the client-bundle preset form Tier B and are deferred:
 # the host dev surface (types package, client-bundle preset) has no npm
-# publication yet (upstream proposal "host dev surface publication"; see the
-# dsh-extra control repo's workunits/github-release note "CI 分层与暂缓决策").
+# publication yet (upstream proposal "host dev surface publication").
 # Until that lands, build + per-module tests are verified locally against a
 # host checkout, not in CI. The commented steps below are that deferred tail:
 #   - run: pnpm build
