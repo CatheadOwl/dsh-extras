@@ -76,3 +76,13 @@ Settings → Plugins → **Prompt Middleware** tab（slot id `prompt-middleware`
 - **持久化**：浏览器 localStorage，key `dsh.promptMiddleware.disabled`（JSON name 列表）；host 只有内存镜像（页面加载与每次拨开关时由 UI 重推）。
 - **视图字段**：name、kind（仅声明式 provider 有值；imperative 显示占位）、priority、timeoutMs、mode、source（`imperative` / `declarative`）、enabled。
 - 配置数字（`providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`）不进本 UI——已由 `ConfigSchema` 挂在宿主标准 configurable-plugins 配置面。
+
+### 双入口（config `disabledProviders`）
+
+插件 config 的 `disabledProviders?: string[]` 是第二个禁用入口——部署者意志的通道，headless / web / CLI 一致可达（headless 经 profile `--patch` overlay）。与浏览器开关面的关系：
+
+- **合并语义：并集**（任一入口说禁即禁）。config 是部署者意志、UI 是用户意志，禁用比启用更保守；对 eval A/B 场景安全——B 臂的 patch 禁用不会被人在 UI 里点开。`PromptMiddlewareService.run()` 对 config 集合、浏览器镜像、caller 传入集合各自做并集后交给 runner。
+- **来源归属**：runner 先查 `options.configDisabled`（记 reason `disabled by config`）再查 `options.disabled`（记 `disabled by user`）——同一 provider 双禁时归属 config（更硬的意志）。过滤位置与顺序语义同上（先于 once 过滤、不触碰账本）。
+- **集合独立性**：service 内 config 名单与浏览器镜像是两个独立集合；`setDisabled()` 整体替换浏览器镜像，**不会**冲掉 config 名单。
+- **未知名忽略**：provider 注册晚于 config 加载，无法预校验「已注册名」；未知名运行期 match nothing、无害（与 gates 的 disabled 口径一致）。
+- **显示口径**：`listViews()` 的 `enabled` 只反映用户开关（浏览器镜像）；config 禁用的 provider 在 UI 中仍显示为已启用——UI 是用户意志的面，不反映部署层。

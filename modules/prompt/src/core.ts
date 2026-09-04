@@ -165,9 +165,12 @@ function orderedProviders(entries: readonly RegisteredProvider[]): RegisteredPro
   return [...entries].sort((a, b) => (a.provider.priority ?? 0) - (b.provider.priority ?? 0) || a.order - b.order)
 }
 
+/** The runner's numeric knobs — `disabledProviders` is service-owned, not runner config. */
+type RunnerConfig = Required<Pick<PromptMiddlewareConfig, 'providerTimeoutMs' | 'totalTimeoutMs' | 'renderBudgetChars'>>
+
 export class PromptMiddlewareRunner {
   private readonly registry = createPromptMiddlewareRegistry() as InternalPromptMiddlewareRegistry
-  private readonly config: Required<PromptMiddlewareConfig>
+  private readonly config: RunnerConfig
   /** Per-session ledger of already-injected `once`-mode provider paths. */
   private readonly injected = new Map<string, Set<string>>()
 
@@ -255,7 +258,12 @@ export class PromptMiddlewareRunner {
       const provider = entry.provider
       // Switch is the contract: a disabled provider never runs. Filtering sits
       // before the once-dedupe check, so a disabled `once` provider neither
-      // re-checks nor marks the ledger.
+      // re-checks nor marks the ledger. The config-owned set is checked first
+      // so the skip is attributed to its source (config vs user).
+      if (options.configDisabled?.has(provider.name)) {
+        trace.push({ provider: provider.name, status: 'skipped', pathsIn: paths.length, reason: 'disabled by config' })
+        continue
+      }
       if (options.disabled?.has(provider.name)) {
         trace.push({ provider: provider.name, status: 'skipped', pathsIn: paths.length, reason: 'disabled by user' })
         continue

@@ -19,13 +19,13 @@ function relatesProvider(overrides = {}) {
   return { name: 'demo-relates', kind: 'demo', resolve: async () => undefined, ...overrides }
 }
 
-async function serviceHarness() {
+async function serviceHarness(config = {}) {
   const ctx = new Context()
-  await ctx.plugin(PromptMiddlewareService, {})
+  await ctx.plugin(PromptMiddlewareService, config)
   return ctx.get('promptMiddleware')
 }
 
-function run(runner, { path = 'a.md', sessionId, disabled, turnId = '1' } = {}) {
+function run(runner, { path = 'a.md', sessionId, disabled, configDisabled, turnId = '1' } = {}) {
   return runner.run({
     prompt: path,
     paths: [{ path, kind: 'file', origin: 'prompt-parse' }],
@@ -34,6 +34,7 @@ function run(runner, { path = 'a.md', sessionId, disabled, turnId = '1' } = {}) 
     turnId,
     ...(sessionId !== undefined ? { sessionId } : {}),
     ...(disabled !== undefined ? { disabled } : {}),
+    ...(configDisabled !== undefined ? { configDisabled } : {}),
     signal: new AbortController().signal,
   })
 }
@@ -189,4 +190,77 @@ test('run() unions a caller disabled set with the service mirror', async () => {
   assert.equal(ran.a, false)
   assert.equal(ran.b, false)
   assert.equal(result.trace.filter(e => e.status === 'skipped' && e.reason === 'disabled by user').length, 2)
+})
+
+test('a configDisabled provider skips with reason "disabled by config", before once dedupe', async () => {
+  let ran = false
+  const runner = new PromptMiddlewareRunner()
+  runner.register(provider({
+    name: 'once-on',
+    mode: 'once',
+    run: async () => {
+      ran = true
+      return [{ path: 'a.md', items: [{ kind: 'k', label: 'x', value: 'x' }] }]
+    },
+  }))
+  const first = await run(runner, { sessionId: 's1', configDisabled: new Set(['once-on']) })
+  assert.equal(ran, false)
+  assert.deepEqual(first.relates, [])
+  assert.ok(first.trace.some(e => e.provider === 'once-on' && e.status === 'skipped' && e.reason === 'disabled by config'))
+
+  // Filter-only, same as the user switch: nothing was written to the ledger.
+  assert.equal((await run(runner, { sessionId: 's1' })).relates.length, 1)
+})
+
+test('a provider in both sets attributes the skip to config (checked first)', async () => {
+  const runner = new PromptMiddlewareRunner()
+  runner.register(provider({ name: 'both', run: async () => [] }))
+  const result = await run(runner, { disabled: new Set(['both']), configDisabled: new Set(['both']) })
+  assert.ok(result.trace.some(e => e.provider === 'both' && e.status === 'skipped' && e.reason === 'disabled by config'))
+  assert.ok(!result.trace.some(e => e.reason === 'disabled by user'))
+})
+
+test('a config-disabled unknown name matches nothing', async () => {
+  const runner = new PromptMiddlewareRunner()
+  let ran = false
+  runner.register(provider({ name: 'real', run: async () => { ran = true; return [] } }))
+  const result = await run(runner, { configDisabled: new Set(['no-such-provider']) })
+  assert.equal(ran, true)
+  assert.ok(!result.trace.some(e => e.status === 'skipped'))
+})
+
+test('service config disabledProviders disables headless and survives setDisabled pushes', async () => {
+  const service = await serviceHarness({ disabledProviders: ['off'] })
+  const ran = { off: false, on: false }
+  service.register(provider({ name: 'off', run: async () => { ran.off = true; return [] } }))
+  service.register(provider({ name: 'on', run: async () => { ran.on = true; return [] } }))
+
+  // Headless baseline: no browser ever pushes; the config key alone disables.
+  const result = await service.run({
+    prompt: 'a.md',
+    paths: [{ path: 'a.md', kind: 'file', origin: 'prompt-parse' }],
+    agent: {},
+    cwd: '.',
+    turnId: '1',
+  })
+  assert.equal(ran.off, false)
+  assert.equal(ran.on, true)
+  assert.ok(result.trace.some(e => e.provider === 'off' && e.status === 'skipped' && e.reason === 'disabled by config'))
+
+  // The browser mirror replaces wholesale but must not clobber the config set.
+  service.setDisabled(['on'])
+  const dual = await service.run({
+    prompt: 'a.md',
+    paths: [{ path: 'a.md', kind: 'file', origin: 'prompt-parse' }],
+    agent: {},
+    cwd: '.',
+    turnId: '2',
+  })
+  assert.ok(dual.trace.some(e => e.provider === 'off' && e.reason === 'disabled by config'))
+  assert.ok(dual.trace.some(e => e.provider === 'on' && e.reason === 'disabled by user'))
+
+  // Display semantics: listViews().enabled reflects only the user switch.
+  const views = service.listViews()
+  assert.equal(views.find(view => view.name === 'off').enabled, true)
+  assert.equal(views.find(view => view.name === 'on').enabled, false)
 })

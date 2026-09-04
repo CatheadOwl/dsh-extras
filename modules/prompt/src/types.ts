@@ -135,6 +135,14 @@ export interface PromptMiddlewareConfig {
   providerTimeoutMs?: number
   totalTimeoutMs?: number
   renderBudgetChars?: number
+  /**
+   * Provider names disabled at the deployment level (config / profile patch) —
+   * the headless-reachable second entry, unioned with the browser-owned switch
+   * mirror so either surface saying "off" wins. Unknown names simply match
+   * nothing (providers register after config loads, so this cannot be
+   * pre-validated); skipped providers trace `disabled by config`.
+   */
+  disabledProviders?: string[]
 }
 
 export interface PromptMiddlewareRunOptions {
@@ -151,6 +159,13 @@ export interface PromptMiddlewareRunOptions {
   now?: () => number
   /** Provider names skipped this run (the switch mirror), filtered before `once` dedupe. */
   disabled?: ReadonlySet<string>
+  /**
+   * Provider names disabled via plugin config (`disabledProviders`), kept
+   * separate from `disabled` so the runner can attribute the skip: config
+   * source traces `disabled by config`, user source `disabled by user`.
+   * Checked before `disabled`; same filter position (before `once` dedupe).
+   */
+  configDisabled?: ReadonlySet<string>
 }
 
 export interface PromptRelatesGroup {
