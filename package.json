@@ -4,6 +4,7 @@
   "version": "0.1.1",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@11.7.0",
   "exports": {
     "./gates": {
       "types": "./modules/gates/lib/index.d.ts",
