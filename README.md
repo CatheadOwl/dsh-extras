@@ -70,8 +70,10 @@ Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单�
 pnpm run build                  # 四模块 lib + client bundle
 pnpm run test:gates             # 各模块单测（test:markdown / test:prompt / test:routes）
 pnpm run verify:package-face    # exports / facade 校验
-pnpm run verify:publish-readiness  # 发布卫生校验（docs locality 等）
+pnpm run verify:publish-readiness  # 发布卫生校验（docs locality、host closure 等）
 ```
+
+host closure 校验会走网络遍历 npm registry（每请求 10s 超时）；直连 registry 不稳定的环境用 Node 内建代理支持走代理：`$env:NODE_USE_ENV_PROXY='1'; $env:HTTPS_PROXY='http://<proxy>'`（Node ≥ 24）。离线构建可 `DSH_SKIP_HOST_CLOSURE=1` 跳过（红检查不允许静默转绿）。
 
 构建借用宿主 checkout 的工具链（`deepseek-harness/node_modules/.bin` 下的 tsc / tsdown，见 package.json scripts）——克隆本包仓库后需先准备好一份 dsh 检出；开发期宿主 peer 解析 = 把 `node_modules/@deepseek-ai/*` 按 junction 接到宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态）。各模块的行为 eval（意图/回归用例）位于 `modules/<m>/eval/`，框架与运行方式见各模块 eval README。
 
