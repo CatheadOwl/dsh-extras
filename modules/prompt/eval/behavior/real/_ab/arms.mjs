@@ -46,9 +46,12 @@ const SEARCH_TOOLS = new Set(['grep', 'glob'])
 const READ_TOOLS = new Set(['read'])
 
 /**
- * Extract the per-run metrics from one EvalTrace.
+ * Extract the per-run metrics from one run trace.
  *
- * @param {import('@catheadowl/dsh-eval').EvalTraceLike} trace
+ * @param {{ toolCalls?: { seq: number, name: string, arguments: string }[],
+ *           userMessages?: { seq: number, source: object, text: string }[] }} trace
+ *   the EvalTrace shape produced by @catheadowl/dsh-eval (field table in its
+ *   matchers doc); only the projections used here are declared.
  * @param {{ targetPath: string, marker: string, avoidPaths?: readonly string[] }} spec
  */
 export function extractMetrics(trace, spec) {

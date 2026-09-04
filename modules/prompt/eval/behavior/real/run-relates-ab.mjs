@@ -16,9 +16,9 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { createRequire } from 'node:module'
 
-import { runEvalCase, resolveDshCli } from '@catheadowl/dsh-eval'
+import { runEvalCase } from '@catheadowl/dsh-eval'
+import { resolveDshCliChain } from '@catheadowl/dsh-eval/experimental'
 
 import { ARMS, extractMetrics } from './_ab/arms.mjs'
 import { AVOID_PATHS, MARKER, TARGET_PATH } from './_fixtures/seed-doc-tree.mjs'
@@ -115,30 +115,17 @@ writeFileSync(join(outDir, 'results.json'), `${JSON.stringify(report, undefined,
 writeFileSync(join(outDir, 'summary.md'), renderSummary(summary), 'utf8')
 console.log(`\nresults: ${join(outDir, 'results.json')}\n${renderSummary(summary)}`)
 
-/** Resolve the compiled dsh CLI: walk up from the @deepseek-ai/dsh package
- * location until a checkout root (`apps/cli/lib/bin.js`) is found. */
+/** Resolve the compiled dsh CLI through the framework's resolution chain
+ * (DSH_REPO env as the explicit repo flag, else the node_modules layer). */
 function resolveCli() {
-  const require = createRequire(import.meta.url)
-  let start
+  const repo = (process.env.DSH_REPO ?? '').trim()
   try {
-    start = join(require.resolve('@deepseek-ai/dsh/package.json'), '..')
-  } catch {
-    console.error('relates-ab: cannot resolve @deepseek-ai/dsh from the extras node_modules layer (run relink-dsh-peers or set DSH_REPO)')
+    const { cli } = resolveDshCliChain({ repoFlag: repo !== '' ? repo : undefined, startDir: import.meta.dirname })
+    return cli
+  } catch (error) {
+    console.error(`relates-ab: ${error instanceof Error ? error.message : String(error)}`)
     process.exit(1)
   }
-  let repoDir = (process.env.DSH_REPO ?? '').trim() !== '' ? process.env.DSH_REPO : start
-  for (let dir = repoDir; ; dir = join(dir, '..')) {
-    if (existsSync(join(dir, 'apps', 'cli', 'lib', 'bin.js'))) {
-      repoDir = dir
-      break
-    }
-    const parent = join(dir, '..')
-    if (parent === dir) {
-      console.error(`relates-ab: no compiled dsh CLI found above '${start}' (build deepseek-harness, or set DSH_REPO)`)
-      process.exit(1)
-    }
-  }
-  return resolveDshCli(repoDir)
 }
 
 /** Minimal `--key value` / `--flag` parsing. */
