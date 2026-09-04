@@ -119,3 +119,41 @@ test('md_rename refuses an evidence-free post-hoc call and attaches the remedy e
   // Nothing was rewritten on refusal.
   assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '# R\n')
 })
+
+test('md_rename honors the workspace gates.yml frozen-dirs policy (single policy source)', async () => {
+  const { ctx, defs } = makeCtx()
+  apply(ctx)
+  const root = fixture({
+    'gates.yml': 'gates:\n  - id: doc-link\n    options:\n      frozen-dirs: [archived]\n',
+    'README.md': '[g](docs/guide.md)\n',
+    'docs/guide.md': '# Guide\n',
+    'archived/holder.md': '[g](../docs/guide.md)\n',
+  })
+  const result = await defs[0].execute({ oldPath: 'docs/guide.md', newPath: 'guide.md' }, makeExec(root))
+  assert.equal(result.status, 'moved')
+  // Active holder rewritten from the same gates.yml declaration the doc-link
+  // gate reads; the frozen holder is reported as a skip and left byte-exact.
+  assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[g](guide.md)\n')
+  assert.equal(readFileSync(join(root, 'archived', 'holder.md'), 'utf8'), '[g](../docs/guide.md)\n')
+  assert.equal(result.edited.includes('archived/holder.md'), false)
+  const frozenSkip = result.skips.find(s => s.file === 'archived/holder.md')
+  assert.ok(frozenSkip !== undefined, 'frozen holder rewrite surfaces as a skip')
+  assert.match(frozenSkip.reason, /frozen/)
+})
+
+test('md_rename fails loud on a malformed workspace frozen-dirs declaration', async () => {
+  const { ctx, defs } = makeCtx()
+  apply(ctx)
+  const root = fixture({
+    'gates.yml': 'gates:\n  - id: doc-link\n    options:\n      frozen-dirs: archived\n',
+    'README.md': '[g](docs/guide.md)\n',
+    'docs/guide.md': '# Guide\n',
+  })
+  await assert.rejects(
+    () => defs[0].execute({ oldPath: 'docs/guide.md', newPath: 'guide.md' }, makeExec(root)),
+    /frozen-dirs must be a list/,
+    'the tool face must not silently rewrite frozen files while the gate face would fail',
+  )
+  // Refusal happened at plan time: nothing moved.
+  assert.equal(existsSync(join(root, 'docs', 'guide.md')), true)
+})

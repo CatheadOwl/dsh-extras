@@ -46,6 +46,7 @@ export type { CheckRepositoryOptions, LinkReference, Resolution, LinkViolation, 
 export { rebaseDestination } from './rebase.js'
 export { rebaseHref, planRename, applyRenamePlan, REASON_NO_RENAME_EVIDENCE } from './rename.js'
 export type {
+  PlanRenameOptions,
   RenameSkip,
   RenameConflict,
   RenamePlan,

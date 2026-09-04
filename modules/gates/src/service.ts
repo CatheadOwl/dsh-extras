@@ -66,7 +66,11 @@ function configErrorGate(error: string): GateDefinition {
   }
 }
 
-export function mergeGateDefinitions(registry: readonly GateDefinition[], project: readonly GateDefinition[]): {
+export function mergeGateDefinitions(
+  registry: readonly GateDefinition[],
+  project: readonly GateDefinition[],
+  overlays: ReadonlyMap<string, Record<string, unknown>> = new Map(),
+): {
   definitions: GateDefinition[]
   error?: string
 } {
@@ -82,13 +86,34 @@ export function mergeGateDefinitions(registry: readonly GateDefinition[], projec
     }
     byId.set(definition.id, 'project')
   }
-  return { definitions: [...registry, ...project] }
+  const definitions = [...registry, ...project]
+  // Options-only overlays: repo policy onto plugin-registered gates. The id
+  // must resolve to a plugin gate (an overlay onto a project-declared gate is
+  // a duplicate declaration — those options belong on the entry itself).
+  for (const [id, overlay] of overlays) {
+    const index = definitions.findIndex(definition => definition.id === id)
+    if (index === -1) {
+      return {
+        definitions,
+        error: `${PROJECT_GATES_FILE} declares an options overlay for gate ${JSON.stringify(id)}, but no plugin gate with that id is registered`,
+      }
+    }
+    if (byId.get(id) !== 'plugin') {
+      return {
+        definitions,
+        error: `${PROJECT_GATES_FILE} declares an options overlay for gate ${JSON.stringify(id)}, which is project-declared — put its options on that gate's own entry`,
+      }
+    }
+    definitions[index] = { ...definitions[index], options: { ...definitions[index].options, ...overlay } }
+  }
+  return { definitions }
 }
 
 interface ProjectGatesCacheEntry {
   /** gates.yml mtime, or null when the file is absent; the cache key's freshness token. */
   mtimeMs: number | null
   definitions: GateDefinition[]
+  overlays: Map<string, Record<string, unknown>>
   error?: string
 }
 
@@ -205,7 +230,7 @@ export class GatesService extends Service {
   /** Registry gates + the workspace's gates.yml, with a parse-error gate when the file is broken. */
   definitions(root: string): GateDefinition[] {
     const project = this.projectGates(root)
-    const merged = mergeGateDefinitions(this.registry.list(), project.definitions)
+    const merged = mergeGateDefinitions(this.registry.list(), project.definitions, project.overlays)
     const error = project.error ?? merged.error
     if (error === undefined) return merged.definitions
     return [...merged.definitions, configErrorGate(error)]
@@ -222,9 +247,9 @@ export class GatesService extends Service {
     const cached = this.projectCache.get(root)
     if (cached !== undefined && cached.mtimeMs === mtimeMs) return cached
     const loaded = mtimeMs === null
-      ? { definitions: [] as GateDefinition[], error: undefined }
+      ? { definitions: [] as GateDefinition[], overlays: new Map<string, Record<string, unknown>>(), error: undefined }
       : loadProjectGates(root)
-    const entry: ProjectGatesCacheEntry = { mtimeMs, definitions: loaded.definitions, error: loaded.error }
+    const entry: ProjectGatesCacheEntry = { mtimeMs, definitions: loaded.definitions, overlays: loaded.overlays, error: loaded.error }
     this.projectCache.set(root, entry)
     return entry
   }

@@ -47,6 +47,7 @@ export function apply(ctx: Context): void {
 | GateStatus | type | src/types.ts | Terminal state of one gate run; a skipped gate reused a prior passed result or was cancelled before running. |
 | GateTrigger | type | src/types.ts | When a gate runs. |
 | GateViolation | interface | src/types.ts | One located problem, shaped so the model can fix it in one pass. |
+| projectGateOptions | function | src/repo-gates.ts | The project-declared options mapping for one gate id — the single repo policy face for surfaces that are not themselves gates (e.g. |
 | registerGate | function | src/register.ts | Register one plugin-owned gate through the gates registry. |
 <!-- generated: ts-api-reference:end -->
 

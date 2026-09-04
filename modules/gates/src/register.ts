@@ -12,6 +12,8 @@ import type {} from './service.js'
 
 import type { GateDefinition } from './types.js'
 
+export { projectGateOptions } from './repo-gates.js'
+
 export type {
   GateChangeSet,
   GateDefinition,

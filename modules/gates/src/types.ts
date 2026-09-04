@@ -123,8 +123,22 @@ export interface GateDefinition {
   relevantPath?: (path: string) => boolean
   /** Optional auto-repair (subagent or command), dispatched on defer-level failure instead of only recording. */
   fixer?: GateFixer
-  /** Pure detection; `root` is the session workspace root (a runtime fact). */
-  check(root: string, changes?: GateChangeSet): Promise<GateViolation[]>
+  /**
+   * Repo policy overlay for this gate. A plugin gate may carry default
+   * options; a project `gates.yml` options entry (or an options-only overlay
+   * entry keyed by this gate's id) merges over them (`{ ...definition.options,
+   * ...overlay }`). The runner hands the merged mapping to `check` as its
+   * third argument — interpretation is entirely the gate's (policy-free
+   * mechanism; the gates plugin never reads option keys).
+   */
+  options?: Record<string, unknown>
+  /**
+   * Pure detection; `root` is the session workspace root (a runtime fact).
+   * `changes` is the session change set (stop runs only); `options` is the
+   * merged repo policy overlay (`definition.options`), absent when none is
+   * declared anywhere.
+   */
+  check(root: string, changes?: GateChangeSet, options?: Record<string, unknown>): Promise<GateViolation[]>
 }
 
 /**
@@ -146,5 +160,12 @@ export interface ConfigGateEntry {
   module?: string
   /** Shell: command run with the session workspace root as cwd; nonzero exit fails. */
   command?: string
+  /**
+   * Repo policy overlay for this gate's check (forwarded as the check's third
+   * argument; command gates receive it as the `GATE_OPTIONS` JSON env var).
+   * An entry declaring ONLY `id` + `options` is an overlay onto the
+   * plugin-registered gate with that id (see `splitOptionsOverlays`).
+   */
+  options?: Record<string, unknown>
 }
 

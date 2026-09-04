@@ -205,6 +205,34 @@ describe('doc-link gate check', () => {
       'hint decodes the fragment before ranking',
     )
   })
+
+  it('frozen-dirs：冻结目录内文件的出链豁免，活跃文件链接冻结目标仍检查', () => {
+    const root = fixture({
+      'README.md': '[dead-into-frozen](archived/x/missing.md)\n',
+      'archived/x/old.md': '[rotted](../../gone.md)\n',
+    })
+    // Without the option both findings surface.
+    assert.deepEqual(check(root).map(v => v.file).sort(), ['README.md', 'archived/x/old.md'])
+    // With frozen-dirs the frozen source is exempt; the active source stays checked.
+    const violations = check(root, undefined, { 'frozen-dirs': ['archived'] })
+    assert.deepEqual(violations.map(v => v.file), ['README.md'])
+    assert.match(violations[0].reason, /target does not exist/)
+  })
+
+  it('frozen-dirs：stop 档与冻结豁免叠加（两者都须通过）', () => {
+    const root = fixture({
+      'a.md': '[missing](no.md)\n',
+      'archived/old.md': '[rotted](gone.md)\n',
+    })
+    const violations = check(root, { paths: ['a.md', 'archived/old.md'], opaque: false }, { 'frozen-dirs': ['archived'] })
+    assert.deepEqual(violations.map(v => v.file), ['a.md'])
+  })
+
+  it('frozen-dirs：非字符串列表 → fail loud', () => {
+    const root = fixture({ 'a.md': '# A\n' })
+    assert.throws(() => check(root, undefined, { 'frozen-dirs': 'archived' }), /frozen-dirs must be a list/)
+    assert.throws(() => check(root, undefined, { 'frozen-dirs': [1] }), /frozen-dirs must be a list/)
+  })
 })
 
 describe('plugin registration', () => {

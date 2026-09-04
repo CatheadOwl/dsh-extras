@@ -35,6 +35,7 @@ export default {
     facadeExports: {
       './gates/register': [
         'registerGate',
+        'projectGateOptions',
         'GateChangeSet',
         'GateDefinition',
         'GateFixer',

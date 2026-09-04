@@ -54,10 +54,11 @@ gates:
 
 module 指向的模块需导出**通用表面**：
 
-- **通用形状**：\`check(root, changes?): GateViolation[]\`（或返回 Promise）；
+- **通用形状**：\`check(root, changes?, options?): GateViolation[]\`（或返回 Promise）；
   \`changes\` 是可选会话变更集 \`{paths: string[], opaque: boolean}\`——\`paths\` 为
   本轮 \`write\`/\`edit\` 触及的路径（自上次干净通过累计），\`opaque\` 为出现不透明写
-  （bash/subagent）导致 \`paths\` 不全；仅 stop 档提供，手动入口传 \`undefined\`。
+  （bash/subagent）导致 \`paths\` 不全；仅 stop 档提供，手动入口传 \`undefined\`；
+  \`options\` 为条目声明的 \`options\` 覆写（未声明即 \`undefined\`）。
 
 ### 2.2 command（shell，兜底）
 
@@ -76,16 +77,38 @@ manual 入口不注入该变量。
 
 ## 3. 字段速查
 
+### 3.1 options 覆写（给插件级 gate 传仓库策略）
+
+\`options\`（mapping）是仓库策略通道：module gate 作为 \`check\` 第三参数收到、
+command gate 经 \`GATE_OPTIONS\`（JSON）env 收到。**纯 \`id\` + \`options\` 条目**（不声明
+\`module\`/\`command\`）按 id 覆写**插件注册**的 gate——不重复执行体，只覆盖策略；覆写
+未知 id 或项目自声明 gate 会 fail loud（\`gates-config\`）。示例（markdown 模块 doc-link
+的 frozen-dirs）：
+
+\`\`\`yaml
+gates:
+  - id: doc-link            # 插件注册的 gate：纯 options 覆写
+    options:
+      frozen-dirs: [archived]
+\`\`\`
+
+**每个 gate 认识哪些键由该 gate 自己的文档定义**（gates 插件不解释任何键）。随包
+\`@catheadowl/dsh-extras\`：doc-link 的 \`frozen-dirs\`（冻结目录豁免：gate 不查其出链、
+\`md_rename\` 视其只读）见 markdown 模块 \`docs/doc-link-gate.md\`。
+
+### 3.2 全字段
+
 | 字段 | 必需 | 说明 |
 |------|------|------|
 | \`id\` | ✓ | kebab-case；全局唯一；重名、非法或使用保留 id 即报错 |
-| \`module\` / \`command\` | 二选一 ✓ | 都没有 → 物化时 fail loud |
+| \`module\` / \`command\` | 二选一 ✓ | 都没有 → 物化时 fail loud（唯一例外：纯 \`options\` 覆写条目） |
 | \`description\` | 建议 | 列表/反馈标题 |
 | \`rationale\` | 建议 | 失败时注入的设计说明 |
 | \`level\` | 可选 | \`blocking\`（默认）/ \`advisory\` / \`defer\` |
 | \`timeoutMs\` | 可选 | 默认 120000 |
 | \`relevant\` | 可选 | 增量短路相关性模式（如 \`['*.md']\`）；仅精确脏轮里与脏路径无关时复用上轮通过结果 |
 | \`fixer\` | 可选 | 仅 \`defer\` 档合法；两变体：\`{ kind: 'subagent', prompt, request? }\` 派继承上下文的子 agent 离线修（\`prompt\` 静态指令、派发时自动追加失败文件清单，\`request\` 透传 \`provider\`/\`persona\`/\`toolFilter\`/\`agentOptions\`）；\`{ kind: 'command', command }\` 同步跑脚本（cwd=工作区根、带超时），非零退出记入快照 |
+| \`options\` | 可选 | 仓库策略覆写（mapping）：module gate 作为 \`check\` 第三参数、command gate 经 \`GATE_OPTIONS\`（JSON）收到；键语义由各 gate 自定义。纯 \`id\`+\`options\` 条目（无 \`module\`/\`command\`）按 id 覆写插件注册 gate 的 options |
 
 ## 4. 触发与执行语义（写配置前要知道的）
 
@@ -125,9 +148,10 @@ manual 入口不注入该变量。
   仍慢则调 \`level: advisory\`。
 - 手动入口（\`gates_run\` / \`/gates\`）总是全扫，且不回写轮末脏状态
   （手动通过不会让下个轮末短路，保守方向）。
-- **仓库级 id 与插件级 gate 撞名会 fail loud**：示例 id \`md-metadata\` 已被
+- **仓库级声明执行体与插件级 gate 撞名会 fail loud**：示例 id \`md-metadata\` 已被
   \`@catheadowl/dsh-extras\` markdown 模块插件级注册（defer + subagent fixer，装该包的
-  profile 自带）；要声明自己的等价检查需换 id，或直接复用插件 gate 不再声明。
+  profile 自带）；要声明自己的等价检查需换 id，或直接复用插件 gate 不再声明——
+  想给插件 gate 传策略用纯 \`options\` 覆写条目（§3.1），那不撞名。
 `
 
 /**

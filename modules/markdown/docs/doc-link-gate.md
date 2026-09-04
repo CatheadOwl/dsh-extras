@@ -21,8 +21,8 @@ description: markdown 模块的 doc-link gate——Markdown 内链完整性门�
 
 | 模块 | 职责 |
 |---|---|
-| `src/gate-check.ts` | 通用 gate 表面 `check(root, changes?)`：形状适配 + 轮末归责谓词；由 `markdown/gate-check` 子路径导出，供 `gates.yml` `module:` 回退与测试复用 |
-| `src/index.ts` | 插件入口：`apply(ctx)` → `registerGate(ctx, { id: 'doc-link', … })`（硬导入消费面，软服务依赖——gates 缺席时本模块照常加载、不注册） |
+| `src/gate-check.ts` | 通用 gate 表面 `check(root, changes?, options?)`：形状适配 + 轮末归责谓词 + `frozen-dirs` 冻结豁免；由 `markdown/gate-check` 子路径导出，供 `gates.yml` `module:` 回退与测试复用 |
+| `src/index.ts` | 插件入口：`apply(ctx)` → `registerGate(ctx, { id: 'doc-link', … })`（硬导入消费面，软服务依赖——gates 缺席时本模块照常加载、不注册）；`md_rename` 工具从同一 `frozen-dirs` 声明构造只读谓词（单一策略源） |
 
 > **机制归模块内 links 库，政策归本 gate 面。** 数据面（git 扫描 + mdast 解析 + 锚点校验）在 [links-lib](links-lib.md)（`src/links/`，与 `md_rename` 工具共享、同版本演进的单拷贝）；本 gate 面只持有政策——`rationale`、`level: blocking`、`relevantPath`（`*.md`）、轮末归责谓词。
 
@@ -32,6 +32,7 @@ description: markdown 模块的 doc-link gate——Markdown 内链完整性门�
 - `relevantPath` = `*.md`（**大小写不敏感**：`README.MD` 之类大写后缀也重扫）：仅脏路径含 md 的轮重扫，其余复用上轮通过结果（非 Markdown 工作区零扫描即过）。
 - 外部目标（`//`、`/`、scheme）与指向非 Markdown 目标的 fragment 从不标记（links 库语义）。
 - **链接即承诺**：链接语法断言目标在所在文件位置可解析；不承诺的文件名（模板正文里的"按需创建"产物、未来文件）用 code span 提及而非链接——gate 不设任何措辞豁免。
+- **`frozen-dirs` 选项（仓库策略覆写）**：`gates.yml` 里对 `doc-link` 声明 `options: { frozen-dirs: [目录名, …] }`（纯 options 条目按 id 覆写插件注册的 gate，见 gates 模块 adding-a-repo-gate）。语义：文件的**任一祖先目录**命中名单 → 该文件作为**源**豁免——冻结内容（DOC 式 `archived/`）只读不再修，其出链必然腐烂且永不可修，报告即噪音；活跃文件链接**进入**冻结目录的目标仍照常检查（链接即承诺不变）。非字符串列表 fail loud。`md_rename` 工具经 `projectGateOptions` 读同一声明，把冻结文件视为只读（移动照常、内容改写变 skip + report；移入冻结目录的归档 move 本身不豁免）。默认（未声明）：零豁免，行为与无选项时逐字节一致。
 - anchor-missing 的 remedy guidance 携带**确定性修复提示**：目标文档里与失败 fragment 最长公共前缀相同的标题（平局按文档序，≤3 条），每条带「标题文本 → 精确 #anchor」——agent 认领标题、抄锚点即可，无需知道 slug 规则；无共享前缀则退回静态指引。
 
 ## 构建与测试

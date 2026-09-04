@@ -1,0 +1,6 @@
+gates:
+  - id: fixture-check
+    module: check-mod.mjs
+  - id: doc-link
+    options:
+      frozen-dirs: [archived]

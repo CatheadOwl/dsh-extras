@@ -288,4 +288,53 @@ describe('planRename / applyRenamePlan (post-hoc repair)', () => {
     assert.equal(readFileSync(join(root, 'moved', 'guide.md'), 'utf8'), '# A\n\n[home](../README.md)\n\nEdited after move.\n')
     assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[a](moved/guide.md)\n')
   })
+
+  // Case 10: post-hoc + frozen — pass 2p judges freeze on the holder; a
+  // frozen in-link holder is reported, not rewritten.
+  it('post-hoc repair leaves a frozen in-link holder untouched (skip + report)', () => {
+    const root = fixture({
+      'archived/holder.md': '[guide](../docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+      'README.md': '[guide](docs/guide.md)\n',
+    })
+    mkdirSync(join(root, 'notes'))
+    renameSync(join(root, 'docs', 'guide.md'), join(root, 'notes', 'guide.md'))
+
+    const isFrozen = abs => abs.slice(root.length + 1).split(/[\\/]/).slice(0, -1).includes('archived')
+    const { certain, plan } = planRename(root, 'docs/guide.md', 'notes/guide.md', { isFrozen })
+    assert.equal(certain, true)
+    const result = applyRenamePlan(plan)
+    // Active holder rewritten; frozen holder byte-frozen with a reported skip.
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide](notes/guide.md)\n')
+    assert.equal(readFileSync(join(root, 'archived', 'holder.md'), 'utf8'), '[guide](../docs/guide.md)\n')
+    assert.equal(result.edited.includes('archived/holder.md'), false)
+    const frozenSkip = plan.skips.find(s => s.file === 'archived/holder.md')
+    assert.ok(frozenSkip !== undefined)
+    assert.match(frozenSkip.reason, /frozen/)
+  })
+
+  // Case 11: post-hoc + frozen — pass 1p judges freeze by the PRE-move
+  // position (oldRel); a frozen moved file's own out-links are not rebased.
+  it('post-hoc repair does not rebase a frozen moved file\'s own out-links (freeze by old position)', () => {
+    const root = fixture({
+      'docs/archived/old.md': '# Old\n\n[home](../../README.md)\n',
+      'README.md': '[old](docs/archived/old.md)\n',
+    })
+    mkdirSync(join(root, 'deep'))
+    renameSync(join(root, 'docs'), join(root, 'deep', 'docs'))
+
+    const isFrozen = abs => abs.slice(root.length + 1).split(/[\\/]/).slice(0, -1).includes('archived')
+    const { certain, plan } = planRename(root, 'docs', 'deep/docs', { isFrozen })
+    assert.equal(certain, true)
+    const result = applyRenamePlan(plan)
+    // The moved file landed deeper ([home] would need ../../.. now) but it
+    // was frozen at its old position (docs/archived) → bytes untouched, skip.
+    assert.equal(readFileSync(join(root, 'deep', 'docs', 'archived', 'old.md'), 'utf8'), '# Old\n\n[home](../../README.md)\n')
+    assert.equal(result.edited.includes('deep/docs/archived/old.md'), false)
+    const frozenSkip = plan.skips.find(s => s.file === 'deep/docs/archived/old.md')
+    assert.ok(frozenSkip !== undefined)
+    assert.match(frozenSkip.reason, /frozen/)
+    // The active in-link holder was still rewritten.
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[old](deep/docs/archived/old.md)\n')
+  })
 })

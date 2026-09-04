@@ -177,3 +177,56 @@ describe('planRename / applyRenamePlan (L1 explicit)', () => {
     assert.deepEqual(checkRepository(root), [])
   })
 })
+
+describe('planRename frozen sources (isFrozen option)', () => {
+  const frozenArchived = root => (abs) =>
+    abs.slice(root.length + 1).split(/[\\/]/).slice(0, -1).includes('archived')
+
+  it('moves an active target but leaves a frozen holder untouched (skip + report, bytes frozen)', () => {
+    const root = fixture({
+      'archived/old-note.md': '[still points at docs](../docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { certain, plan } = planRename(root, 'docs/guide.md', 'guide.md', { isFrozen: frozenArchived(root) })
+    assert.equal(certain, true)
+    assert.equal(plan.editsByFile.size, 0)
+    assert.equal(plan.skips.length, 1)
+    assert.equal(plan.skips[0].file, 'archived/old-note.md')
+    assert.match(plan.skips[0].reason, /frozen/)
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'archived/old-note.md'), 'utf8'), '[still points at docs](../docs/guide.md)\n')
+    assert.equal(existsSync(join(root, 'guide.md')), true)
+  })
+
+  it('the archival move itself is not exempt: a non-frozen source moving into a frozen dir is fully rewritten', () => {
+    const root = fixture({
+      'README.md': '[guide](docs/deep/guide.md)\n',
+      'docs/deep/guide.md': '# Guide\n\n[home](../../README.md)\n',
+    })
+    const { certain, plan } = planRename(root, 'docs/deep/guide.md', 'archived/docs/deep/guide.md', { isFrozen: frozenArchived(root) })
+    assert.equal(certain, true)
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide](archived/docs/deep/guide.md)\n')
+    assert.equal(readFileSync(join(root, 'archived', 'docs', 'deep', 'guide.md'), 'utf8'), '# Guide\n\n[home](../../../README.md)\n')
+  })
+
+  it('a frozen file moving with a renamed parent subtree moves unchanged, its would-be rewrites reported', () => {
+    const root = fixture({
+      'work/README.md': '[archived doc](docs/archived/old.md)\n',
+      'work/docs/archived/old.md': '[escape](../../../README.md)\n',
+      'README.md': '# Root\n',
+    })
+    // Depth-changing move (work/docs → docs): the frozen out-link would need
+    // a rebase (../../../README.md → ../../README.md) — it must NOT happen.
+    const { certain, plan } = planRename(root, 'work/docs', 'docs', { isFrozen: frozenArchived(root) })
+    assert.equal(certain, true)
+    applyRenamePlan(plan)
+    // Frozen bytes move verbatim; the stale out-link surfaces as a skip at its pre-move path.
+    assert.equal(readFileSync(join(root, 'docs', 'archived', 'old.md'), 'utf8'), '[escape](../../../README.md)\n')
+    const frozenSkip = plan.skips.find(s => s.file === 'work/docs/archived/old.md')
+    assert.ok(frozenSkip !== undefined, 'frozen out-link rewrite is reported as a skip')
+    assert.match(frozenSkip.reason, /frozen/)
+    // Active holders were still rewritten.
+    assert.equal(readFileSync(join(root, 'work', 'README.md'), 'utf8'), '[archived doc](../docs/archived/old.md)\n')
+  })
+})

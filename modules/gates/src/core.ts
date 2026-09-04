@@ -151,7 +151,11 @@ export async function runGate(definition: GateDefinition, root: string, options:
   options.signal?.throwIfAborted()
   const startedAt = Date.now()
   try {
-    const violations = await withTimeout(definition.check(root, options.changes), definition.timeoutMs, definition.id)
+    const violations = await withTimeout(
+      definition.check(root, options.changes, definition.options),
+      definition.timeoutMs,
+      definition.id,
+    )
     return {
       gateId: definition.id,
       status: violations.length === 0 ? 'passed' : 'failed',

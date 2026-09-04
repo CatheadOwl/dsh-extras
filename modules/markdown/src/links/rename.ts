@@ -93,6 +93,20 @@ export interface RenamePlanResult {
   plan: RenamePlan
 }
 
+export interface PlanRenameOptions {
+  /**
+   * Frozen (read-only by repo policy) source files, by absolute path. A frozen
+   * file still MOVES with its subtree, but its content is never rewritten:
+   * each reference that the plan would otherwise edit becomes a skip
+   * (reported, never touched). The one exception is the file's own archival
+   * move — a non-frozen source moving INTO a frozen directory is fully
+   * rewritten (freeze is judged at the pre-move position). Policy-free
+   * mechanism: the carrier constructs the predicate (e.g. from a
+   * `frozen-dirs` gate option); absent predicate = nothing is frozen.
+   */
+  isFrozen?: (absFile: string) => boolean
+}
+
 export interface RenameApplyResult {
   moved: boolean
   /** Root-relative paths whose content was rewritten (in-link + out-link). */
@@ -148,6 +162,20 @@ function conflict(file: string, ref: Pick<LinkReference, 'line' | 'url'>, reason
 
 function skip(file: string, ref: Pick<LinkReference, 'line' | 'url'>, reason: string): RenameSkip {
   return { file, line: ref.line, url: ref.url, reason }
+}
+
+/** Skip reason when a rewrite was planned but its source file is frozen (read-only by policy). */
+const REASON_FROZEN_SOURCE = 'source file is frozen (read-only by policy; reference left unchanged)'
+
+/**
+ * Drop the edits for one frozen source file, converting each would-be rewrite
+ * into a reported skip. Frozen semantics: the file moves with the plan, its
+ * bytes do not change.
+ */
+function discardFrozenRewrites(file: string, rewrites: Rewrite[], skips: RenameSkip[]): void {
+  for (const { reference } of rewrites) {
+    skips.push(skip(file, reference, REASON_FROZEN_SOURCE))
+  }
 }
 
 /** Repo-relative old→new pairs of git-witnessed moved files (D2: the out-link pass scope). */
@@ -210,10 +238,11 @@ function postHocEvidence(repoRoot: string, oldAbs: string, newAbs: string): Move
  * is link-only (post-hoc repair); oldPath missing without evidence stays a
  * hard conflict.
  */
-export function planRename(root: string, oldPath: string, newPath: string): RenamePlanResult {
+export function planRename(root: string, oldPath: string, newPath: string, options: PlanRenameOptions = {}): RenamePlanResult {
   const repoRoot = gitTopLevel(root)
   const oldAbs = resolve(root, oldPath)
   const newAbs = resolve(root, newPath)
+  const isFrozen = options.isFrozen
   const conflicts: RenameConflict[] = []
   const skips: RenameSkip[] = []
 
@@ -269,6 +298,7 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
     for (const [oldRel, newRel] of movedFiles) {
       const oldFile = resolve(repoRoot, oldRel) // resolution baseline (pre-move position)
       const newFile = resolve(repoRoot, newRel) // physical content location
+      const frozen = isFrozen?.(oldFile) === true // freeze judged at the pre-move position
       const source = readFileSync(newFile, 'utf8')
       const rewrites: Rewrite[] = []
       for (const ref of extractReferences(source)) {
@@ -303,7 +333,10 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
         }
         rewrites.push({ reference: ref, newHref })
       }
-      if (rewrites.length > 0) editsByFile.set(newFile, applyRebase(source, rewrites))
+      if (rewrites.length > 0) {
+        if (!frozen) editsByFile.set(newFile, applyRebase(source, rewrites))
+        else discardFrozenRewrites(newRel, rewrites, skips)
+      }
     }
 
     // 2p. In-link rewrite, resolved lexically (plan-layer difference #1):
@@ -317,6 +350,7 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
     for (const candidateAbs of gitGrep(repoRoot, needle)) {
       if (movedNewAbs.has(candidateAbs)) continue // part of the move → out-link pass owns it
       const source = readFileSync(candidateAbs, 'utf8')
+      const candidateRel = posixRelative(repoRoot, candidateAbs)
       const rewrites: Rewrite[] = []
       for (const ref of extractReferences(source)) {
         const resolution = resolveReferenceLexically(ref, candidateAbs)
@@ -338,7 +372,10 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
         }
         rewrites.push({ reference: ref, newHref })
       }
-      if (rewrites.length > 0) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
+      if (rewrites.length > 0) {
+        if (isFrozen?.(candidateAbs) !== true) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
+        else discardFrozenRewrites(candidateRel, rewrites, skips)
+      }
     }
 
     return {
@@ -375,7 +412,13 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
       }
       rewrites.push({ reference: ref, newHref })
     }
-    if (rewrites.length > 0) editsByFile.set(newFile, applyRebase(source, rewrites))
+    if (rewrites.length > 0) {
+      // Freeze judged at the pre-move position: a file moving INTO a frozen
+      // directory (the archival move) is fully rewritten — that edit is the
+      // policy-authorized last one.
+      if (isFrozen?.(oldFile) !== true) editsByFile.set(newFile, applyRebase(source, rewrites))
+      else discardFrozenRewrites(posixRelative(repoRoot, oldFile), rewrites, skips)
+    }
   }
 
   // 2. In-link rewrite: references elsewhere that resolve INTO old, rewritten
@@ -385,6 +428,7 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
   for (const candidateAbs of gitGrep(repoRoot, needle)) {
     if (isInside(oldAbs, candidateAbs)) continue // moves with the subtree → unchanged
     const source = readFileSync(candidateAbs, 'utf8')
+    const candidateRel = posixRelative(repoRoot, candidateAbs)
     const rewrites: Rewrite[] = []
     for (const ref of extractReferences(source)) {
       const resolution = resolveReference(ref, candidateAbs, repoRoot)
@@ -416,7 +460,10 @@ export function planRename(root: string, oldPath: string, newPath: string): Rena
       }
       rewrites.push({ reference: ref, newHref })
     }
-    if (rewrites.length > 0) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
+    if (rewrites.length > 0) {
+      if (isFrozen?.(candidateAbs) !== true) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
+      else discardFrozenRewrites(candidateRel, rewrites, skips)
+    }
   }
 
   return {

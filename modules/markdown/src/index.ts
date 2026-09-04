@@ -22,12 +22,12 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import z from '@deepseek-ai/schemastery'
-import { registerGate } from '@catheadowl/dsh-extras/gates/register'
+import { registerGate, projectGateOptions } from '@catheadowl/dsh-extras/gates/register'
 import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/gates/register'
-import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename } from './links/index.js'
+import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename, repositoryRoot } from './links/index.js'
 import type { RenameConflict, RenameSkip } from './links/index.js'
 
-import { check as checkDocLink } from './gate-check.js'
+import { check as checkDocLink, frozenSourcePredicate, parseFrozenDirs } from './gate-check.js'
 import { check as checkMdMetadata } from './metadata-check.js'
 
 export const name = 'markdown'
@@ -60,6 +60,21 @@ function conflictView(c: RenameConflict): { file: string; line: number; url: str
 
 function skipView(s: RenameSkip): { file: string; line: number; url: string; reason: string } {
   return { file: s.file, line: s.line, url: s.url, reason: s.reason }
+}
+
+/**
+ * The workspace's `frozen-dirs` policy (declared on the `doc-link` gate's
+ * `gates.yml` options) as a rename-face predicate, or undefined when the
+ * workspace declares none. Single policy source: the gate and the tool read
+ * the same entry, so check exemptions and read-only holders can never drift.
+ * A malformed declaration fails loud here exactly as it does on the gate
+ * face (`parseFrozenDirs` is the shared shape check) — the tool must not
+ * silently widen into rewriting frozen files while the gate is failing.
+ */
+function workspaceFrozenPredicate(root: string): ((absFile: string) => boolean) | undefined {
+  const frozenDirs = parseFrozenDirs(projectGateOptions(root, 'doc-link')?.['frozen-dirs'])
+  if (frozenDirs === undefined || frozenDirs.length === 0) return undefined
+  return frozenSourcePredicate(repositoryRoot(root), frozenDirs)
 }
 
 /**
@@ -158,7 +173,8 @@ export function apply(ctx: Context): void {
     },
     async execute(args, exec) {
       const root = sessionWorkspace(exec)
-      const { certain, plan } = planRename(root, args.oldPath, args.newPath)
+      const isFrozen = workspaceFrozenPredicate(root)
+      const { certain, plan } = planRename(root, args.oldPath, args.newPath, isFrozen === undefined ? {} : { isFrozen })
       if (!certain) {
         const conflicts = plan.conflicts.map(conflictView)
         return toJsonValue({
@@ -181,7 +197,7 @@ export function apply(ctx: Context): void {
 
   registerGate(ctx, {
     ...DOC_LINK_GATE,
-    check: async (root, changes): Promise<GateViolation[]> => checkDocLink(root, changes),
+    check: async (root, changes, options): Promise<GateViolation[]> => checkDocLink(root, changes, options),
   })
 
   registerGate(ctx, {
