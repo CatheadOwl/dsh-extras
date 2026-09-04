@@ -31,6 +31,7 @@ description: markdown 模块的 doc-link gate——Markdown 内链完整性门�
 - gate id `doc-link`；`on: ['stop','manual']`、`level: 'blocking'`（无确定性修复内核的语义修复，保持阻断档）。
 - `relevantPath` = `*.md`（**大小写不敏感**：`README.MD` 之类大写后缀也重扫）：仅脏路径含 md 的轮重扫，其余复用上轮通过结果（非 Markdown 工作区零扫描即过）。
 - 外部目标（`//`、`/`、scheme）与指向非 Markdown 目标的 fragment 从不标记（links 库语义）。
+- **链接即承诺**：链接语法断言目标在所在文件位置可解析；不承诺的文件名（模板正文里的"按需创建"产物、未来文件）用 code span 提及而非链接——gate 不设任何措辞豁免。
 - anchor-missing 的 remedy guidance 携带**确定性修复提示**：目标文档里与失败 fragment 最长公共前缀相同的标题（平局按文档序，≤3 条），每条带「标题文本 → 精确 #anchor」——agent 认领标题、抄锚点即可，无需知道 slug 规则；无共享前缀则退回静态指引。
 
 ## 构建与测试
