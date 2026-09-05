@@ -1,5 +1,5 @@
 ---
-description: 开发工作流——构建/测试命令、宿主 checkout 摆放约定、工具链借用与 peer junction 接线、host-closure 网络检查的代理与跳过
+description: 开发工作流——构建/测试命令、宿主 checkout 锚点（构建硬锚点 + 接线工具 DSH_REPO 覆盖）、工具链借用与 peer junction 接线、host-closure 网络检查的代理与跳过
 ---
 
 # 开发工作流（development）
@@ -14,9 +14,9 @@ pnpm run verify:package-face    # exports / facade checks
 pnpm run verify:publish-readiness  # release hygiene checks (docs locality, host closure, ...)
 ```
 
-## 宿主 checkout 摆放约定
+## 宿主 checkout 锚点
 
-构建脚本（`package.json` 的 `build:*` / `check-types:*`）以 `..\..\deepseek-harness` 锚点借用宿主工具链（`node_modules/.bin` 下的 tsc / tsdown）。因此克隆本仓库后，先在**同级目录**摆一份 deepseek-harness 检出并构建（`pnpm install && pnpm run build`）：
+工具链分两类：**tsc 自持**（本包 devDependency 安装，`build:*` / `check-types:*` 直接调用，与宿主检出位置无关）；**tsdown 借宿主**（[scripts/host-tool.mjs](../scripts/host-tool.mjs) 锚点解析，因为它必须与宿主源码树里的 `clientBundle` preset 配对，preset 无 npm 出口）。锚点解析链：`DSH_REPO`（机器级 env）> 嵌套仓默认 `../../deepseek-harness`（零配置形态仍是同级摆放）：
 
 ```text
 <parent>/
@@ -24,7 +24,11 @@ pnpm run verify:publish-readiness  # release hygiene checks (docs locality, host
   <this-repo>/          # this package repository
 ```
 
-开发期宿主 peer 的解析 = 把 `node_modules/@deepseek-ai/*` 按 junction 接到宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态）。
+宿主检出不在默认位置时设 `DSH_REPO` 即可。构建前置（一次性）：
+
+1. 宿主检出 `pnpm install && pnpm run build`（tsdown 借用 + preset 需要）；
+2. 本包 `pnpm install`；
+3. 本包根执行 `node scripts/relink-host-peers.mjs`（锚点链同上）——把 `node_modules/@deepseek-ai/*` 按 junction 接到宿主检出的 **workspace 源目录**（与宿主 CLI 安装顶层 node_modules 内链接同形态）。**`@deepseek-ai/*` 类型解析依赖这层 junction**（各 `tsconfig*.json` 不含宿主路径），缺了它 check-types/build 必红（fail-loud，不是可选项）。
 
 各模块的行为 eval（意图/回归用例）位于 `modules/<m>/eval/`；框架与运行方式见各模块 eval README（不随包发布，名称引用）。
 
