@@ -1,0 +1,82 @@
+name: Publish npm
+
+# Publishes @catheadowl/dsh-extras to the npm registry via npm trusted
+# publishing (OIDC): npm trusts CatheadOwl/dsh-extras + publish.yml, so no
+# long-lived token lives in repo secrets. Version bumps ride a `v*` tag that
+# must match package.json.
+#
+# Build prerequisites (Tier-B tail, see ci.yml header): the four module
+# builds borrow the dsh host checkout's toolchain via the relative path
+# ../../deepseek-harness, and build:client needs the tsdown out-of-tree
+# patch replayed onto it. Both are reproduced here explicitly:
+#   - host checked out (pinned upstream ref) at dev/deepseek-harness
+#   - self checked out at dev/dsh-plugin-dev/extras so the relative path
+#     ../../deepseek-harness resolves inside the workspace
+#   - patch/tsdown-out-of-tree-fallback.patch applied before host install
+# When Phase 3 host-borrow retirement lands (toolchain as devDeps), the
+# host checkout + patch steps collapse away.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish (trusted publishing)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # OIDC trusted publishing (npm trusts CatheadOwl/dsh-extras + publish.yml)
+    steps:
+      - name: Checkout (self, nested for host-borrow path)
+        uses: actions/checkout@v4
+        with:
+          path: dev/dsh-plugin-dev/extras
+
+      - name: Checkout (dsh host, pinned upstream base of the tsdown patch)
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: dd6322d604  # upstream master; tsdown patch base — bump together with patch/
+          path: dev/deepseek-harness
+
+      - name: Replay tsdown out-of-tree patch onto host
+        run: git -C dev/deepseek-harness apply dev/dsh-plugin-dev/extras/patch/tsdown-out-of-tree-fallback.patch
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      # Trusted publishing needs npm >= 11.5 for OIDC; node 22 ships older.
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cd dev/dsh-plugin-dev/extras
+          pkg_version="v$(node -p "require('./package.json').version")"
+          tag_version="${GITHUB_REF##*/}"
+          if [ "$pkg_version" != "$tag_version" ]; then
+            echo "::error::tag $tag_version does not match package.json $pkg_version"
+            exit 1
+          fi
+
+      - name: Install host toolchain
+        run: pnpm install --frozen-lockfile
+        working-directory: dev/deepseek-harness
+
+      - name: Install package dependencies
+        run: pnpm install --no-frozen-lockfile
+        working-directory: dev/dsh-plugin-dev/extras
+
+      - name: "Publish (prepack chain: build + face + readiness + i18n)"
+        run: npm publish --access public
+        working-directory: dev/dsh-plugin-dev/extras
