@@ -1,24 +1,24 @@
 /**
- * gates config-guide skill: a user-invocable skill whose body distills the
+ * gates config-guide skill: a skill whose body distills the
  * repo-declared `gates.yml` cookbook (`docs/adding-a-repo-gate.md`) plus the
  * execution facts a writer needs (discovery, forms, fields, verification,
- * pitfalls). Registered user-only, the inverse of coggit's model-only
- * handbooks: a human pulls the guide in with the `/gates-config-guide`
- * gesture when they want to create/understand/edit `gates.yml`; the model
- * catalog and `skill` tool never advertise it.
+ * pitfalls). Model-visible in the catalog: the actor editing `gates.yml` is
+ * usually the model itself (config changes, self-declared gates, gate
+ * troubleshooting), so the guide must be discoverable from that side; humans
+ * keep the `/gates-config-guide` gesture.
  */
 import type { Context } from '@deepseek-ai/cordis'
 // Type-only: pulls the `ctx.skills` Context augmentation; the registry
 // service itself is provided by the host profile. No runtime import.
 import type {} from '@deepseek-ai/dsh-skill'
 
-/** Skill name for the `/gates-config-guide` user gesture. */
+/** Skill name for the `/gates-config-guide` user gesture (kept for humans). */
 export const GATES_CONFIG_GUIDE_SKILL_NAME = 'gates-config-guide'
 
 const GATES_CONFIG_GUIDE_CONTENT = `# gates.yml 配置指南（gates 插件）
 
 本指南指导你创建、理解、编写 gates 插件（\`@catheadowl/dsh-extras\`）的仓库级配置文件
-\`gates.yml\`。用户显式调用本 skill（\`/gates-config-guide\`）时按此操作。
+\`gates.yml\`。用户以 \`/gates-config-guide\` 手势、或模型在目录中按需加载本 skill 时按此操作。
 
 ## 1. gates.yml 是什么
 
@@ -155,7 +155,7 @@ gates:
 `
 
 /**
- * Register the user-only config-guide skill via soft dependency injection:
+ * Register the config-guide skill via soft dependency injection:
  * a profile without `dsh-skill` keeps gates fully functional minus the skill,
  * matching the plugin's conditional-injection stance (same shape as the
  * `ctx.inject(['commands'], ...)` registration of `/gates`).
@@ -164,11 +164,11 @@ export function registerGatesConfigGuideSkill(ctx: Context): void {
   ctx.inject(['skills'], (skillCtx) => {
     skillCtx.skills.register({
       name: GATES_CONFIG_GUIDE_SKILL_NAME,
-      description: 'gates 配置指南：创建、理解、编写仓库级 gates.yml（用户显式调用）',
-      whenToUse: '当用户想创建、理解或修改 gates 插件的仓库级配置文件 gates.yml 时，由用户通过 /gates-config-guide 显式调用',
+      description: 'gates 配置指南：创建、理解、编写仓库级 gates.yml',
+      whenToUse: '当要创建、理解或修改 gates 插件的仓库级配置文件 gates.yml 时（无论用户手势 /gates-config-guide 还是模型自行遇到该需求）',
       source: 'custom',
       content: GATES_CONFIG_GUIDE_CONTENT,
-      invocation: { modelInvocable: false, userInvocable: true },
+      invocation: { modelInvocable: true, userInvocable: true },
     })
   })
 }

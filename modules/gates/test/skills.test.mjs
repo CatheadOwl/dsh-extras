@@ -18,7 +18,7 @@ function captureSkillRegistration() {
   return { ctx, registered }
 }
 
-test('registerGatesConfigGuideSkill registers one user-only gates-config-guide skill', async () => {
+test('registerGatesConfigGuideSkill registers one gates-config-guide skill visible to both sides', async () => {
   const { registerGatesConfigGuideSkill, GATES_CONFIG_GUIDE_SKILL_NAME } = await import(fromLib('skills'))
   const { ctx, registered } = captureSkillRegistration()
   registerGatesConfigGuideSkill(ctx)
@@ -28,8 +28,9 @@ test('registerGatesConfigGuideSkill registers one user-only gates-config-guide s
   assert.equal(skill.name, 'gates-config-guide')
   // Public skill-name grammar enforced by the registry (isSkillName).
   assert.match(skill.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-  // The inverse of coggit's model-only handbooks: human gesture only.
-  assert.deepEqual(skill.invocation, { modelInvocable: false, userInvocable: true })
+  // The gates.yml editor is usually the model itself, so the guide must be
+  // model-visible; humans keep the gesture.
+  assert.deepEqual(skill.invocation, { modelInvocable: true, userInvocable: true })
   assert.equal(skill.source, 'custom')
   assert.ok(skill.description.length > 0)
   assert.ok(skill.whenToUse !== undefined && skill.whenToUse.length > 0)

@@ -59,7 +59,7 @@ export function apply(ctx: Context): void {
 | service seam | `ctx.gates` | 插件与 gates 内部驱动 |
 | agent tool | `gates_run` | 模型 |
 | human command | `/gates` | 用户 |
-| user skill | `/gates-config-guide` | 显式手势用户 |
+| skill | `/gates-config-guide` | 手势用户 + 模型（目录可按需加载） |
 | Web client face | `@catheadowl/dsh-extras/client` | Settings → Plugins → Gates |
 
 root entry `@catheadowl/dsh-extras` 只服务 dsh loader，不承诺实现层导出。内部模块、服务类、controller、runner 与脏状态实现都不是公共消费面。

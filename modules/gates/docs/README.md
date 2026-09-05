@@ -18,7 +18,7 @@ description: gates 插件的使用文档入口（cookbook 风格阅读地图）�
 | [designing-gate-sets](designing-gate-sets.md) | 配方: 一个逻辑检查拆成多个 gate，按确定性分档（自动修 / 阻断 / 报告） |
 | [development](development.md) | 维护指南：消费面变更、构建与测试、自举 gates、兼容纪律 |
 
-> 嫌翻文档麻烦？装了本插件后，在 dsh 会话里打 `/gates-config-guide` 会把「创建 / 理解 / 编写 `gates.yml`」的操作指南作为 skill 注入（仅用户显式调用，模型不自动加载）。skill 正文维护在 `src/skills.ts`，本文档是它的权威展开。
+> 嫌翻文档麻烦？装了本插件后，在 dsh 会话里打 `/gates-config-guide` 会把「创建 / 理解 / 编写 `gates.yml`」的操作指南作为 skill 注入；该 skill 也对模型目录开放（改 `gates.yml` 的执行者经常是模型，按需自行加载）。skill 正文维护在 `src/skills.ts`，本文档是它的权威展开。
 
 ## 与其他文档的关系
 
