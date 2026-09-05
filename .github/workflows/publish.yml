@@ -79,6 +79,13 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: dev/deepseek-harness
 
+      # Host workspace packages resolve types from their built lib/ outputs
+      # (gitignored artifacts), so a fresh checkout must build them before the
+      # extras modules can typecheck against the borrowed peers.
+      - name: Build host libraries (host + client faces)
+        run: pnpm run build:lib
+        working-directory: dev/deepseek-harness
+
       - name: Install package dependencies
         run: pnpm install --no-frozen-lockfile
         working-directory: dev/dsh-plugin-dev/extras
