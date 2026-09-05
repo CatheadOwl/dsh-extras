@@ -11,7 +11,7 @@ description: 与宿主的关系——peer 闭包与组合行形态、为什么�
 
 ## 为什么包装宿主的 hook
 
-宿主在 turn 收尾提供 `agent/turn-stopping` 检查点（serial 模式，多监听器共存、顺序无关）——但检查点只提供「反对即 steer」的原语：配置钩子桥没有插件注册面，裸挂监听器的每个检查都得各自实现反对协议、阻断自限与配置发现。gates 把它包装成可组合的 gate 框架（`ctx.gates` + `registerGate` 消费面），价值不止触发包装，而在其上的契约层（enforcement 三档、fixer、归责过滤、预算）。完整论证见 [modules/gates/docs/why-gates.md](../modules/gates/docs/why-gates.md)。
+宿主在 turn 收尾提供 `agent/turn-stopping` 检查点（serial 模式，多监听器共存、顺序无关）——但检查点的反对原语只有 steer（inject/followup 亦可达，但都强制续步或开新轮，无旁路）：配置钩子桥没有插件注册面，裸挂监听器的每个检查都得各自实现反对协议、阻断自限与配置发现。gates 把它包装成可组合的 gate 框架（`ctx.gates` + `registerGate` 消费面），价值不止触发包装，而在其上的契约层（enforcement 三档、fixer、归责过滤、预算）。完整论证见 [modules/gates/docs/why-gates.md](../modules/gates/docs/why-gates.md)。
 
 ## 本包的 opinionated 取向
 

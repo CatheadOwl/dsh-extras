@@ -1,12 +1,12 @@
 ---
-description: 为什么需要 prompt 模块——宿主 agent/pre-step 检查点的机制事实与框架的注册面/共存纪律价值；含失效判据与边界
+description: 为什么需要 prompt 模块——宿主 agent/pre-step 拦截点的机制事实与框架的注册面/共存纪律价值；含失效判据与边界
 ---
 
 # 为什么需要 prompt 模块（why）
 
-## 宿主检查点的机制事实
+## 宿主拦截点的机制事实
 
-dsh 宿主在 user prompt 进入模型前提供 `agent/pre-step` 检查点（waterfall 模式，监听者可改写/拒绝 claimed messages），事实是：
+dsh 宿主在 user prompt 进入模型前提供 `agent/pre-step` 拦截点（waterfall 模式，监听者可改写/拒绝 claimed messages），事实是：
 
 - **人人可挂，但各挂各的**：任何插件都能直接监听 pre-step 自己注入上下文——单插件、单需求、不在意重复注入时完全够用；
 - **宿主没有「多注入者共存」的原语**：第二个注入者出现时的合并与定序、跨 compact 的去重、注入预算的分配、用户按来源关闭某个注入——这些宿主都不管，散写的注入者要么互相不知情地抢占上下文，要么各自重造管线；

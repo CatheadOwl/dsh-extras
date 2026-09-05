@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-**做 harness 就是做 docs。**`@catheadowl/dsh-extras` 让你的 [dsh](https://github.com/deepseek-ai/deepseek-harness) agent 所依赖的知识保持健康。它把 dsh 的 turn 收尾 hook 包装成可组合的质量门禁框架——一个注册面（`registerGate`），而不是每个插件各自抢占 hook——并随包交付这句话所要求的文档维护组件：Markdown 链接治理、向会话注入项目知识、知识库路由视图。
+**做 harness 就是做 docs。**`@catheadowl/dsh-extras` 是一次 opinionated 的尝试：让 [dsh](https://github.com/deepseek-ai/deepseek-harness) agent 所依赖的知识做到文档健康与可导航。它把两个常用的 dsh hook 包装成可组合的基础框架——`agent/turn-stopping`（轮末）上的 gates 与 `agent/pre-step` 上的 prompt 中间件，各给一个注册面（`registerGate` / `registerPromptMiddlewareProvider`），而不是每个插件各自裸挂 hook——并随包交付该立场的落地：Markdown 链接治理、按路径注入上下文、知识库路由视图。
 
 `dsh plugin add` 一次全装，每个模块是组合里可独立开关的一行（按行 id 标识），不需要的行关掉即可，互不影响。本包与 dsh 宿主的关系、为什么要包装宿主 hook，见 [docs/host.md](docs/host.md)。
 
@@ -16,12 +16,19 @@ dsh plugin add @catheadowl/dsh-extras
 
 ## 模块
 
+扩展框架（面向消费插件的注册面）：
+
 | 模块 | 行 id | 提供什么 | 文档 |
 |---|---|---|---|
 | gates | `gates` | 质量门禁框架（`ctx.gates`）：turn 收尾自动运行的可组合 gate 与 `registerGate` 消费面 | [modules/gates/README.md](modules/gates/README.md) |
+| prompt | `prompt` | prompt 中间件框架（`ctx.promptMiddleware`）：`agent/pre-step` 上的 provider 注册表，把用户提示词中的路径提及变成受预算约束的 relates 上下文；`registerPromptMiddlewareProvider` / `registerRelatesProvider` 消费面 | [modules/prompt/README.md](modules/prompt/README.md) |
+
+工具与消费行：
+
+| 模块 | 行 id | 提供什么 | 文档 |
+|---|---|---|---|
 | markdown | `markdown` | `md_rename` 工具（搬移并改写 Markdown 内链）+ `doc-link` gate + 内置链接事务库 | [modules/markdown/README.md](modules/markdown/README.md) |
-| prompt | `prompt` | prompt 注入服务（declarative provider + 内置 parse/tree 库），向会话注入项目知识 | [modules/prompt/README.md](modules/prompt/README.md) |
-| routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider（一个 prompt 中间件 provider） | [modules/routes/README.md](modules/routes/README.md) |
 
 每个模块是宿主插件组合里可独立开关的一行：不共享状态，关掉任何一行，其余模块行为不变。
 
@@ -57,6 +64,7 @@ dsh plugin add @catheadowl/dsh-extras
 除组合行外，本包导出插件开发者消费的稳定子路径：
 
 - `@catheadowl/dsh-extras/gates/register`——gates 插件消费面（`registerGate` + `GateDefinition` / `GateViolation` 类型）。
+- `@catheadowl/dsh-extras/prompt/register`——prompt 中间件消费面（`registerPromptMiddlewareProvider` / `registerRelatesProvider` + provider 类型）。
 
 各模块自己的次级消费面（如 markdown 的仓库级 `gates.yml` 回退）见对应模块文档。
 Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单独安装。

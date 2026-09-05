@@ -6,7 +6,7 @@ description: extras 的 prompt 模块——user prompt enrichment 小框架：�
 
 **价值**：让 dsh 会话在用户提到某个路径时自动获得该路径的定向上下文（面包屑、关联说明等），而不是让模型盲猜或用户手动粘贴——注入只按路径聚合、不改写用户消息、不阻断轮次。
 
-**与宿主的关系**：挂在 dsh 的 `agent/pre-step` 检查点上做一个 provider 注册表（`ctx.promptMiddleware`），本模块只实现承载层，不内置 cognition 或面包屑等业务逻辑——那些由其他插件/模块作为 provider 注册。为什么是框架而不是各插件直挂 pre-step：一个注册面 + 统一 runner（once 去重 / 预算 / 超时 / 降级 / 可见性纪律），代替每个注入者重复造注入管线、互相不知情地抢占上下文。与宿主的整体关系见包根 [docs/host.md](../../docs/host.md)；本模块的完整论证见 [docs/why-prompt.md](docs/why-prompt.md)。
+**与宿主的关系**：挂在 dsh 的 `agent/pre-step` 拦截点上做一个 provider 注册表（`ctx.promptMiddleware`），本模块只实现承载层，不内置 cognition 或面包屑等业务逻辑——那些由其他插件/模块作为 provider 注册。为什么是框架而不是各插件直挂 pre-step：一个注册面 + 统一 runner（once 去重 / 预算 / 超时 / 降级 / 可见性纪律），代替每个注入者重复造注入管线、互相不知情地抢占上下文。与宿主的整体关系见包根 [docs/host.md](../../docs/host.md)；本模块的完整论证见 [docs/why-prompt.md](docs/why-prompt.md)。
 
 安装本包见[包根 README](../../README.md)（`dsh plugin add`，prompt 是其中一行）。链路一句话：pre-step 解析 user prompt 中的路径提及 → provider 产出 **relates**（对被提及路径追加的关联上下文条目，`value` / `href`）→ 聚合去重预算后随会话注入。
 

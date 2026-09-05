@@ -9,8 +9,8 @@ description: 为什么需要 gates——宿主 turn-stopping 检查点的机制�
 dsh 宿主在 turn 收尾提供 `agent/turn-stopping` 检查点，事实是：
 
 - **serial 模式**：宿主 await 全体监听器，多监听器共存、监听顺序无关——「抢占/踩踏」不是问题；
-- **配置钩子桥没有插件注册面**：宿主的 hooks 子系统（hooks-claude-code / hooks-codex）只翻译配置文件里的外部命令；插件自带的检查没有可挂的声明入口（宿主自述「a native cordis plugin could do everything this bridge does — more powerfully」，但没给注册面）；
-- **反对协议与预算要自己做**：裸挂监听器的检查要自己处理 steer 反对、连续阻断自限与项目级配置发现——后两者宿主源码里只有 TODO 标记（stop-loop-guard / per-session-hook-config），无实现无提案。
+- **配置钩子桥没有插件注册面**：宿主的 hooks 子系统（hooks-claude-code / hooks-codex）只翻译配置文件里的外部命令；插件自带的检查没有可挂的声明入口（宿主 hook-protocol 自述「a native Cordis plugin has the full harness API with no hook protocol in between」，但没给注册面）；
+- **反对协议与预算要自己做**：裸挂监听器的检查要自己处理 steer 反对、连续阻断自限与项目级配置发现——后两者宿主源码里只有 TODO 标记（stop-loop-guard / per-session-hook-config），未见实现。
 
 ## gates 提供什么
 

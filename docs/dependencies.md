@@ -20,7 +20,7 @@ dsh 是微内核 harness：插件在 Cordis fiber 树上运行，能力以**服�
 |---|---|
 | gates | `ctx.tools`（`gates_run`）、`agent/turn-stopping` 检查点（轮末阻塞驱动）、命令/技能注册面 |
 | markdown | `ctx.tools`（`md_rename`）、`agent/turn-stopping`（doc-link gate 的 defer 档旁路） |
-| prompt | `agent/pre-step` 检查点（driver 挂载点）、Typert Remote / Web 配置面 |
+| prompt | `agent/pre-step` 拦截点（driver 挂载点）、Typert Remote / Web 配置面 |
 | routes | `ctx.tools`（`any_routes`）+ prompt 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
 | client（锚点包） | Web 插槽（`settings.plugins.tab`）——聚合 §2 两个基座的 Settings Tab |
 

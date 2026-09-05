@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` keeps the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on healthy. It wraps dsh's turn-close hook into a composable quality-gate framework — one registration face (`registerGate`) instead of every plugin grabbing the hook — and ships the doc-maintenance components that philosophy implies: Markdown link hygiene, project-knowledge injection into the session, and routing views over Markdown knowledge bases.
+**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` is an opinionated attempt at docs health and navigation for the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on. It wraps two commonly used dsh hooks into composable base frameworks — gates on `agent/turn-stopping` (turn close) and prompt middleware on `agent/pre-step`, each one registration face (`registerGate` / `registerPromptMiddlewareProvider`) instead of every plugin grabbing the raw hook — and ships what that stance implies: Markdown link hygiene, per-path context injection, and routing views over Markdown knowledge bases.
 
 `dsh plugin add` installs everything at once; every module is a separately toggleable composition row (identified by row id) and can be disabled without affecting the others. What this package is relative to the dsh host — and why it wraps host hooks at all — is covered in [docs/host.md](docs/host.md).
 
@@ -16,12 +16,19 @@ Requires the dsh CLI. All runtime dependencies come from the dsh host (peerDepen
 
 ## Modules
 
+Extension frameworks (registration seams for consumer plugins):
+
 | Module | Row id | What it provides | Docs |
 |---|---|---|---|
 | gates | `gates` | Quality-gate framework (`ctx.gates`): composable gates run automatically at turn close, plus the `registerGate` consumer face | [modules/gates/README.md](modules/gates/README.md) |
+| prompt | `prompt` | Prompt-middleware framework (`ctx.promptMiddleware`): provider registry on `agent/pre-step` that turns path mentions into budgeted relates context; `registerPromptMiddlewareProvider` / `registerRelatesProvider` consumer faces | [modules/prompt/README.md](modules/prompt/README.md) |
+
+Tools & consumers:
+
+| Module | Row id | What it provides | Docs |
+|---|---|---|---|
 | markdown | `markdown` | `md_rename` tool (move a Markdown file and rewrite every internal link) + the `doc-link` gate + the bundled link-transaction library | [modules/markdown/README.md](modules/markdown/README.md) |
-| prompt | `prompt` | Prompt-injection service (declarative providers + bundled parse/tree libraries) that injects project knowledge into the session | [modules/prompt/README.md](modules/prompt/README.md) |
-| routes | `routes` | `any_routes` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_routes` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider (a prompt-middleware provider) | [modules/routes/README.md](modules/routes/README.md) |
 
 Each module is an independently toggleable row in the host's plugin composition: no shared state — disable any row and the others behave exactly as before.
 
@@ -57,6 +64,7 @@ Adding or removing modules happens through package versions: upgrade this packag
 Beyond the composition rows, the package exports stable subpaths for plugin developers:
 
 - `@catheadowl/dsh-extras/gates/register` — the gates plugin consumer face (`registerGate` + the `GateDefinition` / `GateViolation` types).
+- `@catheadowl/dsh-extras/prompt/register` — the prompt-middleware consumer face (`registerPromptMiddlewareProvider` / `registerRelatesProvider` + the provider types).
 
 Secondary consumer faces per module (e.g. markdown's repo-level `gates.yml` fallback) are documented in each module's README.
 The Web Settings tabs (gates / prompt) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
