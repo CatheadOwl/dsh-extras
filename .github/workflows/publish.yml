@@ -100,5 +100,17 @@ jobs:
         working-directory: dev/dsh-plugin-dev/extras
 
       - name: "Publish (prepack chain: build + face + readiness + i18n)"
+        if: github.event_name == 'push'
         run: npm publish --access public
+        working-directory: dev/dsh-plugin-dev/extras
+
+      # Preflight form (workflow_dispatch): the full chain above, ending in a
+      # pack dry-run instead of a publish. Local preflight cannot validate
+      # this workflow (warm local env masks every CI-only failure mode —
+      # runner OS, clean checkout, nested layout, action semantics), so run
+      # this once before tagging a release to surface workflow bugs without
+      # publish side effects.
+      - name: "Preflight pack dry-run (prepack chain, no publish)"
+        if: github.event_name == 'workflow_dispatch'
+        run: npm pack --dry-run
         working-directory: dev/dsh-plugin-dev/extras
