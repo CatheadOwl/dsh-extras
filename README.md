@@ -1,7 +1,3 @@
----
-description: Homepage of the @catheadowl/dsh-extras npm package — a dsh plugin carrier wrapping the turn-close hook into a composable quality-gate framework and shipping doc-maintenance modules (Markdown link hygiene, project-knowledge injection, knowledge-base routing).
----
-
 # @catheadowl/dsh-extras
 
 English | [中文](README.zh.md)

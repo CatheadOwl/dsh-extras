@@ -1,7 +1,3 @@
----
-description: @catheadowl/dsh-extras 包主页——dsh 插件载体：把 turn 收尾 hook 包装成可组合质量门禁框架，并交付文档维护模块（Markdown 链接治理、项目知识注入、知识库路由）。
----
-
 # @catheadowl/dsh-extras
 
 [English](README.md) | 中文
