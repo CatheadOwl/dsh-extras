@@ -1,5 +1,7 @@
-// register face 的 generated API reference:check(root) 供 gates.yml /
+// register face 的 generated API reference:check() 供 gates.yml /
 // node:test 消费;--write 时原地重生成 docs/register.md 的 generated region。
+// 位置锚定:忽略 gates runner 传入的会话根,始终按本文件自身位置解析包根
+// (gates runner 会以 check(root, changes, options) 调用,三者均不参与解析)。
 import { fileURLToPath } from 'node:url'
 import { join, resolve } from 'node:path'
 
@@ -8,12 +10,12 @@ import { generateApiReference } from '../../../scripts/lib/api-reference.mjs'
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
 
-export async function check(packageRoot = root, ts) {
-  const compiler = ts ?? await loadTypeScript()
+export async function check(_workspaceRoot, _changes, _options) {
+  const compiler = await loadTypeScript()
   const { changed } = await generateApiReference({
-    source: join(packageRoot, 'src/register.ts'),
-    output: join(packageRoot, 'docs/register.md'),
-    packageRoot,
+    source: join(root, 'src/register.ts'),
+    output: join(root, 'docs/register.md'),
+    packageRoot: root,
     check: true,
   }, compiler)
   return changed

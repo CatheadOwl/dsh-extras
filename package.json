@@ -45,7 +45,6 @@
     "modules/*/lib/**/*.d.ts",
     "modules/*/package.json",
     "modules/*/README.md",
-    "modules/*/gates.yml",
     "modules/*/docs/**/*.md",
     "modules/*/examples/**",
     "modules/*/child-runtime/**",

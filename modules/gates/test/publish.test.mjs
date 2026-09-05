@@ -10,11 +10,11 @@ const packageRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..
 test('publish-readiness gate passes for the current package', async () => {
   // The real gate config (scripts/verify.config.mjs) — never a weakened
   // default: the test must vouch for the gate that actually ships.
-  assert.deepEqual(checkPublishReadiness(packageRoot, {}, await loadConfig()), [])
+  assert.deepEqual(await checkPublishReadiness(packageRoot, {}, await loadConfig()), [])
 })
 
 test('publish-readiness gate catches non-registry dependencies and escaping doc links', async () => {
-  const violations = checkPublishReadiness(packageRoot, {
+  const violations = await checkPublishReadiness(packageRoot, {
     manifestOverride: {
       private: true,
       dependencies: { yaml: 'link:../../deepseek-harness/node_modules/.pnpm/yaml@2.9.0/node_modules/yaml', '@deepseek-ai/cordis': '*' },

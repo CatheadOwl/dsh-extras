@@ -1,31 +1,39 @@
+# Package-level bootstrap gates —— 归 @catheadowl/dsh-extras 包所有，由 gates 插件
+# 在以本包为根的会话（开发检出或独立 repo 镜像）里按会话工作区根发现执行。
+# 2026-09-06 自模块级 gates.yml（modules/{gates,markdown,prompt}/gates.yml）整合而来：
+# 三份 docs-nav 薄入口逐字节相同，去重为一个包级遍历入口；其余条目本就指向包级
+# 脚本。所有入口按脚本自身位置锚定（忽略 runner 传入的 root），故无论会话根在
+# 哪层都指向正确的模块布局。某模块若将来单独分发，届时再物化模块级 gates.yml
+# 与单模块薄入口（物化义务登记在开发仓库 gates 项目的 TODO 控制面，按名引用）。
 gates:
   - id: register-face-boundary
-    module: ../../scripts/verify-package-face.mjs
+    module: scripts/verify-package-face.mjs
     description: The extras package exposes per-module loader entries and frozen public faces without implementation exports.
     rationale: >-
       Consumers depend on @catheadowl/dsh-extras public entries. Keeping every composition
       row's entry limited to the dsh loader contract prevents service, controller, runner,
       and dirty-state modules from becoming accidental public API.
     level: blocking
-    relevant: ['package.json', 'src/', 'docs/']
+    relevant: ['package.json', 'modules/']
   - id: register-docs-fresh
-    module: scripts/register-reference.mjs
+    module: modules/gates/scripts/register-reference.mjs
     description: The register-face API reference matches src/register.ts.
     rationale: >-
       The generated API table is the machine-checked inventory of the plugin consumer face.
       A stale table teaches consumers the wrong import, type, or fixer contract.
     level: blocking
-    relevant: ['src/register.ts', 'src/types.ts', 'docs/register.md']
+    relevant: ['modules/gates/src', 'modules/gates/docs']
   - id: docs-nav
     module: scripts/verify-docs-nav.mjs
-    description: Every active gates document is reachable from the documentation entry.
+    description: Every module document is reachable from that module's documentation entry.
     rationale: >-
-      docs/README.md is the reader entry point. An unlinked page is hidden even when its
-      content is current, so navigation integrity is part of documentation correctness.
+      Each docs-owning module's docs/README.md is its reader entry point, and the module
+      README must link to it. An unlinked page is hidden even when its content is current,
+      so navigation integrity is part of documentation correctness.
     level: blocking
-    relevant: ['README.md', 'docs/']
+    relevant: ['README.md', 'modules/']
   - id: publish-readiness
-    module: ../../scripts/verify-publish-readiness.mjs
+    module: scripts/verify-publish-readiness.mjs
     description: The extras package stays independently publishable (peer-only host deps, registry ranges, self-contained docs, meta-free sources).
     rationale: >-
       extras ships without bundling the dsh host: host packages are peerDependencies provided
@@ -35,5 +43,4 @@ gates:
       docs, dated workunit TODOs): comments carry functional semantics, design attribution
       lives in the cognition layer.
     level: blocking
-    relevant: ['package.json', 'src/', 'README.md', 'docs/', 'eval/']
-
+    relevant: ['package.json', 'modules/', 'docs/', 'eval/']

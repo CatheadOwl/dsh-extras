@@ -39,14 +39,14 @@ junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份�
 
 ## 自举 gates
 
-本项目的 `gates.yml` 声明四个 module gates：
+自举 gates 声明在**包根** [`gates.yml`](../../../gates.yml)（2026-09-06 自各模块 gates.yml 整合而来；入口脚本按自身位置锚定，与加载它的会话根无关），共四个 module gates：
 
 - `register-face-boundary`：package/root/register 导出与禁止 import 模式；
-- `register-docs-fresh`：[register.md](register.md) 的 generated API region；
-- `docs-nav`：docs 导航与 package README 入口；
+- `register-docs-fresh`：[register.md](register.md) 的 generated API region（入口在 `modules/gates/scripts/`）；
+- `docs-nav`：全部 docs-owning 模块（gates / markdown / prompt）的导航与 README 入口（包级遍历入口在 `scripts/verify-docs-nav.mjs`）；
 - `publish-readiness`：独立发布卫生（peer-only 宿主依赖、registry 版本范围、docs 与 scripts 不越出包根）。
 
-在 gates 目录打开 dsh 会话后，用 `/gates` 或 `gates_run` 执行。脚本源码在 `scripts/`；它们是项目自举资产，不进入发布包运行时。
+在 **extras 包根**打开 dsh 会话后，用 `/gates` 或 `gates_run` 执行。脚本源码在包根 `scripts/` 与 `modules/gates/scripts/`；它们是项目自举资产，不进入发布包运行时。
 
 ## 兼容与发布
 

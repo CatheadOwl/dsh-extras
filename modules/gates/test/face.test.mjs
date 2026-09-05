@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 
 import * as rootFace from '../lib/index.js'
-import { check as checkDocsNav } from '../scripts/verify-docs-nav.mjs'
+import { check as checkDocsNav } from '../../../scripts/verify-docs-nav.mjs'
 import { check as checkPackageFace } from '../../../scripts/verify-package-face.mjs'
 import { check as checkRegisterDocs } from '../scripts/register-reference.mjs'
 
