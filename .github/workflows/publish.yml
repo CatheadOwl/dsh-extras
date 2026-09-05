@@ -43,7 +43,9 @@ jobs:
           path: dev/deepseek-harness
 
       - name: Replay tsdown out-of-tree patch onto host
-        run: git -C dev/deepseek-harness apply dev/dsh-plugin-dev/extras/patch/tsdown-out-of-tree-fallback.patch
+        # patch path must be absolute: git resolves it against the -C target,
+        # not the step cwd
+        run: git -C dev/deepseek-harness apply "${{ github.workspace }}/dev/dsh-plugin-dev/extras/patch/tsdown-out-of-tree-fallback.patch"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
