@@ -1,8 +1,14 @@
+---
+description: @catheadowl/dsh-extras 包主页——dsh 插件载体：把 turn 收尾 hook 包装成可组合质量门禁框架，并交付文档维护模块（Markdown 链接治理、项目知识注入、知识库路由）。
+---
+
 # @catheadowl/dsh-extras
 
 [English](README.md) | 中文
 
-一个 npm 包，多个**运行时独立**的 [dsh](https://github.com/deepseek-ai/deepseek-harness) 插件模块：质量门禁、Markdown 链接治理、prompt 注入、知识库路由——`dsh plugin add` 一次全装，每个模块是组合里可独立开关的一行（按行 id 标识），不需要的行关掉即可，互不影响。
+**做 harness 就是做 docs。**`@catheadowl/dsh-extras` 让你的 [dsh](https://github.com/deepseek-ai/deepseek-harness) agent 所依赖的知识保持健康。它把 dsh 的 turn 收尾 hook 包装成可组合的质量门禁框架——一个注册面（`registerGate`），而不是每个插件各自抢占 hook——并随包交付这句话所要求的文档维护组件：Markdown 链接治理、向会话注入项目知识、知识库路由视图。
+
+`dsh plugin add` 一次全装，每个模块是组合里可独立开关的一行（按行 id 标识），不需要的行关掉即可，互不影响。本包与 dsh 宿主的关系、为什么要包装宿主 hook，见 [docs/host.md](docs/host.md)。
 
 ## 安装
 
@@ -21,7 +27,7 @@ dsh plugin add @catheadowl/dsh-extras
 | prompt | `prompt` | prompt 注入服务（declarative provider + 内置 parse/tree 库），向会话注入项目知识 | [modules/prompt/README.md](modules/prompt/README.md) |
 | routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
 
-每个模块是 cordis 组合里的独立一行（fiber）：不共享状态，关掉任何一行，其余模块行为不变。
+每个模块是宿主插件组合里可独立开关的一行：不共享状态，关掉任何一行，其余模块行为不变。
 
 ## 配置
 

@@ -10,6 +10,7 @@ description: gates 插件的使用文档入口（cookbook 风格阅读地图）�
 
 | 文档 | 内容 |
 |------|------|
+| [why-gates](why-gates.md) | 为什么需要 gates：宿主 turn-stopping 的机制事实与 gates 的注册面/公共机制/契约层价值 |
 | [execution-model](execution-model.md) | 触发时机与执行链、级别与预算、反馈形状、成本模型 |
 | [register](register.md) | 插件消费面：`@catheadowl/dsh-extras/gates/register`、最小 quickstart、公共 API reference |
 | [adding-a-repo-gate](adding-a-repo-gate.md) | 配方: 给仓库加一个 Config 声明式 gate（module / command 两形态） |

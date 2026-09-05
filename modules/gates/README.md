@@ -25,7 +25,7 @@ dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 
 ## 架构：两种 gate 注册形态
 
-gate 是插件继 tool / skill 之后的**第三个显式承载点**：tool = 模型的手，skill = 模型的知识，gate = 对模型产出的制度检查（策略驱动，模型无需知晓）。注册形态有两种，刻意不对称：
+本插件的设计核心思想：**gate 是继 tool / skill 之后的第三个显式承载点**——三者组成 session 内的三个 harness 点：skill / rule prompt 是软引导，tool 是在环行动，gate 是轮末把关（tool = 模型的手，skill = 模型的知识，gate = 对模型产出的制度检查，策略驱动、模型无需知晓；`gates_run` 工具面与静默 hook 在触发时机上趋同——agent 会自发在轮末验证，hook 是兜底）。这是一个设计立场（design stance），不是对生态现状的断言。设计原话见开发仓 core-idea 记录（按名引用）。注册形态有两种，刻意不对称：
 
 | 形态 | 定义处 | 适用 | 类比 |
 |---|---|---|---|

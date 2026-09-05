@@ -1,8 +1,14 @@
+---
+description: Homepage of the @catheadowl/dsh-extras npm package — a dsh plugin carrier wrapping the turn-close hook into a composable quality-gate framework and shipping doc-maintenance modules (Markdown link hygiene, project-knowledge injection, knowledge-base routing).
+---
+
 # @catheadowl/dsh-extras
 
 English | [中文](README.zh.md)
 
-One npm package, several **runtime-independent** [dsh](https://github.com/deepseek-ai/deepseek-harness) plugin modules: quality gates, Markdown link hygiene, prompt injection, and knowledge-base routing. `dsh plugin add` installs everything at once; every module is a separately toggleable composition row (identified by row id) and can be disabled without affecting the others.
+**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` keeps the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on healthy. It wraps dsh's turn-close hook into a composable quality-gate framework — one registration face (`registerGate`) instead of every plugin grabbing the hook — and ships the doc-maintenance components that philosophy implies: Markdown link hygiene, project-knowledge injection into the session, and routing views over Markdown knowledge bases.
+
+`dsh plugin add` installs everything at once; every module is a separately toggleable composition row (identified by row id) and can be disabled without affecting the others. What this package is relative to the dsh host — and why it wraps host hooks at all — is covered in [docs/host.md](docs/host.md).
 
 ## Install
 
@@ -21,7 +27,7 @@ Requires the dsh CLI. All runtime dependencies come from the dsh host (peerDepen
 | prompt | `prompt` | Prompt-injection service (declarative providers + bundled parse/tree libraries) that injects project knowledge into the session | [modules/prompt/README.md](modules/prompt/README.md) |
 | routes | `routes` | `any_routes` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider | [modules/routes/README.md](modules/routes/README.md) |
 
-Each module is an independent row (fiber) in the Cordis composition: no shared state — disable any row and the others behave exactly as before.
+Each module is an independently toggleable row in the host's plugin composition: no shared state — disable any row and the others behave exactly as before.
 
 ## Configuration
 
