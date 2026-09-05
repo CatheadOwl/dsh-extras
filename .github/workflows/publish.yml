@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: dd6322d604  # upstream master; tsdown patch base — bump together with patch/
+          ref: dd6322d604e00eec1ba5e0c8541159906a21094a  # upstream master; tsdown patch base — bump together with patch/ (40-char sha: checkout treats shorter refs as branch/tag names)
           path: dev/deepseek-harness
 
       - name: Replay tsdown out-of-tree patch onto host
