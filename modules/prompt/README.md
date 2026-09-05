@@ -6,7 +6,9 @@ description: extras 的 prompt 模块——user prompt enrichment 小框架：�
 
 **价值**：让 dsh 会话在用户提到某个路径时自动获得该路径的定向上下文（面包屑、关联说明等），而不是让模型盲猜或用户手动粘贴——注入只按路径聚合、不改写用户消息、不阻断轮次。
 
-**与宿主的关系**：挂在 dsh 的 `agent/pre-step` 检查点上做一个 provider 注册表（`ctx.promptMiddleware`），本模块只实现承载层，不内置 cognition 或面包屑等业务逻辑——那些由其他插件/模块作为 provider 注册。
+**与宿主的关系**：挂在 dsh 的 `agent/pre-step` 检查点上做一个 provider 注册表（`ctx.promptMiddleware`），本模块只实现承载层，不内置 cognition 或面包屑等业务逻辑——那些由其他插件/模块作为 provider 注册。为什么是框架而不是各插件直挂 pre-step：一个注册面 + 统一 runner（once 去重 / 预算 / 超时 / 降级 / 可见性纪律），代替每个注入者重复造注入管线、互相不知情地抢占上下文。与宿主的整体关系见包根 [docs/host.md](../../docs/host.md)；本模块的完整论证见 [docs/why-prompt.md](docs/why-prompt.md)。
+
+安装本包见[包根 README](../../README.md)（`dsh plugin add`，prompt 是其中一行）。链路一句话：pre-step 解析 user prompt 中的路径提及 → provider 产出 **relates**（对被提及路径追加的关联上下文条目，`value` / `href`）→ 聚合去重预算后随会话注入。
 
 ## 提供面
 
@@ -16,7 +18,7 @@ description: extras 的 prompt 模块——user prompt enrichment 小框架：�
 | `registerPromptMiddlewareProvider(ctx, provider)` | 消费插件的硬 import 注册入口（`@catheadowl/dsh-extras/prompt/register`）；内部仍通过 `ctx.inject(['promptMiddleware'], ...)` 软依赖 |
 | `registerRelatesProvider(ctx, provider)` | 声明式 provider 的硬 import 注册入口（同上子路径）；`resolve` + `kind` 由框架物化为 provider 并复用整套 runner。注册示例与 API reference 见 [docs/register.md](docs/register.md) |
 | `agent/pre-step` driver | 解析直接 user prompt，运行 provider，向 accepted enter batch 追加 relates 上下文 |
-| Typert Remote `promptMiddleware` | `list` / `setDisabled`：Settings → Plugins → Prompt Middleware 配置面（provider 开关） |
+| Typert Remote `promptMiddleware` | `list` / `setDisabled`：Settings → Plugins → Prompt Middleware 配置面（provider 开关）；Typert Remote 是宿主的 Web RPC 面 |
 | client 半 | `settings.plugins.tab` slot（id `prompt-middleware`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
 
 ## Quickstart（`registerRelatesProvider`）
@@ -72,5 +74,5 @@ provider 开关：Settings → Plugins → Prompt Middleware 按 provider name �
 
 - `src/parse` 是模块内纯库，不作为插件形态提供。
 - `ctx.fileReferences` 仍是 host/file candidate seam，不被替代。
-- breadcrumb-description 已由 extras 的 routes 模块经 `registerRelates` 声明式落地（`createBreadcrumbDescriptionProvider` / `resolveBreadcrumbPath`）。声明式契约见 [docs/contract.md](docs/contract.md)。
+- 业务 provider 不内置在本行：面包屑、认知链接等由各注册方插件/模块自注册（各自文档负责清单）。声明式契约见 [docs/contract.md](docs/contract.md)。
 - v0 不做 prompt rewrite / blocking / provider 注册参数编辑 UI（priority / kind / mode 在配置面只读展示，编辑是另一个问题域）。provider 开关配置面已落地（见上文）。

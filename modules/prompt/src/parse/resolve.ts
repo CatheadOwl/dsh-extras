@@ -14,13 +14,13 @@
  *   in `pathMatchesSegments`; `kind`-based scope still applies (`dir` → dirs
  *   only), but the anchor makes the mention a precise position, not a guess
  * - `dir` mention → matched against directory candidates only. Directory
- *   candidates are expected to carry a trailing `/` (e.g. `handbooks/`); when
+ *   candidates are expected to carry a trailing `/` (e.g. `guides/`); when
  *   the caller does not mark directories that way, this falls back to the full
  *   tree (best effort).
  * - matches are ranked by relevance: an exact leaf-name match first (a dotless
- *   bare word like `gates` prefers the directory `dsh-plugin-dev/gates/` over
+ *   bare word like `gates` prefers the directory `tools/gates/` over
  *   the extension-stripped file `gates.yml`), then shallow depth (a bare `docs`
- *   resolves to the root `docs/`, not `deepseek-harness/docs/`), then input
+ *   resolves to the root `docs/`, not `vendor/docs/`), then input
  *   order.
  * - `total === 0` or `total >= ambiguityThreshold` → `resolved: []` (dropped);
  *   otherwise → `resolved` holds every match tied with the top hit on

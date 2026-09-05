@@ -10,8 +10,8 @@
  * - `cap` is a parameter, not a hardcoded constant.
  * - An exact match is a hit. CogGit's `pathHints` excluded it because it only
  *   ran after a miss; here every extracted token is matched, exact included.
- * - `candidatePaths` may include directories, so a bare `handbooks` query
- *   matches `handbooks/`, `topics/handbooks/`, … at any depth.
+ * - `candidatePaths` may include directories, so a bare `guides` query
+ *   matches `guides/`, `topics/guides/`, … at any depth.
  *
  * Matching rules (segments split on `/`), two modes:
  * - Unanchored (project-relative query, no leading `/`): the query's segments
@@ -26,8 +26,8 @@
  *   candidate must be an exact full-position match — every segment equal, no
  *   trailing slice, no extension stripping. `/README.md` names the root
  *   `README.md` only (never `a/README.md`); `/docs` never matches `docs.md`.
- *   A directory candidate's trailing `/` is not a segment, so `/handbooks`
- *   and `/handbooks/` both name the root node `handbooks/`.
+ *   A directory candidate's trailing `/` is not a segment, so `/guides`
+ *   and `/guides/` both name the root node `guides/`.
  */
 
 export interface PathCandidateMatches {
@@ -108,7 +108,7 @@ export function pathMatchesSegments(
   // leading `/` pins the path to the repository root, so matching is exact
   // full-position equality — every segment, no trailing slice, no extension
   // stripping. This branch must precede the `endsWith('/' + query)` shortcut:
-  // `/workunits/md-fabric` must NOT tail-match `x/workunits/md-fabric`.
+  // `/notes/md-fabric` must NOT tail-match `x/notes/md-fabric`.
   if (query.startsWith('/')) {
     if (candidateSegments.length !== querySegments.length) {
       return false

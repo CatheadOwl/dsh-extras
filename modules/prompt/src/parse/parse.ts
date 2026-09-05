@@ -94,8 +94,8 @@ export class ProjectRelativePathRecognizer implements PathRecognizer {
   private classify(raw: string, start: number): PathCandidate | null {
     // A leading `@` is the workspace-citation marker (host FILE_REFERENCE_PROMPT):
     // strip it and root-anchor the remainder. `@` and `/` are the same root
-    // anchor spelled two ways, so `@workunits/md-fabric/` normalizes to
-    // `/workunits/md-fabric` and rides the matcher's root-anchored branch.
+    // anchor spelled two ways, so `@notes/md-fabric/` normalizes to
+    // `/notes/md-fabric` and rides the matcher's root-anchored branch.
     const cited = raw.startsWith('@')
     const body = cited ? raw.slice(1) : raw
     if (body === '') {
@@ -184,8 +184,8 @@ function normalizeInner(inner: string): string {
 }
 
 /**
- * Strip a leading `./` (current-directory prefix) so `./handbooks` and
- * `./handbooks/` normalize to `handbooks` and match like the bare form.
+ * Strip a leading `./` (current-directory prefix) so `./guides` and
+ * `./guides/` normalize to `guides` and match like the bare form.
  * `../` is preserved (relative-parent stays a literal segment; the consumer
  * guards escaping the project root). A lone `./`/`..` is left untouched here
  * and handled downstream.
