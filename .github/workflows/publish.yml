@@ -83,6 +83,15 @@ jobs:
         run: pnpm install --no-frozen-lockfile
         working-directory: dev/dsh-plugin-dev/extras
 
+      # Host-borrow type wiring (Phase 3 #1 gap, CI form): peers are declared
+      # with "*" and autoInstallPeers is false, so module builds resolve
+      # @deepseek-ai/* types from a junction into the host checkout's
+      # node_modules — the documented local arrangement, reproduced here.
+      - name: Wire host peer packages into resolution path
+        run: |
+          mkdir -p dev/dsh-plugin-dev/extras/node_modules/@deepseek-ai
+          ln -s "$GITHUB_WORKSPACE"/dev/deepseek-harness/node_modules/@deepseek-ai/* dev/dsh-plugin-dev/extras/node_modules/@deepseek-ai/
+
       - name: "Publish (prepack chain: build + face + readiness + i18n)"
         run: npm publish --access public
         working-directory: dev/dsh-plugin-dev/extras
