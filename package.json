@@ -3,6 +3,10 @@
   "description": "Curated extras for dsh: one npm package, several independent plugin modules — gates (turn-close quality gates), markdown (md_rename tool + doc-link gate), prompt (declarative prompt injection), routes (any_routes knowledge routing). `dsh plugin add @catheadowl/dsh-extras` installs them all; per-row `disabled` turns one off.",
   "version": "0.1.2",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CatheadOwl/dsh-extras.git"
+  },
   "type": "module",
   "packageManager": "pnpm@11.7.0",
   "exports": {
