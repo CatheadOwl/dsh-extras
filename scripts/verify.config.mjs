@@ -10,6 +10,19 @@ export default {
   docsRoots: ['docs', 'eval'],
   hostClosureCheck: true,
   rulesSeed: '.agent/rules/package-independence.md',
+  // Rule 11 (host-borrow locality): the only sanctioned anchor consumers —
+  // the peer relink tool, the tsdown host-borrow wrapper, and the tsdown
+  // preset dynamic import. Anything else reaching the host checkout by
+  // relative path is a violation; installable tools belong in devDependencies
+  // (borrow-vs-install discipline, handbooks/pkg-dev/borrow-vs-install).
+  hostBorrow: {
+    hostToken: 'deepseek-harness',
+    anchorConsumers: [
+      'scripts/relink-host-peers.mjs',
+      'scripts/host-tool.mjs',
+      'modules/client/tsdown.config.ts',
+    ],
+  },
   packageFace: {
     ownName: '@catheadowl/dsh-extras',
     modulesDir: 'modules',
