@@ -14,7 +14,7 @@ description: prompt 模块注入契约——provider 执行模型与定序、onc
 - 超时：per-provider `timeoutMs`，缺省走 middleware 配置 `providerTimeoutMs`。
 - 失败粒度：单个 provider 抛错/超时 → 该 provider trace `failed`，不阻断其他 provider、不阻断轮次。
 - 同轮内 merge/dedupe：dedupe 判定键为 `path + kind + href/value`；胜者按注册序裁决（`priority` 不兼做冲突赢家）。`value` 与 `href` 同时给出时渲染优先 `value`，轮内 dedupe key 用 `href`（缺省回退 `value`）。
-- render budget：合并后的内容按 `renderBudgetChars` 截断渲染为 additionalContext；模型不可见注入通道，不改写用户消息。
+- render budget：合并后的内容按 `renderBudgetChars` 截断渲染为 additionalContext（内容模型可见，信封不渲染本插件名），不改写用户消息。
 
 ## once 注入去重
 

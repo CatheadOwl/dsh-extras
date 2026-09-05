@@ -79,7 +79,7 @@ registerPromptMiddlewareProvider(ctx, {
 |---|---|---|
 | package register face | `@catheadowl/dsh-extras/prompt/register` | 插件开发者 |
 | service seam | `ctx.promptMiddleware` | 插件与 prompt 内部 driver |
-| agent/pre-step driver | 宿主检查点 | 注入通道（模型不可见，不改写用户消息） |
+| agent/pre-step driver | 宿主检查点 | 注入通道（内容模型可见、信封不署名，不改写用户消息） |
 | Web client face | `@catheadowl/dsh-extras/client` | Settings → Plugins → Prompt Middleware |
 
 root entry `@catheadowl/dsh-extras` 只服务 dsh loader，不承诺实现层导出。内部模块、service 类与 runner 实现都不是公共消费面。
