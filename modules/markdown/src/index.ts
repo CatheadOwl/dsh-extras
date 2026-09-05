@@ -142,7 +142,11 @@ const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
     + 'when later written directly by the session or caught in a manual git review. Markdown inside a git '
     + 'repository nested under the workspace root (a vendored submodule or any directory with its own `.git`) '
     + 'is exempt: that content follows its own repository conventions and SSOT, the same git boundary the '
-    + 'module\'s scan-based faces (`md_rename`, `doc-link`) already keep.',
+    + 'module\'s scan-based faces (`md_rename`, `doc-link`) already keep. A homepage README at a package '
+    + 'root — `README.md` or a variant like `README.zh.md`, in a directory with a `package.json` — is also '
+    + 'exempt: that file doubles as the package/repository homepage, which GitHub renders raw — frontmatter '
+    + 'would show as literal noise — so it intentionally carries no description; other md under the package '
+    + 'root stays covered.',
   on: ['stop', 'manual'],
   level: 'defer',
   // Incremental shortcut: only dirty .md paths can change this gate's result.

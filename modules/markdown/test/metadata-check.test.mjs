@@ -172,6 +172,82 @@ describe('md-metadata nested-git exemption', () => {
   })
 })
 
+describe('md-metadata package-root README exemption', () => {
+  it('skips a homepage README at a nested package root without frontmatter', () => {
+    const root = fixture({
+      'pkg/README.md': '# package homepage, GitHub renders it raw\n',
+      'pkg/package.json': '{ "name": "pkg", "version": "0.0.0" }\n',
+    })
+    assert.deepEqual(check(root, changes(['pkg/README.md'])), [])
+  })
+
+  it('skips i18n homepage variants (README.zh.md) at a package root', () => {
+    const root = fixture({
+      'pkg/README.zh.md': '# 包根首页\n',
+      'pkg/package.json': '{ "name": "pkg" }\n',
+    })
+    assert.deepEqual(check(root, changes(['pkg/README.zh.md'])), [])
+  })
+
+  it('skips an uppercase-suffix homepage README (README.MD) at a package root', () => {
+    const root = fixture({
+      'pkg/README.MD': '# homepage, uppercase suffix\n',
+      'pkg/package.json': '{ "name": "pkg" }\n',
+    })
+    assert.deepEqual(check(root, changes(['pkg/README.MD'])), [])
+  })
+
+  it('still flags readme-prefixed files that are not homepage variants (readme-notes.md)', () => {
+    const root = fixture({
+      'pkg/package.json': '{ "name": "pkg" }\n',
+      'pkg/readme-notes.md': '# not the homepage\n',
+    })
+    assert.equal(check(root, changes(['pkg/readme-notes.md'])).length, 1)
+  })
+
+  it('skips the workspace-root README when the workspace itself is a package root', () => {
+    const root = fixture({
+      'README.md': '# this workspace is itself an npm package homepage\n',
+      'package.json': '{ "name": "workspace-package" }\n',
+    })
+    assert.deepEqual(check(root, changes(['README.md'])), [])
+  })
+
+  it('still covers non-README md under a package root', () => {
+    const root = fixture({
+      'pkg/package.json': '{ "name": "pkg" }\n',
+      'pkg/docs/guide.md': '# no description\n',
+    })
+    const violations = check(root, changes(['pkg/docs/guide.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'pkg/docs/guide.md')
+  })
+
+  it('still flags README.md when its directory has no package.json', () => {
+    const root = fixture({ 'docs/README.md': '# plain workspace readme\n' })
+    assert.equal(check(root, changes(['docs/README.md'])).length, 1)
+  })
+
+  it('still flags a nested README.md lacking frontmatter inside a package docs folder', () => {
+    const root = fixture({
+      'pkg/package.json': '{ "name": "pkg" }\n',
+      'pkg/docs/README.md': '# inner readme without description\n',
+    })
+    assert.equal(check(root, changes(['pkg/docs/README.md'])).length, 1)
+  })
+
+  it('skips a README at a package root in the same change set while flagging workspace md', () => {
+    const root = fixture({
+      'pkg/package.json': '{ "name": "pkg" }\n',
+      'pkg/README.md': '# homepage\n',
+      'notes/b.md': '# workspace note without description\n',
+    })
+    const violations = check(root, changes(['pkg/README.md', 'notes/b.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'notes/b.md')
+  })
+})
+
 describe('md-metadata registerGate wiring', () => {
   it('registers a defer gate with a subagent fixer when the gates service is present', async () => {
     const gates = []

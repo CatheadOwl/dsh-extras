@@ -28,9 +28,21 @@
  * module's scan-based faces (`md_rename`, `doc-link`) already keep by asking
  * git for the file list; this face is fed from the session event log instead,
  * so it probes `.git` itself (see `insideNestedGitRoot`).
+ *
+ * Package-root README exemption: a homepage `README.md` (or a variant like
+ * `README.zh.md`) living in a directory with
+ * its own `package.json` (an npm package root — the workspace root when it
+ * is itself a package, or a physically-colocated-but-logically-independent
+ * package nested under it, e.g. a subtree projection mirrored to its own
+ * repository without a `.git` in the source tree) is skipped. That file
+ * doubles as the package/repository homepage, and GitHub renders it raw —
+ * YAML frontmatter shows up as literal `---` noise — so it intentionally
+ * carries no description; its conventions belong to the package, not this
+ * workspace's gate. Non-README md under the package root stays covered:
+ * only the homepage file has the rendering constraint.
  */
 import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join, relative, resolve, sep } from 'node:path'
+import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 
 import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 
@@ -143,6 +155,28 @@ function insideNestedGitRoot(rootAbs: string, targetAbs: string, probe: Map<stri
   return false
 }
 
+/** A homepage README: `README` stem plus optional `.`-separated variant segments (README.zh.md). */
+const PACKAGE_README_RE = /^readme(?:\..+)?\.md$/i
+
+/**
+ * Whether `targetAbs` is a package-root homepage README: its basename looks
+ * like `README.md` (optionally with `.`-separated variant segments, e.g.
+ * `README.zh.md`) and its own directory carries a `package.json` — the
+ * mechanical package-boundary signal: a package physically colocated under
+ * another workspace keeps its own package root while the surrounding tree has
+ * none. `probe` memoizes per-directory like the git probe.
+ */
+function isPackageRootReadme(targetAbs: string, probe: Map<string, boolean>): boolean {
+  const dir = dirname(targetAbs)
+  if (!PACKAGE_README_RE.test(basename(targetAbs))) return false
+  let hasPkg = probe.get(dir)
+  if (hasPkg === undefined) {
+    hasPkg = existsSync(join(dir, 'package.json'))
+    probe.set(dir, hasPkg)
+  }
+  return hasPkg
+}
+
 /** Generic gate surface: check the session change set for `.md` files lacking a description. */
 export function check(root: string, changes?: GateChangeSet): GateViolation[] {
   const violations: GateViolation[] = []
@@ -150,11 +184,13 @@ export function check(root: string, changes?: GateChangeSet): GateViolation[] {
 
   const rootAbs = resolve(root)
   const gitProbe = new Map<string, boolean>()
+  const pkgProbe = new Map<string, boolean>()
   for (const path of changes.paths) {
     if (typeof path !== 'string' || path === '' || !path.toLowerCase().endsWith('.md')) continue
     const abs = resolve(root, path)
     if (!withinRoot(rootAbs, abs)) continue
     if (insideNestedGitRoot(rootAbs, abs, gitProbe)) continue
+    if (isPackageRootReadme(abs, pkgProbe)) continue
 
     let source: string
     try {
