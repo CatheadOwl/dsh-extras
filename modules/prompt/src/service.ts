@@ -78,21 +78,27 @@ export class PromptMiddlewareService extends Service {
   }
 
   /**
-   * The settings tab's flat provider list with each provider's enabled state.
-   * `enabled` reflects only the user switch (the browser mirror) — a provider
-   * disabled via config stays `enabled: true` here while never running; that
-   * display semantics is frozen in the contract's dual-entry section.
+   * The settings tab's flat provider list — a projection of `introspect()`
+   * plus the user-switch truth. `enabled` reflects only the user switch (the
+   * browser mirror) so the toggle stays the user's own state; the config
+   * layer surfaces through `effectiveEnabled` / `disabledBy` instead of a
+   * second switch semantic.
    */
   listViews(): PromptMiddlewareProviderView[] {
-    return this.runner.listEntries().map(({ provider, kind }) => ({
-      name: provider.name,
-      ...provider.description !== undefined ? { description: provider.description } : {},
-      ...kind !== undefined ? { kind } : {},
-      ...provider.priority !== undefined ? { priority: provider.priority } : {},
-      ...provider.timeoutMs !== undefined ? { timeoutMs: provider.timeoutMs } : {},
-      mode: provider.mode ?? 'always',
-      source: kind === undefined ? 'imperative' : 'declarative',
-      enabled: !this.disabled.has(provider.name),
+    return this.introspect().map(row => ({
+      name: row.name,
+      ...row.description !== undefined ? { description: row.description } : {},
+      ...row.kind !== undefined ? { kind: row.kind } : {},
+      ...row.priority !== undefined ? { priority: row.priority } : {},
+      ...row.timeoutMs !== undefined ? { timeoutMs: row.timeoutMs } : {},
+      mode: row.mode,
+      // `kind` presence is the declarative registration marker (imperative
+      // providers carry none), so the legacy `source` field projects from it.
+      source: row.kind === undefined ? 'imperative' : 'declarative',
+      enabled: !this.disabled.has(row.name),
+      sources: row.sources,
+      effectiveEnabled: row.effectiveEnabled,
+      disabledBy: row.disabledBy,
     }))
   }
 

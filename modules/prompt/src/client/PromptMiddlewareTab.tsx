@@ -15,7 +15,14 @@ export interface PromptMiddlewareProviderView {
   timeoutMs?: number
   mode: 'always' | 'once'
   source: 'imperative' | 'declarative'
+  /** User switch state (browser mirror) — the toggle's own truth. */
   enabled: boolean
+  /** Signal sources this provider consumes; omitted declaration = prompt-only. */
+  sources: ('prompt' | 'touch')[]
+  /** Union of both disable entries — what the runner actually enforces. */
+  effectiveEnabled: boolean
+  /** Which disable entry (or both) says off; `null` when neither does. */
+  disabledBy: 'user' | 'config' | 'both' | null
 }
 
 /** Callbacks the plugin binds from the `promptMiddleware` Host Remote. */
@@ -39,6 +46,9 @@ type ViewState =
  * registered provider with one switch per provider. The switch list is
  * persisted in the browser's localStorage and mirrored into host memory on
  * load and on every switch, so pre-step injection honors it immediately.
+ * The meta line answers the user's questions (when does it inject, when does
+ * it repeat); registration-facing knobs (source/priority/timeout/kind) live
+ * in the row tooltip.
  */
 export function PromptMiddlewareTab({ t, list, setDisabled }: PromptMiddlewareTabProps) {
   const [state, setState] = useState<ViewState>({ status: 'loading' })
@@ -116,12 +126,15 @@ export function PromptMiddlewareTab({ t, list, setDisabled }: PromptMiddlewareTa
           <ul className={css.list}>
             {state.providers.map(provider => (
               <li key={provider.name} className={css.row}>
-                <div className={css.copy}>
+                <div className={css.copy} title={tooltipLabel(t, provider)}>
                   <div className={css.name}>{provider.name}</div>
                   {provider.description !== undefined
                     ? <div className={css.providerDescription}>{provider.description}</div>
                     : undefined}
                   <div className={css.meta}>{metaLabel(t, provider)}</div>
+                  {provider.disabledBy === 'config' || provider.disabledBy === 'both'
+                    ? <div className={css.badge} role="note">{t('disabledByConfig')}</div>
+                    : undefined}
                 </div>
                 <button
                   type="button"
@@ -129,7 +142,8 @@ export function PromptMiddlewareTab({ t, list, setDisabled }: PromptMiddlewareTa
                   aria-checked={provider.enabled}
                   aria-label={provider.name}
                   className={provider.enabled ? `${css.switch} ${css.switchOn}` : css.switch}
-                  disabled={pending !== undefined}
+                  disabled={pending !== undefined || provider.disabledBy === 'config' || provider.disabledBy === 'both'}
+                  title={provider.disabledBy === 'config' || provider.disabledBy === 'both' ? t('disabledByConfig') : undefined}
                   onClick={() => { void toggle(provider) }}
                 >
                   <span className={css.thumb} />
@@ -142,7 +156,23 @@ export function PromptMiddlewareTab({ t, list, setDisabled }: PromptMiddlewareTa
   )
 }
 
+/**
+ * The user-facing meta line: trigger (which signals feed this provider) and
+ * refresh (when content repeats), derived from `sources` × `mode`. A `once`
+ * provider subscribing to touch re-injects after related files change, so a
+ * bare "once" would mislead; the refresh axis carries that semantics.
+ */
 function metaLabel(t: (key: PromptMiddlewareLocaleKey) => string, provider: PromptMiddlewareProviderView): string {
+  const touch = provider.sources.includes('touch')
+  const trigger = [t('triggerPrompt'), ...(touch ? [t('triggerTouch')] : [])].join(' ')
+  const refresh = provider.mode === 'always'
+    ? t('refreshAlways')
+    : touch ? t('refreshOnceTouch') : t('refreshOnce')
+  return `${t('triggerLabel')}: ${trigger} · ${refresh}`
+}
+
+/** Registration-facing knobs for the row tooltip (debug info, not main copy). */
+function tooltipLabel(t: (key: PromptMiddlewareLocaleKey) => string, provider: PromptMiddlewareProviderView): string {
   const mode = provider.mode === 'always' ? t('modeAlways') : t('modeOnce')
   const source = provider.source === 'imperative' ? t('sourceImperative') : t('sourceDeclarative')
   const priority = provider.priority === undefined ? undefined : `${t('priority')} ${provider.priority}`

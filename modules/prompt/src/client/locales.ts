@@ -13,6 +13,13 @@ export type PromptMiddlewareLocaleKey =
   | 'timeout'
   | 'sourceImperative'
   | 'sourceDeclarative'
+  | 'triggerLabel'
+  | 'triggerPrompt'
+  | 'triggerTouch'
+  | 'refreshOnce'
+  | 'refreshOnceTouch'
+  | 'refreshAlways'
+  | 'disabledByConfig'
 
 export const en: Record<PromptMiddlewareLocaleKey, string> = {
   tab: 'Prompt Middleware',
@@ -23,12 +30,19 @@ export const en: Record<PromptMiddlewareLocaleKey, string> = {
   error: 'Failed to load providers.',
   retry: 'Retry',
   refresh: 'Refresh',
-  modeAlways: 'always',
+  modeAlways: 'every turn',
   modeOnce: 'once',
   priority: 'priority',
   timeout: 'timeout',
   sourceImperative: 'imperative',
   sourceDeclarative: 'declarative',
+  triggerLabel: 'Trigger',
+  triggerPrompt: 'prompt path mentions',
+  triggerTouch: '+ read/edit tool touches',
+  refreshOnce: 'once per subject',
+  refreshOnceTouch: 'once per subject, re-injects after related files change',
+  refreshAlways: 'every turn',
+  disabledByConfig: 'disabled by deployer config',
 }
 
 export const zh: Record<PromptMiddlewareLocaleKey, string> = {
@@ -46,4 +60,11 @@ export const zh: Record<PromptMiddlewareLocaleKey, string> = {
   timeout: '超时',
   sourceImperative: '命令式',
   sourceDeclarative: '声明式',
+  triggerLabel: '触发',
+  triggerPrompt: '提示词提及',
+  triggerTouch: '＋ read/edit 触碰',
+  refreshOnce: '每主题一次',
+  refreshOnceTouch: '每主题一次，文件变更后重新注入',
+  refreshAlways: '每轮注入',
+  disabledByConfig: '部署者配置禁用',
 }

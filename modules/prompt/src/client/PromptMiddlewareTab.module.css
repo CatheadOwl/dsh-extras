@@ -89,6 +89,17 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+.badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 .switch {
   box-sizing: border-box;
   position: relative;

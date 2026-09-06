@@ -146,8 +146,8 @@ test('listViews reports every provider enabled until setDisabled, with kind/sour
 
   const views = service.listViews()
   assert.deepEqual(views.map(view => view.name), ['dec', 'imp'])
-  assert.deepEqual(views[0], { name: 'dec', description: 'declarative one-liner', kind: 'cognition-link', priority: 1, mode: 'once', source: 'declarative', enabled: true })
-  assert.deepEqual(views[1], { name: 'imp', description: 'imperative one-liner', priority: 2, timeoutMs: 500, mode: 'always', source: 'imperative', enabled: true })
+  assert.deepEqual(views[0], { name: 'dec', description: 'declarative one-liner', kind: 'cognition-link', priority: 1, mode: 'once', source: 'declarative', enabled: true, sources: ['prompt'], effectiveEnabled: true, disabledBy: null })
+  assert.deepEqual(views[1], { name: 'imp', description: 'imperative one-liner', priority: 2, timeoutMs: 500, mode: 'always', source: 'imperative', enabled: true, sources: ['prompt'], effectiveEnabled: true, disabledBy: null })
 
   service.setDisabled(['dec'])
   const disabled = service.listViews()
@@ -165,8 +165,31 @@ test('a provider without a description yields a view without the key', async () 
   const service = await serviceHarness()
   service.register(provider({ name: 'bare' }))
   const [view] = service.listViews()
-  assert.deepEqual(view, { name: 'bare', mode: 'always', source: 'imperative', enabled: true })
+  assert.deepEqual(view, { name: 'bare', mode: 'always', source: 'imperative', enabled: true, sources: ['prompt'], effectiveEnabled: true, disabledBy: null })
   assert.equal('description' in view, false)
+})
+
+test('listViews carries provenance: config-disabled stays user-enabled but flagged', async () => {
+  const service = await serviceHarness({ disabledProviders: ['cfg-off'] })
+  service.registerRelates(relatesProvider({
+    name: 'cfg-off',
+    sources: ['prompt', 'touch'],
+    touchSubjects: () => [],
+  }))
+  service.register(provider({ name: 'plain' }))
+  service.setDisabled(['plain'])
+
+  const views = service.listViews()
+  const cfg = views.find(view => view.name === 'cfg-off')
+  // Toggle truth stays user-owned; config surfaces via the projection fields.
+  assert.equal(cfg.enabled, true)
+  assert.equal(cfg.effectiveEnabled, false)
+  assert.equal(cfg.disabledBy, 'config')
+  assert.deepEqual(cfg.sources, ['prompt', 'touch'])
+  const user = views.find(view => view.name === 'plain')
+  assert.equal(user.enabled, false)
+  assert.equal(user.effectiveEnabled, false)
+  assert.equal(user.disabledBy, 'user')
 })
 
 test('run() enforces the service mirror without a caller disabled set', async () => {

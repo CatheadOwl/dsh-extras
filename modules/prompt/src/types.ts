@@ -264,7 +264,14 @@ export interface PromptMiddlewareProviderView {
   timeoutMs?: number
   mode: 'always' | 'once'
   source: 'imperative' | 'declarative'
+  /** User switch state (browser mirror) — the toggle's own truth. */
   enabled: boolean
+  /** Signal sources this provider consumes; omitted declaration = prompt-only. */
+  sources: PromptMiddlewareSource[]
+  /** Union of both disable entries — what the runner actually enforces. */
+  effectiveEnabled: boolean
+  /** Which disable entry (or both) says off; `null` when neither does. */
+  disabledBy: 'user' | 'config' | 'both' | null
 }
 
 /**

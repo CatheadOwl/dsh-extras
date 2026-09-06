@@ -119,7 +119,8 @@ Settings → Plugins → **Prompt Middleware** tab（slot id `prompt-middleware`
 - **单一过滤点**：`PromptMiddlewareRunner.run()` 遍历 `listEntries()` 处——先查 `options.disabled`，命中即 trace `skipped`（reason `disabled by user`）并跳过，过滤发生在 once 过滤之前、不调用 provider。这是唯一的过滤点。
 - **与 once 账本无交互**：开关是纯执行过滤，不触碰 ledger；被关期间不记账也不清账，re-enable 后同一会话已注入的 key 仍抑制（`once` 语义原样），直到 surface replace / 新会话。禁用方向热生效：下一轮即停。
 - **持久化**：浏览器 localStorage，key `dsh.promptMiddleware.disabled`（JSON name 列表）；host 只有内存镜像（页面加载与每次拨开关时由 UI 重推）。
-- **视图字段**：name、description（可选；provider 作者自述，imperative 与声明式面都可选给）、kind（仅声明式 provider 有值；imperative 显示占位）、priority、timeoutMs、mode、source（`imperative` / `declarative`）、enabled。
+- **视图字段**（`listViews()`，是 `introspect()` 的投影 + 用户开关真值）：name、description（可选；provider 作者自述，imperative 与声明式面都可选给）、kind（仅声明式 provider 有值；imperative 显示占位）、priority、timeoutMs、mode、source（`imperative` / `declarative`）、enabled（**只反映用户开关**，开关自身的真值）、sources、effectiveEnabled（双入口并集生效值）、disabledBy（`user` / `config` / `both` / `null`）。
+- **UI meta 行口径**：主行只放用户语义双轴——「触发」（`sources` 投影：提示词路径提及 / ＋ read/edit 工具触碰，touch 工具集为 sensor 封闭集常量文案）×「刷新」（`mode` × `sources` 推导：once 且订阅 touch → 每主题一次、相关文件被 read/edit 触碰后重新注入；once 无 touch → 每主题一次；always → 每轮注入）。注册面标签与 priority / timeoutMs / kind 降级进行内 tooltip（调试信息）；config 禁用（`disabledBy` 含 config）的行显示 provenance 徽标且开关置灰（部署者意志，用户开关不越权）。
 - 配置数字（`providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`）不进本 UI——已由 `ConfigSchema` 挂在宿主标准 configurable-plugins 配置面。
 
 ### 双入口（config `disabledProviders`）
@@ -130,7 +131,7 @@ Settings → Plugins → **Prompt Middleware** tab（slot id `prompt-middleware`
 - **来源归属**：runner 先查 `options.configDisabled`（记 reason `disabled by config`）再查 `options.disabled`（记 `disabled by user`）——同一 provider 双禁时归属 config（更硬的意志）。过滤位置与顺序语义同上（先于 once 过滤、不触碰账本）。
 - **集合独立性**：service 内 config 名单与浏览器镜像是两个独立集合；`setDisabled()` 整体替换浏览器镜像，**不会**冲掉 config 名单。
 - **未知名忽略**：provider 注册晚于 config 加载，无法预校验「已注册名」；未知名运行期 match nothing、无害（与 gates 的 disabled 口径一致）。
-- **显示口径**：`listViews()` 的 `enabled` 只反映用户开关（浏览器镜像）；config 禁用的 provider 在 UI 中仍显示为已启用——UI 是用户意志的面，不反映部署层。要部署层可见，消费 `introspect()`（见下节）。
+- **显示口径**：`listViews()` 的 `enabled` 只反映用户开关（浏览器镜像）——开关的真值归用户；config 层通过同视图的 `effectiveEnabled` / `disabledBy` 呈现（UI 徽标 + 开关置灰），不再有「config 禁用却显示已启用」的假象。
 
 ### 自省快照（`introspect()`）
 
