@@ -14,6 +14,9 @@ pnpm run test:prompt    # 库(parse/tree) + 框架 + wire + client-storage
 # 组合测试：真实 agent-loop + mock adapter，验证 `once` 去重 + surface replace（compact）清账
 # 不在 verify 内：依赖 host 源码 junction（接线方式见包根 README 开发节），新克隆 / 非本机不可跑
 cd modules\prompt ; node --test --test-isolation=none test/composition.test.mjs
+# touch 组合测试：脚本化模型真实调用 read/edit（defineContentToolFixture），端到端驱动
+# sensor → pending → pre-step 消费——v0 等价、chatter 稳态、状态翻转重注、无配对、开关 × touch
+cd modules\prompt ; node --test --test-isolation=none test/touch-composition.test.mjs
 ```
 
 依赖解析与宿主检出约定见 [../README](../README.md)。
