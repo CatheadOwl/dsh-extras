@@ -16,6 +16,7 @@ export type {
   RelatesResolveContext,
   RelatesResolveResult,
   DeclarativeRelatesProvider,
+  TouchSubjectContext,
   PromptMiddlewareTraceStatus,
   PromptMiddlewareTraceEvent,
   PromptMiddlewareConfig,

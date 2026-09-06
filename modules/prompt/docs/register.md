@@ -71,6 +71,7 @@ registerPromptMiddlewareProvider(ctx, {
 | RelatesResolveContext | interface | src/types.ts | One resolved path plus the full turn input, handed to a declarative `resolve`. |
 | RelatesResolveResult | interface | src/types.ts | What a declarative resolver produces for one path. |
 | ResolvedPromptPath | interface | src/types.ts | No JSDoc summary. |
+| TouchSubjectContext | interface | src/types.ts | Session context handed to `touchSubjects` alongside the touched path. |
 <!-- generated: ts-api-reference:end -->
 
 ## Touch 源订阅（声明式）
@@ -82,7 +83,9 @@ registerRelatesProvider(ctx, {
   name: 'my-pairing',
   kind: 'my-notes',
   sources: ['prompt', 'touch'],   // 省略 = ['prompt']（仅 prompt 提及）
-  touchSubjects: touched => (isPaired(touched) ? [pairedSubject(touched)] : []),
+  // 第二参 context = { cwd, sessionId? }：cwd 即 sensor 归一该 touch 的 session cwd
+  // （消费投影点为当前 pre-step cwd）——subject 空间按项目变化的声明方在此查表
+  touchSubjects: (touched, context) => (isPaired(touched, context.cwd) ? [pairedSubject(touched, context.cwd)] : []),
   async resolve({ path }) {
     // path.origin === 'touch' 时 path.touchTool 携带触发工具名（'read' | 'edit'）
     return { value: await loadNote(path.path) }
@@ -90,7 +93,7 @@ registerRelatesProvider(ctx, {
 })
 ```
 
-`touchSubjects` 是纯路径投影，一个声明两个消费者：touch 时框架对产出 subjects 摘 once 账（失效面向**所有声明者**，与订阅/开关无关——被关 provider 的 `run` 永不执行，但其声明仍参与摘账）；下一步 pre-step 再投影一次，subjects 以伪路径（`origin: 'touch'`）只喂给订阅了 `'touch'` 的 provider。声明 `'touch'` 而缺 `touchSubjects` 是死订阅，注册期 fail loud。
+`touchSubjects` 是无隐藏输入的同步投影（一个声明两个消费者）：touch 时框架对产出 subjects 摘 once 账（失效面向**所有声明者**，与订阅/开关无关——被关 provider 的 `run` 永不执行，但其声明仍参与摘账）；下一步 pre-step 再投影一次，subjects 以伪路径（`origin: 'touch'`）只喂给订阅了 `'touch'` 的 provider。单参声明继续合法（context 是增量参数）。声明 `'touch'` 而缺 `touchSubjects` 是死订阅，注册期 fail loud。
 
 ## 消费面
 

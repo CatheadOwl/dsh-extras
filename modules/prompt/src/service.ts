@@ -99,9 +99,12 @@ export class PromptMiddlewareService extends Service {
     this.runner.clearSession(sessionId)
   }
 
-  /** Record one settled tool touch against the session owning the root execution (sensor lane). */
-  recordTouch(sessionId: string, touch: RecordedTouch): void {
-    this.runner.recordTouch(sessionId, touch)
+  /**
+   * Record one settled tool touch against the session owning the root execution (sensor lane).
+   * `context.cwd` rides into every declarer's `touchSubjects` invalidation call.
+   */
+  recordTouch(sessionId: string, touch: RecordedTouch, context: { cwd: string }): void {
+    this.runner.recordTouch(sessionId, touch, context)
   }
 
   /** Take and clear the session's pending touches — the pre-step consumption point (sensor lane). */

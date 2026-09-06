@@ -361,3 +361,56 @@ test('toggle × touch: switched-off provider neither injects nor ledgers; re-ena
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('cwd-dependent projection: the same relative touch lands on per-session subjects', async () => {
+  const adapter = new MockAdapter([])
+  const persistenceRoot = mkdtempSync(join(tmpdir(), 'pm-touch6-persist-'))
+  const ctx = await harness(persistenceRoot)
+  ctx.llm.registerAdapter(['mock'], adapter)
+  const rootA = fixtureRoot()
+  const rootB = fixtureRoot()
+
+  const seen = []
+  ctx.get('promptMiddleware').registerRelates({
+    name: 'per-project-notes',
+    kind: 'proj-note',
+    sources: ['touch'],
+    // Subject space is per-project (the cognition-link shape): the SAME
+    // relative touch path keys under a different root per session cwd.
+    touchSubjects: (touched, context) =>
+      context.cwd === rootA ? [`a/${touched}`] : context.cwd === rootB ? [`b/${touched}`] : [],
+    async resolve({ path }) {
+      seen.push(`${path.origin}:${path.path}`)
+      return { value: `note for ${path.path}` }
+    },
+  })
+
+  const agentA = ctx.agentLoop.create(SessionId('cwd-a-run'), { provider: 'mock', model: 'mock' }, { cwd: rootA })
+  const agentB = ctx.agentLoop.create(SessionId('cwd-b-run'), { provider: 'mock', model: 'mock' }, { cwd: rootB })
+  try {
+    for (const [agent, root] of [[agentA, rootA], [agentB, rootB]]) {
+      adapter.script.push(toolCallResponse('c1', 'read', { file_path: join(root, 'docs', 'guide.md') }), textResponse('done'))
+      const turn = waitForIdle(ctx, agent)
+      agent.followup(createUserMessage({
+        content: [{ type: 'text', text: 'review the guide' }],
+        source: { kind: 'user' },
+      }))
+      await turn
+    }
+
+    // Each session's touch was normalized by its own cwd, projected by that
+    // same cwd, and delivered as that session's subject — no cross-project
+    // mis-projection even though the relative path is identical.
+    assert.deepEqual(seen, ['touch:a/docs/guide.md', 'touch:b/docs/guide.md'])
+    const injectionsA = injectionsOf(agentA)
+    const injectionsB = injectionsOf(agentB)
+    assert.equal(injectionsA.length, 1)
+    assert.ok(injectionsA[0].data.content[0].text.includes('a/docs/guide.md:'), 'session A rendered its own subject space')
+    assert.equal(injectionsB.length, 1)
+    assert.ok(injectionsB[0].data.content[0].text.includes('b/docs/guide.md:'), 'session B rendered its own subject space')
+  } finally {
+    rmSync(persistenceRoot, { recursive: true, force: true })
+    rmSync(rootA, { recursive: true, force: true })
+    rmSync(rootB, { recursive: true, force: true })
+  }
+})

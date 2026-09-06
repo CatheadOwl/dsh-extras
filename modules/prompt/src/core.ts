@@ -11,6 +11,7 @@ import type {
   PromptRelatesGroup,
   RelatesItem,
   ResolvedPromptPath,
+  TouchSubjectContext,
 } from './types.js'
 import type { RecordedTouch } from './sensor.js'
 
@@ -264,8 +265,13 @@ export class PromptMiddlewareRunner {
     this.injected.delete(sessionId)
   }
 
-  /** Record one settled tool touch against the session owning the root execution. */
-  recordTouch(sessionId: string, touch: RecordedTouch): void {
+  /**
+   * Record one settled tool touch against the session owning the root
+   * execution. `context.cwd` is the session cwd the sensor normalized the
+   * path against — it rides into every declarer's `touchSubjects` call so a
+   * per-project subject space can project without guessing.
+   */
+  recordTouch(sessionId: string, touch: RecordedTouch, context: { cwd: string }): void {
     let pending = this.pendingTouches.get(sessionId)
     if (pending === undefined) {
       pending = []
@@ -277,12 +283,13 @@ export class PromptMiddlewareRunner {
     // from the once ledger, so the next consumption re-resolves them. One
     // declarer's projection bug must not poison the others' invalidation —
     // the blast radius is that declarer alone.
+    const projectionContext: TouchSubjectContext = { cwd: context.cwd, sessionId }
     for (const entry of this.registry.listEntries()) {
       const touchSubjects = entry.provider.touchSubjects
       if (touchSubjects === undefined) continue
       let subjects: string[]
       try {
-        subjects = touchSubjects(touch.path)
+        subjects = touchSubjects(touch.path, projectionContext)
       } catch {
         continue
       }
@@ -332,10 +339,16 @@ export class PromptMiddlewareRunner {
       if (!subscribesTouch(entry.provider) || touchSubjects === undefined) return []
       const anchors: ResolvedPromptPath[] = []
       const seen = new Set<string>()
+      // Same context contract as the record-time invalidation projection:
+      // cwd is the current step's session cwd, sessionId the run's scope.
+      const projectionContext: TouchSubjectContext = {
+        cwd: options.cwd,
+        ...options.sessionId !== undefined ? { sessionId: options.sessionId } : {},
+      }
       for (const touch of touches) {
         let subjects: string[]
         try {
-          subjects = touchSubjects(touch.path)
+          subjects = touchSubjects(touch.path, projectionContext)
         } catch (error) {
           // A provider's projection bug must neither break the host pre-step
           // chain nor poison other declarers: this provider sits the batch

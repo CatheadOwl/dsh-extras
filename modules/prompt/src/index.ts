@@ -91,10 +91,14 @@ export async function apply(ctx: Context, config: PromptMiddlewarePluginConfig =
   }, 'prompt-middleware.touchFloats')
   ctx.on('tools/result', (exec: TouchExecution, result: { isError: boolean }) => {
     try {
-      const touches = touchFloats.settle(exec, result.isError, exec.agent?.session.header.cwd ?? process.cwd())
+      // The session cwd is what the sensor normalization below runs against;
+      // the same value rides into recordTouch so declarers' `touchSubjects`
+      // see exactly the cwd their touched path was keyed under.
+      const cwd = exec.agent?.session.header.cwd ?? process.cwd()
+      const touches = touchFloats.settle(exec, result.isError, cwd)
       if (exec.agent === undefined) return
       const sessionId = exec.agent.session.id
-      for (const touch of touches) service.recordTouch(sessionId, touch)
+      for (const touch of touches) service.recordTouch(sessionId, touch, { cwd })
     } catch (error) {
       // A provider's touchSubjects bug must not break the host event chain;
       // the touch is lost for this settle, the next one re-enters clean.

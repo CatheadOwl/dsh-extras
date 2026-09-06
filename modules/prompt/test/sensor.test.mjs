@@ -110,7 +110,7 @@ test('a floated touch reaching an agent-less root is returned — the caller own
 
 test('runner pending: record then take returns and clears', () => {
   const runner = new PromptMiddlewareRunner()
-  runner.recordTouch('s1', { path: 'docs/guide.md', tool: 'read' })
+  runner.recordTouch('s1', { path: 'docs/guide.md', tool: 'read' }, { cwd: '/proj' })
   assert.deepEqual(runner.takePendingTouches('s1'), [{ path: 'docs/guide.md', tool: 'read' }])
   assert.deepEqual(runner.takePendingTouches('s1'), [], 'take clears the pending set')
   assert.deepEqual(runner.takePendingTouches('unknown'), [], 'unknown session has no pending touches')
@@ -118,22 +118,22 @@ test('runner pending: record then take returns and clears', () => {
 
 test('runner pending: turn-boundary discard drops residuals', () => {
   const runner = new PromptMiddlewareRunner()
-  runner.recordTouch('s1', { path: 'docs/guide.md', tool: 'read' })
+  runner.recordTouch('s1', { path: 'docs/guide.md', tool: 'read' }, { cwd: '/proj' })
   runner.discardPendingTouches('s1')
   assert.deepEqual(runner.takePendingTouches('s1'), [])
 })
 
 test('runner pending: sessions are isolated', () => {
   const runner = new PromptMiddlewareRunner()
-  runner.recordTouch('s1', { path: 'a.md', tool: 'read' })
-  runner.recordTouch('s2', { path: 'b.md', tool: 'edit' })
+  runner.recordTouch('s1', { path: 'a.md', tool: 'read' }, { cwd: '/proj' })
+  runner.recordTouch('s2', { path: 'b.md', tool: 'edit' }, { cwd: '/proj' })
   assert.deepEqual(runner.takePendingTouches('s1'), [{ path: 'a.md', tool: 'read' }])
   assert.deepEqual(runner.takePendingTouches('s2'), [{ path: 'b.md', tool: 'edit' }])
 })
 
 test('runner pending: clearSession (surface replace) leaves turn-scoped touches alone', () => {
   const runner = new PromptMiddlewareRunner()
-  runner.recordTouch('s1', { path: 'a.md', tool: 'read' })
+  runner.recordTouch('s1', { path: 'a.md', tool: 'read' }, { cwd: '/proj' })
   runner.clearSession('s1')
   assert.deepEqual(runner.takePendingTouches('s1'), [{ path: 'a.md', tool: 'read' }])
 })

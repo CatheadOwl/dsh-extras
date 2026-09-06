@@ -55,6 +55,20 @@ export type PromptMiddlewareProviderMode = 'always' | 'once'
 /** Signal sources a provider consumes; omitted means prompt-only (v0 behavior). */
 export type PromptMiddlewareSource = 'prompt' | 'touch'
 
+/**
+ * Session context handed to `touchSubjects` alongside the touched path. At
+ * record time `cwd` is the session cwd the sensor normalized the path
+ * against; at the pre-step consumption projection it is the current step's
+ * `cwd`. `sessionId` is the touch-owning session when the caller has one.
+ * Enables cwd-lookup projections (per-project subject spaces) while keeping
+ * the "no hidden inputs" purity bar: everything the projection sees arrives
+ * through this explicit argument pair.
+ */
+export interface TouchSubjectContext {
+  cwd: string
+  sessionId?: string
+}
+
 export interface PromptMiddlewareProvider {
   name: string
   /**
@@ -79,11 +93,15 @@ export interface PromptMiddlewareProvider {
    * framework removes those subjects' `once`-ledger entries (invalidation,
    * runs for every declarer regardless of `sources`) and, when the provider
    * subscribes to `'touch'`, offers the subjects as pseudo-paths at the next
-   * pre-step. Pure path computation, no FS access; returning an empty array
-   * ignores the touch. Declaring `'touch'` in `sources` without this is a
+   * pre-step. Synchronous subject computation with no hidden inputs: no FS
+   * access beyond what the declarer caches ahead, and the second argument is
+   * the only context — declarers may consult it (e.g. a per-cwd config
+   * lookup table) but should keep the call cheap. Returning an empty array
+   * ignores the touch. Single-parameter declarations remain valid (the
+   * context is additive). Declaring `'touch'` in `sources` without this is a
    * dead subscription and fails loud at registration.
    */
-  touchSubjects?(touchedPath: string): string[]
+  touchSubjects?(touchedPath: string, context: TouchSubjectContext): string[]
   run(input: PromptMiddlewareInput): Promise<PromptRelatesContribution[]>
 }
 
@@ -146,7 +164,7 @@ export interface DeclarativeRelatesProvider {
    * Reverse touch projection onto this provider's subjects; see
    * `PromptMiddlewareProvider.touchSubjects` — same contract, declarative face.
    */
-  touchSubjects?(touchedPath: string): string[]
+  touchSubjects?(touchedPath: string, context: TouchSubjectContext): string[]
   /**
    * Resolve the enrichment for ONE mentioned path. Return `undefined` to skip
    * this path — and note a result whose `value`/`href` are both empty strings

@@ -31,8 +31,11 @@ registerRelatesProvider(ctx, {
   name: 'my-pairing',
   kind: 'my-pair-note',
   sources: ['prompt', 'touch'],
-  // 纯路径计算，不碰 FS：touched → 它关联的 subject（无关联返回 []）
-  touchSubjects: touched => (isPaired(touched) ? [pairedSubjectOf(touched)] : []),
+  // 同步计算、无隐藏输入：touched + 会话上下文 → 它关联的 subject（无关联返回 []）。
+  // context.cwd 就是 sensor 归一这条路径所用的 session cwd——subject 空间按项目
+  // （per-cwd 配置）变化的声明方在这里查表选投影目标；查表应同步、缓存化。
+  touchSubjects: (touched, context) =>
+    isPaired(touched, context.cwd) ? [pairedSubjectOf(touched, context.cwd)] : [],
   async resolve({ path }) {
     const state = await loadPairState(path.path)
     if (state === undefined) return undefined
@@ -70,6 +73,7 @@ registerRelatesProvider(ctx, {
 | 关掉的 provider | 不执行、不记账；其 `touchSubjects` 声明仍参与摘账；re-enable 后被摘过的 key 经下次提及/touch 重跑 |
 | `resolve` 抛错 | 你的 provider 记一条 `failed` trace，不影响其他 provider、不打断轮次 |
 | 路径是什么形态 | 项目相对、`/` 分隔（touch 按会话 cwd 归一；项目外路径保留绝对形，配不上的自然忽略） |
+| `touchSubjects` 的第二参 | `{ cwd, sessionId? }`：cwd 在摘账点 = sensor 归一该 touch 的 session cwd，在消费投影点 = 当前 pre-step 的 cwd。subject 空间按项目（per-cwd 配置）变化的声明方在这里查表选投影目标——同一路径在两个 cwd 下可以落到不同 subject |
 
 ## 常见坑
 

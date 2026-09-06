@@ -122,7 +122,7 @@ test('invalidation closes the loop: edit re-runs resolve, undefined renders noth
   })
   const run1 = await runner.run(baseOptions({ paths: [promptPath('src/a.ts')] }))
   assert.ok(run1.text !== undefined, 'prompt mention injects and ledgers')
-  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' })
+  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' }, { cwd: '/proj' })
   const run2 = await runner.run(baseOptions({ touches: [{ path: 'src/a.ts', tool: 'edit' }] }))
   assert.equal(calls, 2, 'invalidation re-ran resolve for the touched subject')
   assert.equal(run2.text, undefined, 'undefined resolve renders nothing')
@@ -150,7 +150,7 @@ test('invalidation runs for declarers regardless of touch subscription', async (
   })
   await runner.run(baseOptions({ paths: [promptPath('src/a.ts')] }))
   assert.equal(calls, 1)
-  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' })
+  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' }, { cwd: '/proj' })
   await runner.run(baseOptions({ paths: [promptPath('src/a.ts')] }))
   assert.equal(calls, 2, 'the touch removed the key even though the provider never subscribed to touch input')
 })
@@ -313,7 +313,7 @@ test('toggle × touch: a disabled provider still invalidates, consumes nothing, 
   assert.equal(calls, 0)
   // While off, a touch still removes the (nonexistent) ledger entry — and
   // crucially does not add one.
-  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' })
+  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'edit' }, { cwd: '/proj' })
   // Turn 2: still off, consumes the pending touch without executing.
   const offResult = await runner.run(baseOptions({ touches: [{ path: 'src/a.ts', tool: 'edit' }], disabled }))
   assert.equal(calls, 0)
@@ -323,4 +323,50 @@ test('toggle × touch: a disabled provider still invalidates, consumes nothing, 
   const onResult = await runner.run(baseOptions({ paths: [promptPath('src/a.ts')] }))
   assert.equal(calls, 1)
   assert.ok(onResult.text !== undefined)
+})
+
+test('a cwd-dependent projection keys invalidation and pseudo-path delivery per session cwd', async () => {
+  // The declarer's subject space is per-project: the same touched path
+  // projects under an 'alpha/' root in the /alpha session and a 'beta/' root
+  // in the /beta session (the cognition-link shape: roots come from
+  // per-cwd config, not from the path string alone).
+  let calls = 0
+  const seen = []
+  const runner = new PromptMiddlewareRunner()
+  runner.registerRelates({
+    name: 'per-project-pairs',
+    kind: 'note',
+    sources: ['prompt', 'touch'],
+    touchSubjects: (touched, context) => [context.cwd === '/alpha' ? `alpha/${touched}` : `beta/${touched}`],
+    async resolve({ path }) {
+      calls += 1
+      seen.push(path.path)
+      return { value: `note for ${path.path}` }
+    },
+  })
+
+  // Ledger an alpha-space subject through a prompt mention.
+  await runner.run(baseOptions({ paths: [promptPath('alpha/src/a.ts')] }))
+  assert.equal(calls, 1)
+
+  // A /beta touch must NOT invalidate the alpha-space key: the record-time
+  // projection ran with the /beta cwd and keyed 'beta/src/a.ts'.
+  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'read' }, { cwd: '/beta' })
+  await runner.run(baseOptions({ paths: [promptPath('alpha/src/a.ts')] }))
+  assert.equal(calls, 1, 'cross-cwd touch did not remove the alpha key (no cold-start mis-projection)')
+
+  // A /alpha touch removes exactly the alpha-space key.
+  runner.recordTouch('s1', { path: 'src/a.ts', tool: 'read' }, { cwd: '/alpha' })
+  await runner.run(baseOptions({ paths: [promptPath('alpha/src/a.ts')] }))
+  assert.equal(calls, 2, 'same-cwd touch removed the alpha key and re-ran resolve')
+
+  // Pseudo-path delivery follows the consuming pre-step's cwd: the same
+  // pending-free touch offered under /beta lands on the beta-space subject.
+  const delivered = await runner.run(baseOptions({
+    cwd: '/beta',
+    touches: [{ path: 'src/a.ts', tool: 'read' }],
+  }))
+  assert.equal(calls, 3)
+  assert.deepEqual(seen, ['alpha/src/a.ts', 'alpha/src/a.ts', 'beta/src/a.ts'], 'each touch landed on its own cwd\'s subject')
+  assert.ok(delivered.text.includes('beta/src/a.ts:'), 'the rendered group keys on the cwd-chosen subject')
 })

@@ -79,11 +79,13 @@ provider 可选声明 `sources?: Array<'prompt' | 'touch'>`（imperative 与声�
 
 ### `touchSubjects` 双向投影
 
-可选**纯函数** `touchSubjects(touchedPath: string): string[]`（双面同加；不碰 FS）：
+可选函数 `touchSubjects?(touchedPath: string, context: { cwd: string; sessionId?: string }): string[]`（双面同加）：
 
+- **纯度口径「无隐藏输入」**：同步计算，不碰 FS、不做 record 时刻的重活；声明方**可以**据 `context` 查表（典型：按 cwd 选 per-project 配置决定 subject 空间），查表本身应同步、缓存化。单参声明继续合法（context 是增量参数，JS 天然兼容）。
+- **context 语义**：`cwd` 在摘账点 = sensor 归一该 touch 所用的 session cwd（record 时刻现成可得，零新状态）；在消费投影点 = 当前 pre-step 的 `cwd`。`sessionId` 是 touch 归账的 session（存在时）。context 是投影可见的**全部**会话上下文——record 时刻没有 prompt/paths，框架不虚构。
 - **反向（失效，一律执行）**：touch 时框架对产出 subjects 摘 once 账（`(provider, key)` 条目删除）——面向**所有声明者**，与 `sources` 订阅、开关状态无关。被关 provider 的 `run` 永不执行，但其声明仍参与摘账（开关是纯执行过滤，屏蔽失效 = 开关获得账本写权，违背 filter-only）。
 - **正向（消费，按订阅过滤）**：下一步 pre-step 对订阅了 `'touch'` 的 provider 再次执行投影，subjects 物化为伪路径进入其 `input.paths`。
-- 与 `subjectOf` 互为镜像：后者把「提及」投影为 key（正向 pre-filter），前者把「touch」投影回 subject（反向失效 + 重跑）。
+- 与 `subjectOf` 互为镜像：后者把「提及」投影为 key（正向 pre-filter），前者把「touch」投影回 subject（反向失效 + 重跑）。`subjectOf` 不加 context——prompt 侧 `resolve`/`run` 本就有完整 input（含 cwd），无此缺口。
 
 ### touch 伪路径与 once key
 
