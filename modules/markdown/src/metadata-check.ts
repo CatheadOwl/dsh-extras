@@ -29,17 +29,28 @@
  * git for the file list; this face is fed from the session event log instead,
  * so it probes `.git` itself (see `insideNestedGitRoot`).
  *
- * Package-root README exemption: a homepage `README.md` (or a variant like
- * `README.zh.md`) living in a directory with
- * its own `package.json` (an npm package root — the workspace root when it
- * is itself a package, or a physically-colocated-but-logically-independent
- * package nested under it, e.g. a subtree projection mirrored to its own
- * repository without a `.git` in the source tree) is skipped. That file
+ * Homepage README exemption: a homepage `README.md` (or a variant like
+ * `README.zh.md`) living in a directory carrying its own root marker — a
+ * `package.json` (an npm package root) or a `.gitignore` (a repository root
+ * without a `.git` entry in this tree, e.g. a subtree projection mirrored to
+ * its own repository) — is skipped. That file
  * doubles as the package/repository homepage, and GitHub renders it raw —
  * YAML frontmatter shows up as literal `---` noise — so it intentionally
  * carries no description; its conventions belong to the package, not this
- * workspace's gate. Non-README md under the package root stays covered:
+ * workspace's gate. Non-README md under that root stays covered:
  * only the homepage file has the rendering constraint.
+ *
+ * Exempt-basename list: files whose role/format is owned outside this
+ * workspace's gate — the agent-instruction files (`AGENTS.md`, `CLAUDE.md`;
+ * their format belongs to the consuming agent harness) and fixed-convention
+ * community files (`CHANGELOG.md`, `CONTRIBUTING.md`; their sections are
+ * dictated by Keep a Changelog / contributor conventions, frontmatter is not
+ * part of the contract) — are skipped wherever they sit. The list lives in
+ * one array (`DEFAULT_EXEMPT_BASENAMES`) for cheap maintenance, and a repo
+ * extends it without a package release via the gate's `exempt-basenames`
+ * option (a list of exact basenames, appended to the defaults) declared in
+ * its `gates.yml` — the same options-overlay seam `doc-link`'s `frozen-dirs`
+ * uses.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
@@ -159,26 +170,61 @@ function insideNestedGitRoot(rootAbs: string, targetAbs: string, probe: Map<stri
 const PACKAGE_README_RE = /^readme(?:\..+)?\.md$/i
 
 /**
- * Whether `targetAbs` is a package-root homepage README: its basename looks
- * like `README.md` (optionally with `.`-separated variant segments, e.g.
- * `README.zh.md`) and its own directory carries a `package.json` — the
- * mechanical package-boundary signal: a package physically colocated under
- * another workspace keeps its own package root while the surrounding tree has
- * none. `probe` memoizes per-directory like the git probe.
+ * Basenames exempt wherever they sit. Each entry records a file whose
+ * format/role is owned by a consumer or fixed convention rather than this
+ * workspace's gate — extend this list when a new fixed-convention filename
+ * emerges, declare per-repo additions through the `exempt-basenames` option.
  */
-function isPackageRootReadme(targetAbs: string, probe: Map<string, boolean>): boolean {
+const DEFAULT_EXEMPT_BASENAMES = ['agents.md', 'claude.md', 'changelog.md', 'contributing.md']
+
+/**
+ * Parse the `exempt-basenames` gate option: a list of exact basenames
+ * appended to `DEFAULT_EXEMPT_BASENAMES`. Matching is exact and
+ * case-insensitive (no globbing — a pattern list would silently grow into a
+ * second regex dialect to maintain). Malformed declarations fail loud.
+ */
+function parseExemptBasenames(option: unknown): Set<string> {
+  const set = new Set(DEFAULT_EXEMPT_BASENAMES)
+  if (option === undefined) return set
+  if (!Array.isArray(option)) {
+    throw new Error('md-metadata gate options: exempt-basenames must be a list of exact basenames')
+  }
+  for (const name of option) {
+    if (typeof name !== 'string' || name === '' || name.includes('/') || name.includes('\\')) {
+      throw new Error('md-metadata gate options: exempt-basenames must be a list of exact basenames (non-empty strings, no path separators)')
+    }
+    set.add(name.toLowerCase())
+  }
+  return set
+}
+
+/**
+ * Whether `targetAbs` is a homepage README at a directory carrying its own
+ * root marker: its basename looks like `README.md` (optionally with
+ * `.`-separated variant segments, e.g. `README.zh.md`) and its own directory
+ * carries a `package.json` (npm package root) or a `.gitignore` (repository
+ * root without a `.git` entry in this tree, e.g. a subtree projection
+ * mirrored to its own repository) — the mechanical root signals: a package
+ * or repo physically colocated under another workspace keeps its own root
+ * markers while the surrounding tree has none. `probe` memoizes
+ * per-directory like the git probe.
+ */
+function isHomepageReadmeAtMarkedRoot(targetAbs: string, probe: Map<string, boolean>): boolean {
   const dir = dirname(targetAbs)
   if (!PACKAGE_README_RE.test(basename(targetAbs))) return false
-  let hasPkg = probe.get(dir)
-  if (hasPkg === undefined) {
-    hasPkg = existsSync(join(dir, 'package.json'))
-    probe.set(dir, hasPkg)
+  let hasRootMarker = probe.get(dir)
+  if (hasRootMarker === undefined) {
+    hasRootMarker = existsSync(join(dir, 'package.json')) || existsSync(join(dir, '.gitignore'))
+    probe.set(dir, hasRootMarker)
   }
-  return hasPkg
+  return hasRootMarker
 }
 
 /** Generic gate surface: check the session change set for `.md` files lacking a description. */
-export function check(root: string, changes?: GateChangeSet): GateViolation[] {
+export function check(root: string, changes?: GateChangeSet, options?: Record<string, unknown>): GateViolation[] {
+  // Parsed before the change-set early return (doc-link precedent): a malformed
+  // options declaration fails loud on both the stop and the manual lane.
+  const exemptBasenames = parseExemptBasenames(options?.['exempt-basenames'])
   const violations: GateViolation[] = []
   if (changes == null || !Array.isArray(changes.paths)) return violations
 
@@ -190,7 +236,8 @@ export function check(root: string, changes?: GateChangeSet): GateViolation[] {
     const abs = resolve(root, path)
     if (!withinRoot(rootAbs, abs)) continue
     if (insideNestedGitRoot(rootAbs, abs, gitProbe)) continue
-    if (isPackageRootReadme(abs, pkgProbe)) continue
+    if (exemptBasenames.has(basename(abs).toLowerCase())) continue
+    if (isHomepageReadmeAtMarkedRoot(abs, pkgProbe)) continue
 
     let source: string
     try {

@@ -142,11 +142,15 @@ const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
     + 'when later written directly by the session or caught in a manual git review. Markdown inside a git '
     + 'repository nested under the workspace root (a vendored submodule or any directory with its own `.git`) '
     + 'is exempt: that content follows its own repository conventions and SSOT, the same git boundary the '
-    + 'module\'s scan-based faces (`md_rename`, `doc-link`) already keep. A homepage README at a package '
-    + 'root — `README.md` or a variant like `README.zh.md`, in a directory with a `package.json` — is also '
-    + 'exempt: that file doubles as the package/repository homepage, which GitHub renders raw — frontmatter '
-    + 'would show as literal noise — so it intentionally carries no description; other md under the package '
-    + 'root stays covered.',
+    + 'module\'s scan-based faces (`md_rename`, `doc-link`) already keep. A homepage README at a directory '
+    + 'carrying its own root marker — `README.md` or a variant like `README.zh.md`, in a directory with a '
+    + '`package.json` (package root) or a `.gitignore` (repository root without a `.git` in this tree) — is '
+    + 'also exempt: that file doubles as the package/repository homepage, which GitHub renders raw — frontmatter '
+    + 'would show as literal noise — so it intentionally carries no description; other md under that root stays '
+    + 'covered. Fixed-convention and agent-owned basenames (`AGENTS.md`, `CLAUDE.md`, `CHANGELOG.md`, '
+    + '`CONTRIBUTING.md`) are exempt wherever they sit: their format belongs to the consuming harness '
+    + 'or an external convention, not this gate; a repo appends its own names via the gate\'s '
+    + '`exempt-basenames` option in its `gates.yml`.',
   on: ['stop', 'manual'],
   level: 'defer',
   // Incremental shortcut: only dirty .md paths can change this gate's result.
@@ -206,6 +210,6 @@ export function apply(ctx: Context): void {
 
   registerGate(ctx, {
     ...MD_METADATA_GATE,
-    check: async (root, changes): Promise<GateViolation[]> => checkMdMetadata(root, changes),
+    check: async (root, changes, options): Promise<GateViolation[]> => checkMdMetadata(root, changes, options),
   })
 }

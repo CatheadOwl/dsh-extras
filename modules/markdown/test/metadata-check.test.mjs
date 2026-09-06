@@ -172,7 +172,7 @@ describe('md-metadata nested-git exemption', () => {
   })
 })
 
-describe('md-metadata package-root README exemption', () => {
+describe('md-metadata homepage README root-marker exemption', () => {
   it('skips a homepage README at a nested package root without frontmatter', () => {
     const root = fixture({
       'pkg/README.md': '# package homepage, GitHub renders it raw\n',
@@ -223,7 +223,31 @@ describe('md-metadata package-root README exemption', () => {
     assert.equal(violations[0].file, 'pkg/docs/guide.md')
   })
 
-  it('still flags README.md when its directory has no package.json', () => {
+  it('skips a homepage README at a directory marked by a `.gitignore` (repo root without `.git`)', () => {
+    const root = fixture({
+      'mirror/README.md': '# subtree projection homepage, no .git in this tree\n',
+      'mirror/.gitignore': 'node_modules\n',
+    })
+    assert.deepEqual(check(root, changes(['mirror/README.md'])), [])
+  })
+
+  it('skips the workspace-root README when the workspace itself carries a `.gitignore`', () => {
+    const root = fixture({
+      'README.md': '# workspace homepage\n',
+      '.gitignore': '*.log\n',
+    })
+    assert.deepEqual(check(root, changes(['README.md'])), [])
+  })
+
+  it('still covers non-README md under a `.gitignore`-marked root', () => {
+    const root = fixture({
+      'mirror/.gitignore': 'node_modules\n',
+      'mirror/docs/guide.md': '# no description\n',
+    })
+    assert.equal(check(root, changes(['mirror/docs/guide.md'])).length, 1)
+  })
+
+  it('still flags README.md when its directory has no root marker (package.json / .gitignore)', () => {
     const root = fixture({ 'docs/README.md': '# plain workspace readme\n' })
     assert.equal(check(root, changes(['docs/README.md'])).length, 1)
   })
@@ -248,6 +272,81 @@ describe('md-metadata package-root README exemption', () => {
   })
 })
 
+describe('md-metadata exempt-basename list', () => {
+  it('skips AGENTS.md and CLAUDE.md wherever they sit', () => {
+    const root = fixture({
+      'AGENTS.md': '# agent instructions, harness-owned format\n',
+      'CLAUDE.md': '@AGENTS.md\n',
+    })
+    assert.deepEqual(check(root, changes(['AGENTS.md', 'CLAUDE.md'])), [])
+  })
+
+  it('skips fixed-convention community files (CHANGELOG.md, CONTRIBUTING.md)', () => {
+    const root = fixture({
+      'CHANGELOG.md': '# Changelog\n\n## [Unreleased]\n',
+      'CONTRIBUTING.md': '# Contributing\n',
+    })
+    assert.deepEqual(check(root, changes(['CHANGELOG.md', 'CONTRIBUTING.md'])), [])
+  })
+
+  it('skips a default-exempt basename nested in a subdirectory while flagging sibling md', () => {
+    const root = fixture({
+      'pkg/AGENTS.md': '# nested agent instructions\n',
+      'pkg/docs/a.md': '# no description\n',
+    })
+    const violations = check(root, changes(['pkg/AGENTS.md', 'pkg/docs/a.md']))
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'pkg/docs/a.md')
+  })
+
+  it('still flags adjacent names that are not exactly a listed basename', () => {
+    const root = fixture({
+      'agents-notes.md': '# not an instruction file\n',
+      'CHANGELOG.old.md': '# not the fixed-convention file\n',
+    })
+    assert.equal(check(root, changes(['agents-notes.md', 'CHANGELOG.old.md'])).length, 2)
+  })
+
+  it('appends repo-declared names via the exempt-basenames option', () => {
+    const root = fixture({ 'CODE_OF_CONDUCT.md': '# convention file\n' })
+    assert.equal(check(root, changes(['CODE_OF_CONDUCT.md'])).length, 1)
+    const exempted = check(root, changes(['CODE_OF_CONDUCT.md']), { 'exempt-basenames': ['CODE_OF_CONDUCT.md'] })
+    assert.deepEqual(exempted, [])
+  })
+
+  it('option-declared names keep the defaults (append, not replace)', () => {
+    const root = fixture({ 'AGENTS.md': '# still exempt\n', 'SECURITY.md': '# newly exempt\n' })
+    assert.deepEqual(
+      check(root, changes(['AGENTS.md', 'SECURITY.md']), { 'exempt-basenames': ['SECURITY.md'] }),
+      [],
+    )
+  })
+
+  it('matches option-declared names case-insensitively without globbing', () => {
+    const root = fixture({ 'security.md': '# lowercase spelling\n', 'SECURITY-notes.md': '# adjacent name\n' })
+    const violations = check(root, changes(['security.md', 'SECURITY-notes.md']), { 'exempt-basenames': ['SECURITY.md'] })
+    assert.equal(violations.length, 1)
+    assert.equal(violations[0].file, 'SECURITY-notes.md')
+  })
+
+  it('fails loud on a malformed exempt-basenames declaration (both lanes)', () => {
+    const root = fixture({ 'a.md': '---\ndescription: x\n---\n' })
+    assert.throws(() => check(root, changes(['a.md']), { 'exempt-basenames': 'AGENTS.md' }), /exempt-basenames/)
+    assert.throws(() => check(root, changes(['a.md']), { 'exempt-basenames': ['docs/AGENTS.md'] }), /exempt-basenames/)
+    assert.throws(() => check(root, changes(['a.md']), { 'exempt-basenames': [''] }), /exempt-basenames/)
+    // Manual lane (null change set) fails loud too — doc-link frozen-dirs precedent.
+    assert.throws(() => check(root, undefined, { 'exempt-basenames': 'AGENTS.md' }), /exempt-basenames/)
+  })
+
+  it('pins the .gitignore marker semantics: a subdirectory .gitignore exempts its README (accepted tradeoff)', () => {
+    const root = fixture({
+      'docs/README.md': '# docs index; sibling .gitignore marks this dir as a root\n',
+      'docs/.gitignore': 'generated/\n',
+    })
+    assert.deepEqual(check(root, changes(['docs/README.md'])), [])
+  })
+})
+
 describe('md-metadata registerGate wiring', () => {
   it('registers a defer gate with a subagent fixer when the gates service is present', async () => {
     const gates = []
@@ -269,8 +368,10 @@ describe('md-metadata registerGate wiring', () => {
     assert.ok(metadata.fixer.prompt.includes('house'))
     assert.equal(metadata.relevantPath('docs/a.md'), true)
     assert.equal(metadata.relevantPath('src/a.ts'), false)
-    // The registered check delegates to the shared data plane (async gate surface).
+    // The registered check delegates to the shared data plane (async gate surface),
+    // including the options overlay seam.
     const root = fixture({ 'a.md': '# No frontmatter\n' })
     assert.equal((await metadata.check(root, changes(['a.md']))).length, 1)
+    assert.deepEqual(await metadata.check(root, changes(['a.md']), { 'exempt-basenames': ['a.md'] }), [])
   })
 })

@@ -107,9 +107,9 @@ gates:
 
 ## 实例与教学示例
 
-`doc-link` 与 `md-metadata` 均已作为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate 提供（见 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级**声明执行体**会与插件 gate 撞名（重名注册即报错）；但项目可以用**纯 `options` 条目**（字段速查 §options 覆写）给插件 gate 覆写仓库策略：条目不声明 `module`/`command`、只携带有效的 `id` + `options`（其余字段不参与判定、写了无效），如 `doc-link` 的 `frozen-dirs: [archived]`。覆写条目的 id 必须命中某个插件注册的 gate；指向项目自声明 gate 或未知 id 都会 fail loud（`gates-config` 报错）。同一策略面（如 frozen-dirs）的其他承载（`md_rename` 工具）也读同一份声明——单一策略源，不改执行体。
+`doc-link` 与 `md-metadata` 均已作为 `@catheadowl/dsh-extras` markdown 模块的插件级 gate 提供（见 [adding-a-plugin-gate](adding-a-plugin-gate.md)）——项目级**声明执行体**会与插件 gate 撞名（重名注册即报错）；但项目可以用**纯 `options` 条目**（字段速查 §options 覆写）给插件 gate 覆写仓库策略：条目不声明 `module`/`command`、只携带有效的 `id` + `options`（其余字段不参与判定、写了无效），如 `doc-link` 的 `frozen-dirs: [archived]`、`md-metadata` 的 `exempt-basenames: [SECURITY.md]`（追加其默认豁免 basename 列表）。覆写条目的 id 必须命中某个插件注册的 gate；指向项目自声明 gate 或未知 id 都会 fail loud（`gates-config` 报错）。同一策略面（如 frozen-dirs）的其他承载（`md_rename` 工具）也读同一份声明——单一策略源，不改执行体。
 
-module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是仓库级声明原样（`check(root, changes?, options?)` 的导出形状、defer + subagent fixer 的声明语法），**完整可跑的参考实现**在同包 [`examples/md-metadata/module-form.mjs`](../examples/md-metadata/module-form.mjs)（冻结标本：仓库级数据面原样迁入，不随活代码演进；活的数据面在 markdown 模块 `src/metadata-check.ts`，插件级注册见其 `src/index.ts`）。要为自己的仓库声明等价检查时，把标本拷进仓库、`module:` 指过去，并换一个不撞名的 `id`。
+module 形态的教学示例仍以 `md-metadata` 为标本：上文的声明片段与 fixer 示例就是仓库级声明原样（`check(root, changes?, options?)` 的导出形状——注：冻结标本早于 options 支持，标本本体仍是无 options 的 `check(root, changes?)`，活数据面在 markdown 模块、defer + subagent fixer 的声明语法），**完整可跑的参考实现**在同包 [`examples/md-metadata/module-form.mjs`](../examples/md-metadata/module-form.mjs)（冻结标本：仓库级数据面原样迁入，不随活代码演进；活的数据面在 markdown 模块 `src/metadata-check.ts`，插件级注册见其 `src/index.ts`）。要为自己的仓库声明等价检查时，把标本拷进仓库、`module:` 指过去，并换一个不撞名的 `id`。
 
 `gates.yml` 解析失败时不会静默：会以一个专用 `gates-config` blocking gate 报错，驱动修复配置文件本身。
 

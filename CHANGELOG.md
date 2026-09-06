@@ -10,6 +10,22 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ## [Unreleased]
 
+### Changed
+
+- `md-metadata` gate: exemption widenings plus a maintainable list.
+  - Homepage README exemption now accepts `.gitignore` as a root marker
+    alongside `package.json` — a `README.md` (or variant) in a directory
+    carrying either marker is skipped (covers repository roots without a
+    `.git` entry in the tree, e.g. subtree projection mirrors). Non-README
+    md under such a root stays covered.
+  - Fixed-convention basenames are exempt wherever they sit, tracked in one
+    maintainable list: `AGENTS.md`, `CLAUDE.md` (agent-harness-owned format),
+    `CHANGELOG.md`, `CONTRIBUTING.md` (external-convention files).
+  - New `exempt-basenames` gate option: repos append their own exact
+    basenames via `gates.yml` (appended to the defaults, case-insensitive
+    exact match, malformed declarations fail loud) — the same options
+    overlay seam as `doc-link`'s `frozen-dirs`.
+
 ### Added
 
 - `prompt` module: tool-touch sensor lane. The framework now listens to
