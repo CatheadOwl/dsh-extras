@@ -32,6 +32,20 @@ gates:
       so navigation integrity is part of documentation correctness.
     level: blocking
     relevant: ['README.md', 'modules/']
+  - id: host-peer-resolution
+    command: node scripts/relink-host-peers.mjs --check-only
+    description: Every @deepseek-ai peer resolves (realpath) to the single host-checkout anchor, never the registry.
+    rationale: >-
+      Host packages are peerDependencies "*" with autoInstallPeers off: the registry latest
+      for several @deepseek-ai packages is stale, so development resolution must come from
+      the host workspace via junctions (dependency-discipline: host peers don't ride the
+      registry, single anchor). A bare pnpm install silently clears those junctions and
+      the failure only surfaces later as ERR_MODULE_NOT_FOUND or a registry-antique
+      prepareCall error — this check surfaces it at turn close instead. Without a host
+      anchor (standalone mirror, no --repo/DSH_REPO) the script exits 0 as not applicable.
+    level: blocking
+    timeoutMs: 60000
+    relevant: ['package.json', 'pnpm-workspace.yaml', 'scripts/relink-host-peers.mjs']
   - id: publish-readiness
     module: scripts/verify-publish-readiness.mjs
     description: The extras package stays independently publishable (peer-only host deps, registry ranges, self-contained docs, meta-free sources).
