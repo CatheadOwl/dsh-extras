@@ -1,5 +1,5 @@
 ---
-description: touch lane 使用指南——tool-touch 信号源的三种消费角色、配对 provider 的完整模式（稳态 resolve、自编辑对账、镜像对齐）与语义速查
+description: touch lane 使用指南——tool-touch 信号源的三种消费角色、配对 provider 的完整模式（稳态 resolve、自编辑对账、镜像对齐）、原子设计「自编辑是推迟不是吞掉」与语义速查
 ---
 
 # touch lane 使用指南
@@ -40,14 +40,15 @@ registerRelatesProvider(ctx, {
     const state = await loadPairState(path.path)
     if (state === undefined) return undefined
 
-    // 纪律一（稳态沉默）：这个 subject 本 session 已渲染过且状态没变 → 什么都不说
+    // 纪律二（自编辑对账）：agent 自己刚改的文件不回叙——复述 agent 刚做的事是噪音。
+    // 注意这里【不】推进 rendered：对账只确认「模型知道自己改了」，不把已见记录
+    // 刷到改后读数——为什么，见下面「原子设计：自编辑是推迟，不是吞掉」。
+    if (path.origin === 'touch' && path.touchTool === 'edit') return undefined
+
+    // 纪律一（稳态沉默）：已渲染过且状态没变 → 什么都不说。
+    // rendered 只在真正渲染时推进。
     if (rendered.has(path.path) && state.version === rendered.get(path.path)) return undefined
     rendered.set(path.path, state.version)
-
-    // 纪律二（自编辑对账）：agent 自己刚改的文件不回叙，只刷记录
-    if (path.origin === 'touch' && path.touchTool === 'edit') {
-      return undefined          // 记录已在上面刷新；复述 agent 刚做的事是噪音
-    }
 
     return { value: formatPairNote(state, path.path) }
   },
@@ -56,10 +57,31 @@ registerRelatesProvider(ctx, {
 
 （`rendered` 是 provider 闭包自持的 `Map<path, version>`——框架不感知「状态」，渲染策略整体住你这边。）
 
+### 原子设计：自编辑是推迟，不是吞掉
+
+「edit 沉默 + 下一次有机接触才说话」不是两个独立开关，是同一个原子设计的两面：
+
+- **edit 对账**只确认「模型知道自己改了」，**不推进「已见状态」记录**；
+- 你想传达的信号（状态变了）就保存在**「已见记录」与现实的差**里；
+- 下一次**有机接触**——用户提及该文件（prompt 侧）、或后续 turn 的 `read`——`resolve` 读到现实与记录的差 → 迁移成立 → 注入。
+
+**反模式（会把信号永久吞掉）**：对账时把记录刷成改后读数——
+
+```ts
+// ✗ 千万不要：对账分支里记录 post-change 状态
+rendered.set(path.path, state.version)          // 刷成改后版本
+if (path.origin === 'touch' && path.touchTool === 'edit') return undefined
+// 下一次有机接触：state.version === 记录 → 稳态沉默 → 这条信号永远不会浮出
+```
+
+正确姿势是上面的示例：**记录只在真正渲染时推进**，对账分支纯返回 `undefined`。这样反复 edit 的稳态成本 = 每次 touch 一次查询、零注入；而改动后的信息最晚在下一次有机接触浮出——推迟，不丢。
+
+（确实存在「吞掉也是对的」场景：你的注记对 agent 刚写的内容零增量时，可以显式选择在对账时推进记录并注释声明——但那是你基于注记语义做的显式决策，不是默认。另一个连带纪律：同 turn 内对账若用 turn 级缓存的快照，读到的是改动前状态——这不是 bug，正是「不推进已见记录」的天然实现，别去「修」它。）
+
 ### 四条 provider 侧纪律
 
-1. **稳态返回 `undefined`**：touch 每次都会重新 offer 同一 subject；「没新东西可说」必须显式沉默。稳态成本 = 每次 touch 一次查询、零注入；状态每翻转一次恰好多注一条——这正是想要的节奏。
-2. **自编辑不回叙**：`path.origin === 'touch' && path.touchTool === 'edit'` 是 agent 自己的动作，复述即噪音；只刷新你的内部记录（对账）。
+1. **稳态返回 `undefined`**：touch 每次都会重新 offer 同一 subject；「没新东西可说」必须显式沉默，且**已见记录只在真正渲染时推进**。稳态成本 = 每次 touch 一次查询、零注入；状态每翻转一次恰好多注一条——这正是想要的节奏。
+2. **自编辑不回叙，也不推进已见记录**：`path.origin === 'touch' && path.touchTool === 'edit'` 是 agent 自己的动作，复述即噪音；对账只返回 `undefined`（见「原子设计：自编辑是推迟，不是吞掉」）。
 3. **两个投影要镜像对齐**：`subjectOf`（提及 → key）与 `touchSubjects`（touch → subject）若指向不同 subject 空间，跨源去重会失效（prompt 注入过、touch 又注一次）。配对型 provider 通常两者恒等或互为正反映射。
 4. **`resolve` 幂等廉价**：它会被反复调用（每 touch 一次），不要在里面做重活或累积副作用。
 
@@ -81,3 +103,4 @@ registerRelatesProvider(ctx, {
 - **声明了 `'touch'` 却忘写 `touchSubjects`**：注册期直接抛错（死订阅）。
 - **想「touch 时立即注入」**：没有这个时机——注入永远发生在下一步 pre-step（模型可见时机相同，且免掉异步投影的串行化成本）。
 - **混合批的 trace**：一批输入同时含 prompt 路径与 touch 伪路径时，trace 记 `source: 'touch'`（新信号优先观测）；纯观测字段，不影响执行。
+- **对账时推进了已见记录**：你的注记从此对这类改动永远沉默——信号被吞掉，不是推迟。见「原子设计：自编辑是推迟，不是吞掉」的反模式。
