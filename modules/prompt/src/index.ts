@@ -33,11 +33,16 @@ export async function apply(ctx: Context, config: PromptMiddlewarePluginConfig =
   ctx.on('agent/pre-step', async ({ agent, messages, turn, step, signal }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject') return decision
+    // Signal sources compose this step's subject batch; the user prompt text
+    // is the only source today. The gate below is "no subjects collected",
+    // never "no prompt text": injection targets the current step's admitted
+    // request batch at any step boundary, so a source that produces subjects
+    // without prompt text (the tool-touch sensor lane) enters here unchanged.
     const prompt = promptText(messages)
-    if (prompt.trim() === '') return decision
     const trace: PromptMiddlewareTraceEvent[] = []
     const cwd = agent.session.header.cwd ?? process.cwd()
-    const paths = await resolvePromptPathList(prompt, cwd, { trace })
+    const paths = prompt.trim() === '' ? [] : await resolvePromptPathList(prompt, cwd, { trace })
+    if (paths.length === 0 && trace.length === 0) return decision
     const result = await service.run({
       prompt,
       paths,
