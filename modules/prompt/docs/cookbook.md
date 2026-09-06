@@ -97,6 +97,20 @@ if (path.origin === 'touch' && path.touchTool === 'edit') return undefined
 | 路径是什么形态 | 项目相对、`/` 分隔（touch 按会话 cwd 归一；项目外路径保留绝对形，配不上的自然忽略） |
 | `touchSubjects` 的第二参 | `{ cwd, sessionId? }`：cwd 在摘账点 = sensor 归一该 touch 的 session cwd，在消费投影点 = 当前 pre-step 的 cwd。subject 空间按项目（per-cwd 配置）变化的声明方在这里查表选投影目标——同一路径在两个 cwd 下可以落到不同 subject |
 
+## 设置面如何呈现你的 provider
+
+Settings → Plugins → Prompt Middleware 里你的行是**声明驱动**的，你不需要（也不能）自定义布局：
+
+| UI 内容 | 来自哪 | 你能控制吗 |
+|---|---|---|
+| name / `description` 一行自述 | 注册声明 | ✅ `description` 是你唯一的作者文案面（一句话，说清"注入的是什么"） |
+| 「触发：提示词提及 ＋ read/edit 触碰」 | `sources` 推导 | 间接——声明了 `'touch'` 就自动带后半句，框架常量，别在 description 里复述 |
+| 「每主题一次，文件变更后重新注入」等刷新文案 | `mode` × `sources` 推导 | 间接——订阅 touch 的 once provider 自动获得"触碰后重注"说法，文案与行为同源、不可能脱钩 |
+| 注册面 / priority / timeoutMs / kind | 行内 tooltip | ❌ 调试信息 |
+| 「部署者配置禁用」徽标 + 开关置灰 | 部署者 config `disabledProviders` | ❌ 部署者意志，用户开关不越权 |
+
+想验证你的声明会渲染成什么样：调 `ctx.promptMiddleware.introspect()`（或 remote `promptMiddleware/introspect`）——设置面就是它的投影；headless / eval 侧查 provider 生效状态（`effectiveEnabled` / `disabledBy`）也走这里，字段表见 [contract.md](contract.md)「自省快照」节。
+
 ## 常见坑
 
 - **`write` 不在闭集**：新建文件的 touch 信号暂不产生（空白语义未定）；新建配对文档的场景目前只能靠 prompt 提及。
