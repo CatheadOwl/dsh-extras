@@ -1,10 +1,10 @@
 ---
-description: prompt 模块注入契约——provider 执行模型与定序、once 注入去重、声明式 registerRelates 与 subjectOf、provider 开关的权威规范
+description: prompt 模块注入契约——provider 执行模型与定序、once 注入去重与 touch 失效、声明式 registerRelates 与 subjectOf、tool-touch sensor lane、provider 开关的权威规范
 ---
 
 # prompt 注入契约（contract）
 
-本文是 prompt 模块运行时契约的权威文本：provider 执行模型与定序、`once` 注入去重与记账、声明式 `registerRelates`（含 `subjectOf` 重键）、render budget 与 provider 开关。注册示例与公共 API reference 见 [register.md](register.md)。
+本文是 prompt 模块运行时契约的权威文本：provider 执行模型与定序、`once` 注入去重与记账、声明式 `registerRelates`（含 `subjectOf` 重键）、tool-touch sensor lane（`sources` 订阅、`touchSubjects` 双向投影、账本失效）、render budget 与 provider 开关。注册示例与公共 API reference 见 [register.md](register.md)。
 
 ## provider 执行模型（imperative）
 
@@ -26,6 +26,7 @@ description: prompt 模块注入契约——provider 执行模型与定序、onc
 - **记账只记实际渲染**：只有未被 render budget 截断的 item 写入 ledger；被截断的 item 不记账，后续轮次预算宽松时可补注。
 - **执行位置**：once-mode provider 执行前，middleware 按 ledger 预过滤 `input.paths`，只传未注入 key 的 path（省算：已注入 path 不再调 provider）；全部命中时写 `skipped` trace（`all paths already injected this session`），不调 provider。ledger 只比 key，不比 description/value。
 - **surface replace 清账**：session surface 被 replace（例如 compact）时，driver 调 `clearSession(sessionId)` 清空该 session 全部 ledger，之后可重新注入。ledger 只在 runner 进程内保存，不落 storage；进程重启后活跃 session 最多重新注入一次。
+- **touch 失效是账本外的正交机制**：ledger 写者除 `markInjected`（实际渲染记账）与 `clearSession`（surface replace）外，还有 touch 失效摘账（见「tool-touch sensor lane」）——它不改 once 的 key 语义与省算承诺，只是按内容变更信号把 key 从账上摘掉。
 - 同一轮内的 merge/dedupe 与跨轮 once 去重正交。
 
 ## 声明式面（`registerRelates`）
@@ -54,6 +55,47 @@ per-turn 共享状态（如 snapshot）由 consumer 用闭包自理：需要「�
 - **允许的投影**：仅提及路径自身或其祖先目录（slash-canonical）。投影越界由物化 `run` 内校验（`projectSubjectStrict`），违规即抛错 → provider `failed` trace，不污染整轮；预过滤/分组序使用的投影带安全回退（退回提及路径本身）。
 - **重键范围**：contribution 分组 key、once ledger key、once 预过滤统一按投影后的 subject 记。兄弟提及共享 subject 时收敛为一组、一 session 一次注入。
 - **预过滤省算**：runner 在调 `resolve` 之前同步调用该纯函数做 once 预过滤，省算语义不变。函数必须纯且同步。
+
+## tool-touch sensor lane
+
+框架统一持有 `tools/result` 监听，把 agent 的文件工具使用变成第二个信号源。provider 不允许自挂 `tools/result` 做注入——那会绕开 once ledger / 预算 / 渲染纪律。
+
+### sensor 契约
+
+- **工具闭集 `{read, edit}`**（`write` defer：新建文件的空白语义未定）。提取规则：`exec.arguments.file_path` 为 string 且 trim 后非空。
+- **准入三条件**：`!result.isError && exec.agent !== undefined && !exec.signal.aborted`——错误、中止、无 agent 的调用不是有效 touch。
+- **祖先上浮**：嵌套执行的 touch 沿执行 token 链上浮，在根执行结算——一次嵌套调用只消费一次，归账到根 agent 的 session。
+- **键空间归一**：touch 路径按根 session 的 cwd 归一为项目相对、斜杠 canonical 形（Windows 盘符前缀大小写不敏感），与 prompt 侧 once key 同一空间；项目外路径保留绝对形，交 provider 天然忽略。
+- **pending 生命周期**：raw touch 记入 per-session pending，在下一步 pre-step 消费；turn 边界（`turn/end`）丢弃残余，不跨 turn 追注。surface replace 不清 pending（turn 作用域，与 ledger 分离）。
+- **无 sensor 级路径筛选**：配对与否由 `touchSubjects` 投影决定（返回空数组 = 忽略），render budget 兜底渲染量。
+
+### `sources` 信号源订阅
+
+provider 可选声明 `sources?: Array<'prompt' | 'touch'>`（imperative 与声明式双面同加，域不收窄）：
+
+- 缺省 = `['prompt']`：行为与本 lane 引入前完全一致（只收 prompt 解析路径）。
+- 含 `'touch'`：本 provider 额外接收 touch 伪路径。**订阅只决定注入消费，不决定失效**。
+- 注册期校验：声明 `'touch'` 而未声明 `touchSubjects` 是死订阅，fail loud；`sources` 非空数组、entry 域合法、`touchSubjects` 为函数，均注册期校验。
+
+### `touchSubjects` 双向投影
+
+可选**纯函数** `touchSubjects(touchedPath: string): string[]`（双面同加；不碰 FS）：
+
+- **反向（失效，一律执行）**：touch 时框架对产出 subjects 摘 once 账（`(provider, key)` 条目删除）——面向**所有声明者**，与 `sources` 订阅、开关状态无关。被关 provider 的 `run` 永不执行，但其声明仍参与摘账（开关是纯执行过滤，屏蔽失效 = 开关获得账本写权，违背 filter-only）。
+- **正向（消费，按订阅过滤）**：下一步 pre-step 对订阅了 `'touch'` 的 provider 再次执行投影，subjects 物化为伪路径进入其 `input.paths`。
+- 与 `subjectOf` 互为镜像：后者把「提及」投影为 key（正向 pre-filter），前者把「touch」投影回 subject（反向失效 + 重跑）。
+
+### touch 伪路径与 once key
+
+- 伪路径为 `ResolvedPromptPath`：`path = subject`、`origin: 'touch'`、`touchTool`（触发工具名，v0 域 `'read' | 'edit'`）、`kind` 固定 `'file'` 且不参与判定。声明式 `resolve({ path })` 直接从 `path.origin` / `path.touchTool` 读来源。
+- **once key = subject 本身**：once 预过滤与 `subjectOf` 对 `origin === 'touch'` 的伪路径**不再二次投影**（预过滤、allowed 集、contribution 分组三处一致）——摘掉的 key 与重记的 key 恒等。prompt 侧 `subjectOf` 语义不变；两侧 key 是否重叠由 provider 的两个声明自行对齐。
+- **chatter 消解**：失效重跑 `resolve` 返回 `undefined` → 不渲染 → 不重新记账 → key 保持无账。稳态下每次 touch 只花一次 resolve、零注入零噪音；状态每翻转一次恰好多注一次。
+
+### trace 口径
+
+- trace 事件可选 `source?: 'prompt' | 'touch'`：本批输入含至少一个 touch 伪路径记 `'touch'`（混合批记 `'touch'`），否则 `'prompt'`；纯观测，不参与执行判定。
+- 空消费批（provider 无可订阅输入）不执行、不记 trace 行。
+- `touchSubjects` 运行期抛错的隔离：消费点收编为该 provider 的 `failed` trace（source `'touch'`）；摘账点跳过该声明者、不影响同批其他声明者。
 
 ## 定序
 
