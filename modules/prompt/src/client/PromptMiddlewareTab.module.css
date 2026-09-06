@@ -75,6 +75,13 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.providerDescription {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-secondary);
+}
+
 .meta {
   margin-top: 4px;
   font-size: 11px;

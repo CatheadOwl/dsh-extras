@@ -29,6 +29,7 @@ export interface BreadcrumbRelatesResult {
 /** Structural subset of the frozen `DeclarativeRelatesProvider` this provider implements. */
 export interface BreadcrumbRelatesProvider {
   name: string
+  description: string
   kind: string
   priority: number
   timeoutMs: number
@@ -53,6 +54,7 @@ interface BreadcrumbCrumb {
 }
 
 const PROVIDER_NAME = 'breadcrumb-description-enricher'
+const PROVIDER_DESCRIPTION = 'Annotates mentioned paths with the description chain built from their ancestor directories\' READMEs (any_routes breadcrumb).'
 const PROVIDER_KIND = 'breadcrumb-description'
 // annotation band (100–199), after cognition-link's canonical band (0–99).
 const PROVIDER_PRIORITY = 100
@@ -70,6 +72,7 @@ export function createBreadcrumbDescriptionProvider(options: BreadcrumbDescripti
   let descriptions: DescriptionCache | undefined
   return {
     name: PROVIDER_NAME,
+    description: PROVIDER_DESCRIPTION,
     kind: PROVIDER_KIND,
     priority: PROVIDER_PRIORITY,
     timeoutMs: PROVIDER_TIMEOUT_MS,

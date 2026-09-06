@@ -8,6 +8,8 @@ import css from './PromptMiddlewareTab.module.css'
 /** One row of the flat provider list as the host Remote reports it. */
 export interface PromptMiddlewareProviderView {
   name: string
+  /** Provider-authored one-liner; absent when the provider declared none. */
+  description?: string
   kind?: string
   priority?: number
   timeoutMs?: number
@@ -116,6 +118,9 @@ export function PromptMiddlewareTab({ t, list, setDisabled }: PromptMiddlewareTa
               <li key={provider.name} className={css.row}>
                 <div className={css.copy}>
                   <div className={css.name}>{provider.name}</div>
+                  {provider.description !== undefined
+                    ? <div className={css.providerDescription}>{provider.description}</div>
+                    : undefined}
                   <div className={css.meta}>{metaLabel(t, provider)}</div>
                 </div>
                 <button

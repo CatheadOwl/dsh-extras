@@ -52,6 +52,12 @@ export type PromptMiddlewareProviderMode = 'always' | 'once'
 
 export interface PromptMiddlewareProvider {
   name: string
+  /**
+   * Human-readable one-liner shown in the Settings → Plugins → Prompt
+   * Middleware tab. Authored by the provider itself (not localized); omitted
+   * providers render name + meta only, exactly as before the field existed.
+   */
+  description?: string
   priority?: number
   timeoutMs?: number
   mode?: PromptMiddlewareProviderMode
@@ -88,6 +94,8 @@ export interface RelatesResolveResult {
 export interface DeclarativeRelatesProvider {
   /** Stable provider name, same PROVIDER_NAME validation as imperative providers. */
   name: string
+  /** Author-facing one-liner carried into the materialized provider's view. */
+  description?: string
   /** Stable item kind for this declaration; one declaration == one kind. */
   kind: string
   /** Transparently passed to the underlying provider (default 0). */
@@ -183,6 +191,8 @@ export interface PromptMiddlewareRunResult {
 /** One row of the Settings → Plugins → Prompt Middleware tab's provider list. */
 export interface PromptMiddlewareProviderView {
   name: string
+  /** Provider-authored one-liner; absent when the provider declared none. */
+  description?: string
   /** Item kind of a declarative provider; imperative providers have none. */
   kind?: string
   priority?: number

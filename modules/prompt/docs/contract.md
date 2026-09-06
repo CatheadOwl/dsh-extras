@@ -41,7 +41,8 @@ description: prompt 模块注入契约——provider 执行模型与定序、onc
 | item 命名 | 沿用 `RelatesItem.kind`，一个声明对应一个 `kind`；不引入 `type` 第二套词汇 |
 | label | 框架用 `kind` 作占位 label（底层 `label` 必填、渲染层不消费 label，不向模型泄露多余人类标签） |
 | priority / timeoutMs | 可选，透传底层 provider；`priority` 语义见「定序」 |
-| 注册期校验 | `name` / `priority` / `timeoutMs` 走既有校验；`kind` 非空、`mode` 仅 `'always'`、`subjectOf` 为函数，均 fail loud |
+| description | 可选非空字符串，provider 作者自述一行话，透传物化 provider 并进 Settings 视图；缺省视图不带该字段（渲染退回 name + meta）。注册期校验：给了但非非空字符串即 fail loud |
+| 注册期校验 | `name` / `priority` / `timeoutMs` / `description` 走既有校验；`kind` 非空、`mode` 仅 `'always'`、`subjectOf` 为函数，均 fail loud |
 | 失败粒度 | 与 imperative 一致：单次 `resolve` 抛错 → 整个 provider `failed` trace，不阻断其他 provider；v0 不做 per-path 异常隔离 |
 
 per-turn 共享状态（如 snapshot）由 consumer 用闭包自理：需要「每轮建一次、逐 path 复用」的 provider 应在闭包内按 `input.turnId` 惰性构建并缓存一次，用完即弃。
@@ -74,7 +75,7 @@ Settings → Plugins → **Prompt Middleware** tab（slot id `prompt-middleware`
 - **单一过滤点**：`PromptMiddlewareRunner.run()` 遍历 `listEntries()` 处——先查 `options.disabled`，命中即 trace `skipped`（reason `disabled by user`）并跳过，过滤发生在 once 过滤之前、不调用 provider。这是唯一的过滤点。
 - **与 once 账本无交互**：开关是纯执行过滤，不触碰 ledger；被关期间不记账也不清账，re-enable 后同一会话已注入的 key 仍抑制（`once` 语义原样），直到 surface replace / 新会话。禁用方向热生效：下一轮即停。
 - **持久化**：浏览器 localStorage，key `dsh.promptMiddleware.disabled`（JSON name 列表）；host 只有内存镜像（页面加载与每次拨开关时由 UI 重推）。
-- **视图字段**：name、kind（仅声明式 provider 有值；imperative 显示占位）、priority、timeoutMs、mode、source（`imperative` / `declarative`）、enabled。
+- **视图字段**：name、description（可选；provider 作者自述，imperative 与声明式面都可选给）、kind（仅声明式 provider 有值；imperative 显示占位）、priority、timeoutMs、mode、source（`imperative` / `declarative`）、enabled。
 - 配置数字（`providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`）不进本 UI——已由 `ConfigSchema` 挂在宿主标准 configurable-plugins 配置面。
 
 ### 双入口（config `disabledProviders`）

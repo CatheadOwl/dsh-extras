@@ -141,18 +141,32 @@ test('the service mirror starts empty, replaces entirely, and is idempotent', as
 
 test('listViews reports every provider enabled until setDisabled, with kind/source split', async () => {
   const service = await serviceHarness()
-  service.register(provider({ name: 'imp', mode: 'always', priority: 2, timeoutMs: 500 }))
-  service.registerRelates(relatesProvider({ name: 'dec', kind: 'cognition-link', priority: 1 }))
+  service.register(provider({ name: 'imp', mode: 'always', priority: 2, timeoutMs: 500, description: 'imperative one-liner' }))
+  service.registerRelates(relatesProvider({ name: 'dec', kind: 'cognition-link', priority: 1, description: 'declarative one-liner' }))
 
   const views = service.listViews()
   assert.deepEqual(views.map(view => view.name), ['dec', 'imp'])
-  assert.deepEqual(views[0], { name: 'dec', kind: 'cognition-link', priority: 1, mode: 'once', source: 'declarative', enabled: true })
-  assert.deepEqual(views[1], { name: 'imp', priority: 2, timeoutMs: 500, mode: 'always', source: 'imperative', enabled: true })
+  assert.deepEqual(views[0], { name: 'dec', description: 'declarative one-liner', kind: 'cognition-link', priority: 1, mode: 'once', source: 'declarative', enabled: true })
+  assert.deepEqual(views[1], { name: 'imp', description: 'imperative one-liner', priority: 2, timeoutMs: 500, mode: 'always', source: 'imperative', enabled: true })
 
   service.setDisabled(['dec'])
   const disabled = service.listViews()
   assert.equal(disabled.find(view => view.name === 'dec').enabled, false)
   assert.equal(disabled.find(view => view.name === 'imp').enabled, true)
+})
+
+test('a description that is not a non-empty string fails loud at registration', async () => {
+  const service = await serviceHarness()
+  assert.throws(() => service.register(provider({ description: '  ' })), /description must be a non-empty string/u)
+  assert.throws(() => service.registerRelates(relatesProvider({ description: 5 })), /description must be a non-empty string/u)
+})
+
+test('a provider without a description yields a view without the key', async () => {
+  const service = await serviceHarness()
+  service.register(provider({ name: 'bare' }))
+  const [view] = service.listViews()
+  assert.deepEqual(view, { name: 'bare', mode: 'always', source: 'imperative', enabled: true })
+  assert.equal('description' in view, false)
 })
 
 test('run() enforces the service mirror without a caller disabled set', async () => {

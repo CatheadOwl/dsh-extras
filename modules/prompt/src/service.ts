@@ -84,6 +84,7 @@ export class PromptMiddlewareService extends Service {
   listViews(): PromptMiddlewareProviderView[] {
     return this.runner.listEntries().map(({ provider, kind }) => ({
       name: provider.name,
+      ...provider.description !== undefined ? { description: provider.description } : {},
       ...kind !== undefined ? { kind } : {},
       ...provider.priority !== undefined ? { priority: provider.priority } : {},
       ...provider.timeoutMs !== undefined ? { timeoutMs: provider.timeoutMs } : {},

@@ -51,6 +51,9 @@ export function validateProvider(provider: PromptMiddlewareProvider): void {
   if (provider.mode !== undefined && provider.mode !== 'always' && provider.mode !== 'once') {
     throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} mode must be 'always' or 'once'`)
   }
+  if (provider.description !== undefined && (typeof provider.description !== 'string' || provider.description.trim() === '')) {
+    throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} description must be a non-empty string`)
+  }
 }
 
 function materializeRelatesProvider(decl: DeclarativeRelatesProvider): { provider: PromptMiddlewareProvider; kind: string; subjectOf?: (path: ResolvedPromptPath) => string } {
@@ -69,6 +72,7 @@ function materializeRelatesProvider(decl: DeclarativeRelatesProvider): { provide
   }
   const provider: PromptMiddlewareProvider = {
     name: decl.name,
+    ...decl.description !== undefined ? { description: decl.description } : {},
     ...decl.priority !== undefined ? { priority: decl.priority } : {},
     ...decl.timeoutMs !== undefined ? { timeoutMs: decl.timeoutMs } : {},
     mode: decl.mode ?? 'once',

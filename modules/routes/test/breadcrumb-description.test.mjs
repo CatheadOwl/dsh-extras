@@ -105,6 +105,8 @@ test('breadcrumb resolver skips paths outside the workspace root', async (t) => 
 test('declarative provider exposes kind/priority/subjectOf and omits an explicit once mode', () => {
   const provider = createBreadcrumbDescriptionProvider(OPTIONS)
   assert.equal(provider.name, 'breadcrumb-description-enricher')
+  assert.equal(typeof provider.description, 'string')
+  assert.ok(provider.description.length > 0)
   assert.equal(provider.kind, 'breadcrumb-description')
   assert.equal(provider.priority, 100)
   assert.equal(provider.timeoutMs, 1000)
