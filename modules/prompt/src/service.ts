@@ -3,6 +3,7 @@ import { Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 
 import { PromptMiddlewareRunner } from './core.js'
+import type { RecordedTouch } from './sensor.js'
 import type {
   DeclarativeRelatesProvider,
   PromptMiddlewareConfig,
@@ -96,6 +97,16 @@ export class PromptMiddlewareService extends Service {
 
   clearSession(sessionId: string): void {
     this.runner.clearSession(sessionId)
+  }
+
+  /** Record one settled tool touch against the session owning the root execution (sensor lane). */
+  recordTouch(sessionId: string, touch: RecordedTouch): void {
+    this.runner.recordTouch(sessionId, touch)
+  }
+
+  /** Drop residual touches at the turn boundary (sensor lane); aborted-turn leftovers never reach a new turn. */
+  discardPendingTouches(sessionId: string): void {
+    this.runner.discardPendingTouches(sessionId)
   }
 
   run(options: PromptMiddlewareRunOptions): Promise<PromptMiddlewareRunResult> {

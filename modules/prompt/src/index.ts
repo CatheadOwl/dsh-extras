@@ -6,9 +6,15 @@ import { isReplacementSurfaceEvent } from '@deepseek-ai/dsh-session'
 
 import { PromptMiddlewareController } from './controller.js'
 import { resolvePromptPathList } from './path-resolver.js'
+import { TouchFloatQueue } from './sensor.js'
+import type { TouchExecution } from './sensor.js'
 import { ConfigSchema, PromptMiddlewareService } from './service.js'
 import type { Config as PromptMiddlewarePluginConfig } from './service.js'
 import type { PromptMiddlewareTraceEvent } from './types.js'
+
+// Loads the `tools/result` event declaration onto Context (declaration
+// merging from the tools package); no runtime import.
+import type {} from '@deepseek-ai/dsh-tools'
 
 // Loader-contract entry only: every composition row's index.ts exports
 // exactly name/inject/Config/apply. In-package consumers (tests, client
@@ -70,9 +76,27 @@ export async function apply(ctx: Context, config: PromptMiddlewarePluginConfig =
     }
   }, { prepend: true })
 
+  // Tool-touch sensor lane: one framework-owned listener records read/edit
+  // file touches into a per-session pending set. Providers never mount their
+  // own `tools/result` injection — that would bypass the once ledger, budget,
+  // and render discipline this framework exists to share.
+  const touchFloats = new TouchFloatQueue()
+  ctx.effect(() => () => {
+    touchFloats.dispose()
+  }, 'prompt-middleware.touchFloats')
+  ctx.on('tools/result', (exec: TouchExecution, result: { isError: boolean }) => {
+    const touches = touchFloats.settle(exec, result.isError, exec.agent?.session.header.cwd ?? process.cwd())
+    if (exec.agent === undefined) return
+    const sessionId = exec.agent.session.id
+    for (const touch of touches) service.recordTouch(sessionId, touch)
+  })
+
   ctx.on('session/event', (session, event) => {
     if (isReplacementSurfaceEvent(event)) {
       service.clearSession(session.id)
+    }
+    if (event.type === 'turn/end') {
+      service.discardPendingTouches(session.id)
     }
   })
 }

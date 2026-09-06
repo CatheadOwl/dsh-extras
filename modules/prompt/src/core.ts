@@ -12,6 +12,7 @@ import type {
   RelatesItem,
   ResolvedPromptPath,
 } from './types.js'
+import type { RecordedTouch } from './sensor.js'
 
 const PROVIDER_NAME = /^[a-z][a-z0-9-]*$/u
 const DEFAULT_PROVIDER_TIMEOUT_MS = 2_000
@@ -177,6 +178,12 @@ export class PromptMiddlewareRunner {
   private readonly config: RunnerConfig
   /** Per-session ledger of already-injected `once`-mode provider paths. */
   private readonly injected = new Map<string, Set<string>>()
+  /**
+   * Per-session pending tool touches recorded by the sensor, consumed at the
+   * next pre-step of the same turn and dropped at the turn boundary — they
+   * never carry into a new turn.
+   */
+  private readonly pendingTouches = new Map<string, RecordedTouch[]>()
 
   constructor(config: PromptMiddlewareConfig = {}) {
     this.config = {
@@ -222,6 +229,28 @@ export class PromptMiddlewareRunner {
   /** Forget every injected path for one session, so `once` providers re-inject after a surface replacement. */
   clearSession(sessionId: string): void {
     this.injected.delete(sessionId)
+  }
+
+  /** Record one settled tool touch against the session owning the root execution. */
+  recordTouch(sessionId: string, touch: RecordedTouch): void {
+    let pending = this.pendingTouches.get(sessionId)
+    if (pending === undefined) {
+      pending = []
+      this.pendingTouches.set(sessionId, pending)
+    }
+    pending.push(touch)
+  }
+
+  /** Take and clear the session's pending touches — the pre-step consumption point. */
+  takePendingTouches(sessionId: string): RecordedTouch[] {
+    const pending = this.pendingTouches.get(sessionId)
+    this.pendingTouches.delete(sessionId)
+    return pending ?? []
+  }
+
+  /** Drop residual touches at the turn boundary; aborted-turn leftovers never reach a new turn. */
+  discardPendingTouches(sessionId: string): void {
+    this.pendingTouches.delete(sessionId)
   }
 
   private markInjected(sessionId: string, providerName: string, path: string): void {
