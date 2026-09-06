@@ -48,10 +48,15 @@ export async function apply(ctx: Context, config: PromptMiddlewarePluginConfig =
     const trace: PromptMiddlewareTraceEvent[] = []
     const cwd = agent.session.header.cwd ?? process.cwd()
     const paths = prompt.trim() === '' ? [] : await resolvePromptPathList(prompt, cwd, { trace })
-    if (paths.length === 0 && trace.length === 0) return decision
+    // Consume the session's pending touches at this step boundary; providers
+    // subscribing to the touch source receive pseudo-paths projected through
+    // their own touchSubjects.
+    const touches = service.takePendingTouches(agent.session.id)
+    if (paths.length === 0 && touches.length === 0 && trace.length === 0) return decision
     const result = await service.run({
       prompt,
       paths,
+      touches,
       agent,
       session: agent.session,
       sessionId: agent.session.id,
@@ -85,10 +90,16 @@ export async function apply(ctx: Context, config: PromptMiddlewarePluginConfig =
     touchFloats.dispose()
   }, 'prompt-middleware.touchFloats')
   ctx.on('tools/result', (exec: TouchExecution, result: { isError: boolean }) => {
-    const touches = touchFloats.settle(exec, result.isError, exec.agent?.session.header.cwd ?? process.cwd())
-    if (exec.agent === undefined) return
-    const sessionId = exec.agent.session.id
-    for (const touch of touches) service.recordTouch(sessionId, touch)
+    try {
+      const touches = touchFloats.settle(exec, result.isError, exec.agent?.session.header.cwd ?? process.cwd())
+      if (exec.agent === undefined) return
+      const sessionId = exec.agent.session.id
+      for (const touch of touches) service.recordTouch(sessionId, touch)
+    } catch (error) {
+      // A provider's touchSubjects bug must not break the host event chain;
+      // the touch is lost for this settle, the next one re-enters clean.
+      ctx.logger.warn('prompt-middleware touch recording failed: %o', error)
+    }
   })
 
   ctx.on('session/event', (session, event) => {

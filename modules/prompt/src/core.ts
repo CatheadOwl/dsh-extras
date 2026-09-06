@@ -55,6 +55,22 @@ export function validateProvider(provider: PromptMiddlewareProvider): void {
   if (provider.description !== undefined && (typeof provider.description !== 'string' || provider.description.trim() === '')) {
     throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} description must be a non-empty string`)
   }
+  if (provider.sources !== undefined) {
+    if (!Array.isArray(provider.sources) || provider.sources.length === 0) {
+      throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} sources must be a non-empty array`)
+    }
+    for (const source of provider.sources) {
+      if (source !== 'prompt' && source !== 'touch') {
+        throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} sources entries must be 'prompt' or 'touch'`)
+      }
+    }
+    if (provider.sources.includes('touch') && provider.touchSubjects === undefined) {
+      throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} declares the touch source without a touchSubjects projection (dead subscription)`)
+    }
+  }
+  if (provider.touchSubjects !== undefined && typeof provider.touchSubjects !== 'function') {
+    throw new Error(`prompt-middleware provider ${JSON.stringify(provider.name)} touchSubjects must be a function`)
+  }
 }
 
 function materializeRelatesProvider(decl: DeclarativeRelatesProvider): { provider: PromptMiddlewareProvider; kind: string; subjectOf?: (path: ResolvedPromptPath) => string } {
@@ -76,6 +92,8 @@ function materializeRelatesProvider(decl: DeclarativeRelatesProvider): { provide
     ...decl.description !== undefined ? { description: decl.description } : {},
     ...decl.priority !== undefined ? { priority: decl.priority } : {},
     ...decl.timeoutMs !== undefined ? { timeoutMs: decl.timeoutMs } : {},
+    ...decl.sources !== undefined ? { sources: decl.sources } : {},
+    ...decl.touchSubjects !== undefined ? { touchSubjects: decl.touchSubjects } : {},
     mode: decl.mode ?? 'once',
     run: async (input) => {
       const contributions: PromptRelatesContribution[] = []
@@ -85,7 +103,10 @@ function materializeRelatesProvider(decl: DeclarativeRelatesProvider): { provide
         if (result === undefined || result === null) continue
         if ((result.value ?? '') === '' && (result.href ?? '') === '') continue
         contributions.push({
-          path: decl.subjectOf !== undefined ? projectSubjectStrict(decl.subjectOf(path), path) : path.path,
+          // `subjectOf` never re-keys touch pseudo-paths: those ARE the
+          // subject their projection produced, and re-keying would drift the
+          // contribution off the key the ledger invalidation removed.
+          path: decl.subjectOf !== undefined && path.origin !== 'touch' ? projectSubjectStrict(decl.subjectOf(path), path) : path.path,
           items: [{
             kind: decl.kind,
             label: decl.kind,
@@ -128,6 +149,10 @@ function projectSubjectStrict(subject: string, mentioned: ResolvedPromptPath): s
  * set conservative (the mentioned path itself).
  */
 function subjectKeyOf(entry: RegisteredProvider, mentioned: ResolvedPromptPath): string {
+  // A touch pseudo-path IS the subject its projection produced: applying
+  // `subjectOf` again could re-key it somewhere the invalidation never
+  // touched, so the once key and the ledger stay identical.
+  if (mentioned.origin === 'touch') return canonicalPath(mentioned.path)
   if (entry.subjectOf === undefined) return mentioned.path
   try {
     return projectSubjectStrict(entry.subjectOf(mentioned), mentioned)
@@ -168,6 +193,14 @@ export function createPromptMiddlewareRegistry(): PromptMiddlewareRegistry {
 
 function orderedProviders(entries: readonly RegisteredProvider[]): RegisteredProvider[] {
   return [...entries].sort((a, b) => (a.provider.priority ?? 0) - (b.provider.priority ?? 0) || a.order - b.order)
+}
+
+function subscribesPrompt(provider: PromptMiddlewareProvider): boolean {
+  return provider.sources?.includes('prompt') ?? true
+}
+
+function subscribesTouch(provider: PromptMiddlewareProvider): boolean {
+  return provider.sources?.includes('touch') ?? false
 }
 
 /** The runner's numeric knobs — `disabledProviders` is service-owned, not runner config. */
@@ -239,6 +272,24 @@ export class PromptMiddlewareRunner {
       this.pendingTouches.set(sessionId, pending)
     }
     pending.push(touch)
+    // Invalidation is open to every declarer, regardless of `sources`
+    // subscription or switch state: a touch removes the subjects it maps to
+    // from the once ledger, so the next consumption re-resolves them. One
+    // declarer's projection bug must not poison the others' invalidation —
+    // the blast radius is that declarer alone.
+    for (const entry of this.registry.listEntries()) {
+      const touchSubjects = entry.provider.touchSubjects
+      if (touchSubjects === undefined) continue
+      let subjects: string[]
+      try {
+        subjects = touchSubjects(touch.path)
+      } catch {
+        continue
+      }
+      for (const subject of subjects) {
+        this.injected.get(sessionId)?.delete(`${entry.provider.name}\u0000${canonicalPath(subject)}`)
+      }
+    }
   }
 
   /** Take and clear the session's pending touches — the pre-step consumption point. */
@@ -268,14 +319,47 @@ export class PromptMiddlewareRunner {
 
   async run(options: PromptMiddlewareRunOptions): Promise<PromptMiddlewareRunResult> {
     const trace: PromptMiddlewareTraceEvent[] = []
-    const paths = dedupePaths(options.paths, trace)
-    if (paths.length === 0) {
-      return { paths, relates: [], trace }
+    const promptPaths = dedupePaths(options.paths, trace)
+    const touches = options.touches ?? []
+    const providers = this.registry.listEntries()
+    // Per-provider touch anchors: pseudo-paths materialized through the
+    // provider's own `touchSubjects` projection, deduped per provider.
+    // Subscribing to 'touch' without a projection is rejected at
+    // registration, so the guard below only short-circuits prompt-only
+    // providers (whose anchors stay empty).
+    const touchAnchors: ResolvedPromptPath[][] = providers.map((entry) => {
+      const touchSubjects = entry.provider.touchSubjects
+      if (!subscribesTouch(entry.provider) || touchSubjects === undefined) return []
+      const anchors: ResolvedPromptPath[] = []
+      const seen = new Set<string>()
+      for (const touch of touches) {
+        let subjects: string[]
+        try {
+          subjects = touchSubjects(touch.path)
+        } catch (error) {
+          // A provider's projection bug must neither break the host pre-step
+          // chain nor poison other declarers: this provider sits the batch
+          // out with a `failed` trace, mirroring how `run` throws are
+          // contained per provider.
+          trace.push({ provider: entry.provider.name, status: 'failed', source: 'touch', reason: renderThrown(error) })
+          return []
+        }
+        for (const raw of subjects) {
+          const path = canonicalPath(raw)
+          if (path === '' || seen.has(path)) continue
+          seen.add(path)
+          anchors.push({ path, kind: 'file', origin: 'touch', touchTool: touch.tool })
+        }
+      }
+      return anchors
+    })
+    if (promptPaths.length === 0 && touches.length === 0) {
+      return { paths: promptPaths, relates: [], trace }
     }
 
     const input: PromptMiddlewareInput = {
       prompt: options.prompt,
-      paths,
+      paths: promptPaths,
       agent: options.agent,
       ...options.session !== undefined ? { session: options.session } : {},
       cwd: options.cwd,
@@ -286,51 +370,63 @@ export class PromptMiddlewareRunner {
     const now = options.now ?? (() => Date.now())
     const totalDeadline = now() + this.config.totalTimeoutMs
     const accepted: AcceptedItem[] = []
-    const providers = this.registry.listEntries()
     for (const [providerIndex, entry] of providers.entries()) {
       const provider = entry.provider
+      const anchors = touchAnchors[providerIndex] ?? []
+      const effectivePaths = subscribesPrompt(provider)
+        ? anchors.length === 0 ? promptPaths : [...promptPaths, ...anchors]
+        : anchors
+      // Nothing this provider subscribes to arrived this step: no execution,
+      // no trace row (v0 skipped empty batches the same way, before any
+      // provider ran).
+      if (effectivePaths.length === 0) continue
+      // Observation-only attribution: a batch including any touch pseudo-path
+      // traces as 'touch'; never affects execution.
+      const source: 'prompt' | 'touch' = anchors.length > 0 ? 'touch' : 'prompt'
       // Switch is the contract: a disabled provider never runs. Filtering sits
       // before the once-dedupe check, so a disabled `once` provider neither
       // re-checks nor marks the ledger. The config-owned set is checked first
       // so the skip is attributed to its source (config vs user).
       if (options.configDisabled?.has(provider.name)) {
-        trace.push({ provider: provider.name, status: 'skipped', pathsIn: paths.length, reason: 'disabled by config' })
+        trace.push({ provider: provider.name, status: 'skipped', source, pathsIn: effectivePaths.length, reason: 'disabled by config' })
         continue
       }
       if (options.disabled?.has(provider.name)) {
-        trace.push({ provider: provider.name, status: 'skipped', pathsIn: paths.length, reason: 'disabled by user' })
+        trace.push({ provider: provider.name, status: 'skipped', source, pathsIn: effectivePaths.length, reason: 'disabled by user' })
         continue
       }
       if (input.signal.aborted) {
-        trace.push({ provider: provider.name, status: 'cancelled', pathsIn: paths.length, reason: 'aborted before run' })
+        trace.push({ provider: provider.name, status: 'cancelled', source, pathsIn: effectivePaths.length, reason: 'aborted before run' })
         continue
       }
       const remaining = totalDeadline - now()
       if (remaining <= 0) {
-        trace.push({ provider: provider.name, status: 'skipped', pathsIn: paths.length, reason: `total timeout ${this.config.totalTimeoutMs}ms exceeded` })
+        trace.push({ provider: provider.name, status: 'skipped', source, pathsIn: effectivePaths.length, reason: `total timeout ${this.config.totalTimeoutMs}ms exceeded` })
         continue
       }
       const sessionScope = provider.mode === 'once' ? options.sessionId : undefined
-      let providerInput: PromptMiddlewareInput = input
+      let providerInput: PromptMiddlewareInput = { ...input, paths: effectivePaths }
       if (sessionScope !== undefined) {
         // Once-ledger keys sit on the subject (the declared projection), not
         // the raw mention: a sibling of an already-injected subject is
-        // suppressed too, which is the point of subject re-keying.
-        const filteredPaths = input.paths.filter((p) => !this.isInjected(sessionScope, provider.name, subjectKeyOf(entry, p)))
-        if (filteredPaths.length === 0 && input.paths.length > 0) {
-          trace.push({ provider: provider.name, status: 'skipped', pathsIn: input.paths.length, reason: 'all paths already injected this session' })
+        // suppressed too, which is the point of subject re-keying. Touch
+        // pseudo-paths key as themselves — their projection already ran.
+        const filteredPaths = effectivePaths.filter((p) => !this.isInjected(sessionScope, provider.name, subjectKeyOf(entry, p)))
+        if (filteredPaths.length === 0 && effectivePaths.length > 0) {
+          trace.push({ provider: provider.name, status: 'skipped', source, pathsIn: effectivePaths.length, reason: 'all paths already injected this session' })
           continue
         }
         providerInput = { ...input, paths: filteredPaths }
       }
       const { contributions, event } = await runProvider(provider, providerInput, Math.min(provider.timeoutMs ?? this.config.providerTimeoutMs, remaining), now)
+      event.source = source
       trace.push(event)
       if (contributions === undefined) continue
-      const normalized = normalizeContributions(provider, providerIndex, entry, contributions, paths, trace)
+      const normalized = normalizeContributions(provider, providerIndex, entry, contributions, providerInput.paths, trace)
       accepted.push(...normalized)
     }
 
-    const merged = mergeRelates(paths, providers, accepted)
+    const merged = mergeRelates(orderedGroupKeys(promptPaths, touchAnchors, providers), accepted)
     const relates = merged.groups
     const rendered = renderRelates(relates, this.config.renderBudgetChars)
     // Mark `once`-mode items injected only when they were actually rendered.
@@ -347,13 +443,13 @@ export class PromptMiddlewareRunner {
       trace.push({
         provider: 'prompt-middleware',
         status: 'truncated',
-        pathsIn: paths.length,
+        pathsIn: promptPaths.length,
         itemsOut: rendered.renderedItems,
         reason: `render budget ${this.config.renderBudgetChars} chars exceeded`,
       })
     }
     return {
-      paths,
+      paths: promptPaths,
       relates,
       ...rendered.text !== undefined ? { text: rendered.text } : {},
       trace,
@@ -515,10 +611,10 @@ interface MergeRelatesResult {
   survivors: AcceptedItem[]
 }
 
-function mergeRelates(paths: readonly ResolvedPromptPath[], entries: readonly RegisteredProvider[], items: readonly AcceptedItem[]): MergeRelatesResult {
+function mergeRelates(orderedKeys: readonly string[], items: readonly AcceptedItem[]): MergeRelatesResult {
   // Insertion-ordered: keys follow the first mention that anchors them.
   const groups = new Map<string, RelatesItem[]>()
-  for (const key of orderedGroupKeys(paths, entries)) groups.set(key, [])
+  for (const key of orderedKeys) groups.set(key, [])
   // Precedence: for each dedupe key, keep the earliest-registered contributor,
   // independent of priority.
   const winners = new Map<string, AcceptedItem>()
@@ -552,21 +648,35 @@ function mergeRelates(paths: readonly ResolvedPromptPath[], entries: readonly Re
 }
 
 /**
- * Group keys in render order: for each mentioned path (resolver order), for
- * each registered entry (priority order), the key the entry would anchor it
- * under — the mention itself, or its declared subject projection. Subject
- * projections collapse sibling mentions onto one key at its first anchor.
+ * Group keys in render order: prompt mentions stay mention-major (each
+ * mention anchors every prompt-subscribed entry's key before the next
+ * mention), then each entry's touch anchors follow in entry order. Keys use
+ * the mention itself, its declared subject projection, or the touch subject
+ * as-is; subject projections collapse sibling mentions onto one key at its
+ * first anchor.
  */
-function orderedGroupKeys(paths: readonly ResolvedPromptPath[], entries: readonly RegisteredProvider[]): string[] {
+function orderedGroupKeys(
+  promptPaths: readonly ResolvedPromptPath[],
+  touchAnchors: readonly (readonly ResolvedPromptPath[])[],
+  entries: readonly RegisteredProvider[],
+): string[] {
   const seen = new Set<string>()
   const keys: string[] = []
-  for (const path of paths) {
+  const add = (key: string): void => {
+    if (!seen.has(key)) {
+      seen.add(key)
+      keys.push(key)
+    }
+  }
+  for (const path of promptPaths) {
     for (const entry of entries) {
-      const key = subjectKeyOf(entry, path)
-      if (!seen.has(key)) {
-        seen.add(key)
-        keys.push(key)
-      }
+      if (!subscribesPrompt(entry.provider)) continue
+      add(subjectKeyOf(entry, path))
+    }
+  }
+  for (const [index, entry] of entries.entries()) {
+    for (const anchor of touchAnchors[index] ?? []) {
+      add(subjectKeyOf(entry, anchor))
     }
   }
   return keys

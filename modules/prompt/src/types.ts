@@ -7,6 +7,8 @@ export interface ResolvedPromptPath {
   path: string
   kind: PromptPathKind
   origin: 'prompt-parse' | string
+  /** Tool that produced this path's touch; present only when origin is 'touch'. */
+  touchTool?: string
   mention?: {
     raw: string
     normalized: string
@@ -50,6 +52,9 @@ export interface PromptMiddlewareInput {
  */
 export type PromptMiddlewareProviderMode = 'always' | 'once'
 
+/** Signal sources a provider consumes; omitted means prompt-only (v0 behavior). */
+export type PromptMiddlewareSource = 'prompt' | 'touch'
+
 export interface PromptMiddlewareProvider {
   name: string
   /**
@@ -61,6 +66,24 @@ export interface PromptMiddlewareProvider {
   priority?: number
   timeoutMs?: number
   mode?: PromptMiddlewareProviderMode
+  /**
+   * Signal sources this provider consumes. Omitted or `['prompt']` keeps the
+   * v0 behavior: only paths parsed from the user prompt reach `run`. Adding
+   * `'touch'` feeds in pseudo-paths materialized from the tool-touch sensor
+   * (`origin: 'touch'`, `touchTool` set). Subscription governs injection
+   * consumption only — ledger invalidation below applies to every declarer.
+   */
+  sources?: PromptMiddlewareSource[]
+  /**
+   * Reverse projection of a touched path onto this provider's subjects: the
+   * framework removes those subjects' `once`-ledger entries (invalidation,
+   * runs for every declarer regardless of `sources`) and, when the provider
+   * subscribes to `'touch'`, offers the subjects as pseudo-paths at the next
+   * pre-step. Pure path computation, no FS access; returning an empty array
+   * ignores the touch. Declaring `'touch'` in `sources` without this is a
+   * dead subscription and fails loud at registration.
+   */
+  touchSubjects?(touchedPath: string): string[]
   run(input: PromptMiddlewareInput): Promise<PromptRelatesContribution[]>
 }
 
@@ -111,8 +134,19 @@ export interface DeclarativeRelatesProvider {
    * (slash-canonical form), so sibling mentions sharing a subject collapse
    * into one group and one injection per session. Pure and synchronous — the
    * runner calls it before invoking `resolve` to keep the once pre-filter.
+   * Never applied to touch pseudo-paths: those ARE the subject already.
    */
   subjectOf?(path: ResolvedPromptPath): string
+  /**
+   * Signal sources this provider consumes; omitted means prompt-only. See
+   * `PromptMiddlewareProvider.sources` — same contract, declarative face.
+   */
+  sources?: PromptMiddlewareSource[]
+  /**
+   * Reverse touch projection onto this provider's subjects; see
+   * `PromptMiddlewareProvider.touchSubjects` — same contract, declarative face.
+   */
+  touchSubjects?(touchedPath: string): string[]
   /**
    * Resolve the enrichment for ONE mentioned path. Return `undefined` to skip
    * this path — and note a result whose `value`/`href` are both empty strings
@@ -133,6 +167,12 @@ export type PromptMiddlewareTraceStatus =
 export interface PromptMiddlewareTraceEvent {
   provider: string
   status: PromptMiddlewareTraceStatus
+  /**
+   * Observation-only signal attribution: `'touch'` when the provider's input
+   * for this run included at least one touch pseudo-path, `'prompt'`
+   * otherwise. Never affects execution.
+   */
+  source?: 'prompt' | 'touch'
   durationMs?: number
   pathsIn?: number
   itemsOut?: number
@@ -156,6 +196,13 @@ export interface PromptMiddlewareConfig {
 export interface PromptMiddlewareRunOptions {
   prompt: string
   paths: ResolvedPromptPath[]
+  /**
+   * Settled tool touches taken from the session's pending set at this
+   * pre-step. Providers subscribing to `'touch'` receive pseudo-paths
+   * projected through their own `touchSubjects`; every declarer's ledger
+   * invalidation already ran at record time.
+   */
+  touches?: ReadonlyArray<{ path: string; tool: string }>
   agent: unknown
   session?: unknown
   /** Stable session identity scoping `once`-mode dedupe; absent means no dedupe scope. */

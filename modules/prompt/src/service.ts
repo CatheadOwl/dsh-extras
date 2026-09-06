@@ -104,6 +104,11 @@ export class PromptMiddlewareService extends Service {
     this.runner.recordTouch(sessionId, touch)
   }
 
+  /** Take and clear the session's pending touches — the pre-step consumption point (sensor lane). */
+  takePendingTouches(sessionId: string): RecordedTouch[] {
+    return this.runner.takePendingTouches(sessionId)
+  }
+
   /** Drop residual touches at the turn boundary (sensor lane); aborted-turn leftovers never reach a new turn. */
   discardPendingTouches(sessionId: string): void {
     this.runner.discardPendingTouches(sessionId)

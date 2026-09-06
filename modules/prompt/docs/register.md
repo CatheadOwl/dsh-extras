@@ -73,6 +73,25 @@ registerPromptMiddlewareProvider(ctx, {
 | ResolvedPromptPath | interface | src/types.ts | No JSDoc summary. |
 <!-- generated: ts-api-reference:end -->
 
+## Touch 源订阅（声明式）
+
+订阅 tool-touch 信号源（`read`/`edit` 的文件 touch）。框架统一持有 `tools/result` 监听，provider 不自挂 hook：
+
+```ts
+registerRelatesProvider(ctx, {
+  name: 'my-pairing',
+  kind: 'my-notes',
+  sources: ['prompt', 'touch'],   // 省略 = ['prompt']（仅 prompt 提及）
+  touchSubjects: touched => (isPaired(touched) ? [pairedSubject(touched)] : []),
+  async resolve({ path }) {
+    // path.origin === 'touch' 时 path.touchTool 携带触发工具名（'read' | 'edit'）
+    return { value: await loadNote(path.path) }
+  },
+})
+```
+
+`touchSubjects` 是纯路径投影，一个声明两个消费者：touch 时框架对产出 subjects 摘 once 账（失效面向**所有声明者**，与订阅/开关无关——被关 provider 的 `run` 永不执行，但其声明仍参与摘账）；下一步 pre-step 再投影一次，subjects 以伪路径（`origin: 'touch'`）只喂给订阅了 `'touch'` 的 provider。声明 `'touch'` 而缺 `touchSubjects` 是死订阅，注册期 fail loud。
+
 ## 消费面
 
 | 面 | 入口 | 消费者 |
