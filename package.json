@@ -43,6 +43,7 @@
   "files": [
     "cordis.patch.yml",
     "README.zh.md",
+    "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
     "docs/**/*.md",
     "modules/*/lib/**/*.js",

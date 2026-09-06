@@ -1,5 +1,5 @@
 ---
-description: extras 包独立性 rules seed（PKG-1..9）——发布文档自包含、路径包内解析、中性示例命名空间、视角正确性等期望形态；生成时控制写作、评审时原样嵌入 dispatch prompt
+description: extras 包独立性 rules seed（PKG-1..10）——发布文档自包含、路径包内解析、中性示例命名空间、视角正确性、changelog 发布面等期望形态；生成时控制写作、评审时原样嵌入 dispatch prompt
 ---
 
 # extras · package-independence rules
@@ -50,6 +50,13 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
   探针：`pnpm run verify:publish-readiness`（docs 域沿革动词 DOC_META_TERMS：
   升格/已归档/原仓库级/薄 shim）+ `grep -rnE '首发|首批' <发布面>`（命中
   人工裁决）。基线：should-fix。
+- **PKG-10〈changelog-face〉**：`CHANGELOG.md` 是包的发布面义务——住在包根、
+  随 `files` 白名单进 tarball、每个 version bump 补一条（version/日期/发布
+  内容，Keep a Changelog 格式）；措辞面向消费者，开发仓控制面叙事不进
+  changelog（与 PKG-6 同口径）。下线能力史先于任何发布版存在时不写
+  「Removed」——从未随发布版存在的东西无 changelog 义务。
+  探针：版本 bump 的 change-set 里 CHANGELOG.md 出现且含新版本号。
+  基线：should-fix。
 
 ## intentional-design 豁免清单（防误报；finding 引用本清单即非 finding）
 
