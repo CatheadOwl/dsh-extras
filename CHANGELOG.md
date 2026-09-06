@@ -24,7 +24,7 @@ follow [Semantic Versioning](https://semver.org/); entries follow
     'touch'` + `touchTool` provenance on the path).
   - Usage guide with the canonical pairing-provider pattern (steady-state
     `undefined`, self-edit reconciliation, `subjectOf`/`touchSubjects` mirror
-    alignment) lives in the module's `docs/touch.md`; contract text in
+    alignment) lives in the module's `docs/cookbook.md`; contract text in
     `docs/contract.md` ("tool-touch sensor lane").
 
 ### Compatibility
