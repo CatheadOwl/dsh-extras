@@ -7,6 +7,7 @@ import type { RecordedTouch } from './sensor.js'
 import type {
   DeclarativeRelatesProvider,
   PromptMiddlewareConfig,
+  PromptMiddlewareIntrospection,
   PromptMiddlewareProvider,
   PromptMiddlewareProviderView,
   PromptMiddlewareRunOptions,
@@ -93,6 +94,31 @@ export class PromptMiddlewareService extends Service {
       source: kind === undefined ? 'imperative' : 'declarative',
       enabled: !this.disabled.has(provider.name),
     }))
+  }
+
+  /**
+   * Read-only introspection snapshot: every registered provider's descriptor,
+   * signal sources, and the effective disable state across both entries —
+   * the single query surface headless consumers and the settings tab project
+   * from. Never a write payload: state changes go through `setDisabled`
+   * (user entry) or plugin config (deployer entry).
+   */
+  introspect(): PromptMiddlewareIntrospection[] {
+    return this.runner.listEntries().map(({ provider, kind }) => {
+      const userDisabled = this.disabled.has(provider.name)
+      const configDisabled = this.configDisabled.has(provider.name)
+      return {
+        name: provider.name,
+        ...provider.description !== undefined ? { description: provider.description } : {},
+        ...kind !== undefined ? { kind } : {},
+        ...provider.priority !== undefined ? { priority: provider.priority } : {},
+        ...provider.timeoutMs !== undefined ? { timeoutMs: provider.timeoutMs } : {},
+        mode: provider.mode ?? 'always',
+        sources: [...(provider.sources ?? ['prompt'])],
+        effectiveEnabled: !userDisabled && !configDisabled,
+        disabledBy: userDisabled && configDisabled ? 'both' : userDisabled ? 'user' : configDisabled ? 'config' : null,
+      }
+    })
   }
 
   clearSession(sessionId: string): void {

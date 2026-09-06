@@ -38,6 +38,21 @@ test('promptMiddleware/list resolves through the gateway with an omitted request
   assert.equal(list[0].source, 'imperative')
 })
 
+test('promptMiddleware/introspect resolves through the gateway with sources and provenance', async () => {
+  const ctx = await wireHarness()
+  const service = ctx.get('promptMiddleware')
+  service.register(provider({ name: 't-provider', mode: 'always' }))
+  service.setDisabled(['t-provider'])
+
+  const gateway = ctx.get('typertGateway')
+  const rows = await gateway.invoke({ namespace: 'promptMiddleware', method: 'introspect', args: {} })
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].name, 't-provider')
+  assert.deepEqual(rows[0].sources, ['prompt'])
+  assert.equal(rows[0].effectiveEnabled, false)
+  assert.equal(rows[0].disabledBy, 'user')
+})
+
 test('promptMiddleware/setDisabled mirrors the list and answers the refreshed view', async () => {
   const ctx = await wireHarness()
   const service = ctx.get('promptMiddleware')

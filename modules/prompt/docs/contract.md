@@ -130,4 +130,26 @@ Settings → Plugins → **Prompt Middleware** tab（slot id `prompt-middleware`
 - **来源归属**：runner 先查 `options.configDisabled`（记 reason `disabled by config`）再查 `options.disabled`（记 `disabled by user`）——同一 provider 双禁时归属 config（更硬的意志）。过滤位置与顺序语义同上（先于 once 过滤、不触碰账本）。
 - **集合独立性**：service 内 config 名单与浏览器镜像是两个独立集合；`setDisabled()` 整体替换浏览器镜像，**不会**冲掉 config 名单。
 - **未知名忽略**：provider 注册晚于 config 加载，无法预校验「已注册名」；未知名运行期 match nothing、无害（与 gates 的 disabled 口径一致）。
-- **显示口径**：`listViews()` 的 `enabled` 只反映用户开关（浏览器镜像）；config 禁用的 provider 在 UI 中仍显示为已启用——UI 是用户意志的面，不反映部署层。
+- **显示口径**：`listViews()` 的 `enabled` 只反映用户开关（浏览器镜像）；config 禁用的 provider 在 UI 中仍显示为已启用——UI 是用户意志的面，不反映部署层。要部署层可见，消费 `introspect()`（见下节）。
+
+### 自省快照（`introspect()`）
+
+`PromptMiddlewareService.introspect()`（remote `promptMiddleware/introspect`）是只读自省面：每个注册 provider 一行，**字段名冻结**如下——
+
+| 字段 | 类型 | 语义 |
+|---|---|---|
+| `name` | `string` | provider 名 |
+| `description` | `string?` | provider 作者自述（未声明则键缺省） |
+| `kind` | `string?` | 声明式 provider 的 item kind（imperative 无） |
+| `priority` | `number?` | 同注册声明（未声明则键缺省） |
+| `timeoutMs` | `number?` | 同注册声明（未声明则键缺省） |
+| `mode` | `'always' \| 'once'` | 刷新模式（默认 `always` for imperative，声明式默认 `once`） |
+| `sources` | `('prompt' \| 'touch')[]` | 信号源订阅；未声明 = `['prompt']` |
+| `effectiveEnabled` | `boolean` | 双入口并集后的生效值，与 `run()` 执法口径一致 |
+| `disabledBy` | `'user' \| 'config' \| 'both' \| null` | 禁用来源归属（`null` = 双开） |
+
+约束：
+
+- **只读**：本形状永不作写载荷。状态变更走窄命令——用户入口 `setDisabled()`，部署者入口 config `disabledProviders`。
+- **投影源**：消费者（设置面、headless eval、诊断面）从本快照取子集，不各自拼接；`listViews()` 的视图是其历史投影，语义不变。
+- **不含注册面**：`source`（imperative/declarative）是插件作者的接线细节，不进本快照的用户语义字段。

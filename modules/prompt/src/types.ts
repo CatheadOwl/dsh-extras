@@ -266,3 +266,31 @@ export interface PromptMiddlewareProviderView {
   source: 'imperative' | 'declarative'
   enabled: boolean
 }
+
+/**
+ * One row of the read-only introspection snapshot (`service.introspect()`):
+ * the framework's self-description of every registered provider — descriptor,
+ * signal sources, and the effective disable state across both entries
+ * (browser mirror + config). The single query surface consumers (settings
+ * tab, headless eval, diagnostics) project from; writes stay narrow
+ * (`setDisabled`, config) — this shape is never a write payload.
+ */
+export interface PromptMiddlewareIntrospection {
+  name: string
+  /** Provider-authored one-liner; absent when the provider declared none. */
+  description?: string
+  /** Item kind of a declarative provider; imperative providers have none. */
+  kind?: string
+  priority?: number
+  timeoutMs?: number
+  mode: 'always' | 'once'
+  /**
+   * Signal sources this provider consumes; prompt-only providers (omitted
+   * declaration) default to `['prompt']`.
+   */
+  sources: PromptMiddlewareSource[]
+  /** Union of both disable entries — the value the runner actually enforces. */
+  effectiveEnabled: boolean
+  /** Which disable entry (or both) says off; `null` when neither does. */
+  disabledBy: 'user' | 'config' | 'both' | null
+}

@@ -24,6 +24,7 @@ export type {
   PromptRelatesGroup,
   PromptMiddlewareRunResult,
   PromptMiddlewareProviderView,
+  PromptMiddlewareIntrospection,
 } from './types.js'
 
 export function registerPromptMiddlewareProvider(ctx: Context, provider: PromptMiddlewareProvider): void {

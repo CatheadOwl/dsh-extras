@@ -14,12 +14,12 @@ description: extras 的 prompt 模块——user prompt enrichment 小框架：�
 
 | 面 | 说明 |
 |---|---|
-| `ctx.promptMiddleware` | `register(provider)` / `registerRelates(provider)` / `list()` / `listViews()` / `disabledIds()` / `setDisabled(names)` / `run(options)` / `clearSession(sessionId)` |
+| `ctx.promptMiddleware` | `register(provider)` / `registerRelates(provider)` / `list()` / `listViews()` / `introspect()` / `disabledIds()` / `setDisabled(names)` / `run(options)` / `clearSession(sessionId)` |
 | `registerPromptMiddlewareProvider(ctx, provider)` | 消费插件的硬 import 注册入口（`@catheadowl/dsh-extras/prompt/register`）；内部仍通过 `ctx.inject(['promptMiddleware'], ...)` 软依赖 |
 | `registerRelatesProvider(ctx, provider)` | 声明式 provider 的硬 import 注册入口（同上子路径）；`resolve` + `kind` 由框架物化为 provider 并复用整套 runner。注册示例与 API reference 见 [docs/register.md](docs/register.md) |
 | `agent/pre-step` driver | 收集本 step 的 subject（prompt 路径解析 + 上一步 pending touch 的 `touchSubjects` 投影），按 provider 的 `sources` 订阅过滤喂入，运行 provider，向当前 step 的 admitted 请求批追加 relates 上下文 |
 | `tools/result` sensor | 框架统一持有的 touch 信号监听：闭集 `{read, edit}`、错误/中止/无 agent 剔除、嵌套上浮到根执行、按 session cwd 归一到项目相对键空间；touch 时对产出 subjects 摘 once 账（失效面向所有声明者），原始 touch 记入 per-session pending、turn 边界丢弃残余 |
-| Typert Remote `promptMiddleware` | `list` / `setDisabled`：Settings → Plugins → Prompt Middleware 配置面（provider 开关）；Typert Remote 是宿主的 Web RPC 面 |
+| Typert Remote `promptMiddleware` | `list` / `setDisabled`：Settings → Plugins → Prompt Middleware 配置面（provider 开关）；`introspect`：只读自省快照（`sources` / `effectiveEnabled` / `disabledBy`，见 [docs/contract.md](docs/contract.md)「自省快照」）。Typert Remote 是宿主的 Web RPC 面 |
 | client 半 | `settings.plugins.tab` slot（id `prompt-middleware`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
 
 ## Quickstart（`registerRelatesProvider`）

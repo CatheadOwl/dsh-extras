@@ -9,7 +9,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 
 import type { PromptMiddlewareService } from './service.js'
-import type { PromptMiddlewareProviderView } from './types.js'
+import type { PromptMiddlewareIntrospection, PromptMiddlewareProviderView } from './types.js'
 
 /** List request; `workspace` is accepted for parity with the gates tab and unused. */
 export interface PromptMiddlewareListRequest {
@@ -40,6 +40,16 @@ export class PromptMiddlewareController extends TypertRemoteService {
   @Remote
   list(request?: PromptMiddlewareListRequest): PromptMiddlewareProviderView[] {
     return this.service.listViews()
+  }
+
+  /**
+   * Read-only introspection snapshot: descriptors, signal sources, and the
+   * effective disable state across both entries (browser mirror + config).
+   * `request` is accepted for wire parity and ignored.
+   */
+  @Remote
+  introspect(request?: PromptMiddlewareListRequest): PromptMiddlewareIntrospection[] {
+    return this.service.introspect()
   }
 
   /**

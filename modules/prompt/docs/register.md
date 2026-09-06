@@ -54,6 +54,7 @@ registerPromptMiddlewareProvider(ctx, {
 | DeclarativeRelatesProvider | interface | src/types.ts | Declarative enrichment provider: the consumer declares how to resolve ONE path plus a stable `kind`; the framework materializes it into an imperative `PromptMiddlewareProvider` and reuses the shared runner (once ledger, merge/ dedupe, budget, timeout, cancel, failure degrade, trace, render). |
 | PromptMiddlewareConfig | interface | src/types.ts | No JSDoc summary. |
 | PromptMiddlewareInput | interface | src/types.ts | No JSDoc summary. |
+| PromptMiddlewareIntrospection | interface | src/types.ts | One row of the read-only introspection snapshot (`service.introspect()`): the framework's self-description of every registered provider — descriptor, signal sources, and the effective disable state across both entries (browser mirror + config). |
 | PromptMiddlewareProvider | interface | src/types.ts | No JSDoc summary. |
 | PromptMiddlewareProviderEntry | interface | src/types.ts | One registered provider plus its declarative `kind`; imperative providers carry none. |
 | PromptMiddlewareProviderMode | type | src/types.ts | Per-session contribution policy for a provider. |

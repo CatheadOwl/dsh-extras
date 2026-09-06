@@ -86,6 +86,7 @@ export default {
         'PromptRelatesGroup',
         'PromptMiddlewareRunResult',
         'PromptMiddlewareProviderView',
+        'PromptMiddlewareIntrospection',
       ],
     },
     forbiddenImports: [
