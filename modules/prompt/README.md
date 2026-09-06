@@ -37,7 +37,7 @@ registerRelatesProvider(ctx, {
 })
 ```
 
-完整注册示例与 API reference 见 [docs/register.md](docs/register.md)。
+完整注册示例与 API reference 见 [docs/register.md](docs/register.md)；tool-touch 信号源（`sources` / `touchSubjects`）的用法指南见 [docs/touch.md](docs/touch.md)。
 
 ## provider 形状
 
