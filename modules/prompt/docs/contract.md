@@ -16,6 +16,7 @@ description: prompt 模块注入契约——provider 执行模型与定序、onc
 - 同轮内 merge/dedupe：dedupe 判定键为 `path + kind + href/value`；胜者按注册序裁决（`priority` 不兼做冲突赢家）。`value` 与 `href` 同时给出时渲染优先 `value`，轮内 dedupe key 用 `href`（缺省回退 `value`）。
 - render budget：合并后的内容按 `renderBudgetChars` 截断渲染为 additionalContext（内容模型可见，信封不渲染本插件名），不改写用户消息。
 - 渲染分组键的**显示形与身份形分离**：分组键（dedupe/ledger 坐标）是剥尾斜杠的 canonical path；渲染行用 `PromptRelatesGroup.display`（目录键补尾斜杠，`Inbox/`），让注入块里的 key 一眼是路径而非裸标签。`display` 仅在与 `path` 不同时出现，渲染消费 `display`、一切键运算用 `path`。
+- **meta 可见注记通道**：item 行形态为 `- [<kind>] <detail> (<meta 后缀>)`。后缀 = 该 item `meta` 上出现的全部 entry，按 Record 插入序、逗号+空格分隔拼接；形态 `key=value`，`value === 'true'` 时省略 `=value`。框架**零 key 语义**——不认识任何 key 的含义，provider 写什么模型看什么；信封完整性归框架：key 与 value 渲染前把 `\n`/`\r` 折叠为空格（其余字符不动），折叠对 provider 不可见、不另记违约。`meta` 缺失或为空对象时行形态与无 meta 逐字节相同；后缀计入 render budget 的逐行核算（同一 candidate 长度检查）。**稳态沉默归 provider**：默认态/无信息态不写该 key（而非写 `false` 等框架去滤）——不写字段 = 天然沉默，写字段 = 有话要说；框架侧过滤需要「默认值」概念，必然引入 key 语义，被显式排除。dedupe key 维持 `path + kind + href/value`，不含 meta。
 
 ## once 注入去重
 

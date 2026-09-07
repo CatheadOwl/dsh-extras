@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { PromptMiddlewareRunner } from '../lib/core.js'
+import { PromptMiddlewareRunner, renderRelates } from '../lib/core.js'
 
 function relatesProvider(overrides = {}) {
   return {
@@ -43,6 +43,25 @@ test('declarative provider emits one item per path with label === kind', async (
     { path: 'a.md', items: [{ kind: 'cognition-link', label: 'cognition-link', href: 'cog/a.md' }] },
     { path: 'b.md', items: [{ kind: 'cognition-link', label: 'cognition-link', href: 'cog/b.md' }] },
   ])
+})
+
+test('declarative resolver meta passes through to the rendered suffix', async () => {
+  const runner = new PromptMiddlewareRunner()
+  runner.registerRelates(relatesProvider({
+    name: 'links',
+    kind: 'cognition-link',
+    resolve: async ({ path }) => ({ href: `cog/${path.path}`, meta: { stale: 'true' } }),
+  }))
+  const result = await runOne(runner, { path: 'a.md' })
+  assert.deepEqual(result.relates[0].items, [
+    { kind: 'cognition-link', label: 'cognition-link', href: 'cog/a.md', meta: { stale: 'true' } },
+  ])
+  const rendered = renderRelates(result.relates)
+  assert.equal(rendered.text, [
+    'relates:',
+    '  a.md:',
+    '    - [cognition-link] cog/a.md (stale)',
+  ].join('\n'))
 })
 
 test('declarative provider defaults to once and clearSession re-arms', async () => {

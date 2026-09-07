@@ -748,7 +748,8 @@ export function renderRelates(relates: readonly PromptRelatesGroup[], budgetChar
     for (const item of group.items) {
       const detail = item.value ?? item.href ?? ''
       const suffix = detail === '' ? '' : ` ${detail}`
-      groupLines.push(`    - [${item.kind}]${suffix}`)
+      const metaSuffix = renderMetaSuffix(item.meta)
+      groupLines.push(`    - [${item.kind}]${suffix}${metaSuffix}`)
       const candidate = [...lines, ...groupLines].join('\n')
       if (candidate.length > budgetChars) {
         truncated = true
@@ -764,6 +765,30 @@ export function renderRelates(relates: readonly PromptRelatesGroup[], budgetChar
     if ([...lines, note].join('\n').length <= budgetChars) lines.push(note)
   }
   return { text: lines.join('\n'), renderedItems, truncated }
+}
+
+/**
+ * Model-visible meta annotation suffix: ` (key=value, key2)` appended after `<detail>`.
+ * Framework is key-agnostic — renders every entry present on the item's meta, in
+ * insertion order, separated by comma + space. `value === 'true'` omits `=value`.
+ * Envelope integrity is the framework's job: `\n`/`\r` in keys and values collapse
+ * to spaces before rendering; all other characters pass through untouched.
+ */
+function renderMetaSuffix(meta: Record<string, string> | undefined): string {
+  if (meta === undefined) return ''
+  const entries = Object.entries(meta)
+  if (entries.length === 0) return ''
+  const parts = entries.map(([key, value]) => {
+    const k = collapseNewlines(key)
+    const rendered = k === '' ? '' : value === 'true' ? k : `${k}=${collapseNewlines(value)}`
+    return rendered
+  }).filter(part => part !== '')
+  if (parts.length === 0) return ''
+  return ` (${parts.join(', ')})`
+}
+
+function collapseNewlines(text: string): string {
+  return text.replace(/[\n\r]/gu, ' ')
 }
 
 function canonicalPath(path: string): string {

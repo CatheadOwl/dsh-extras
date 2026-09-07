@@ -218,6 +218,67 @@ test('renderRelates truncates when it exceeds the budget', () => {
   assert.equal(rendered.truncated, true)
 })
 
+test('renderRelates appends meta entries as a key-agnostic suffix', () => {
+  const rendered = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v', meta: { stale: 'true', updated: 'true' } }] },
+  ], 200)
+  assert.equal(rendered.text, [
+    'relates:',
+    '  a.md:',
+    '    - [k] v (stale, updated)',
+  ].join('\n'))
+})
+
+test('renderRelates renders non-true meta values as key=value', () => {
+  const rendered = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v', meta: { stale: 'false', rev: '9' } }] },
+  ], 200)
+  assert.equal(rendered.text, [
+    'relates:',
+    '  a.md:',
+    '    - [k] v (stale=false, rev=9)',
+  ].join('\n'))
+})
+
+test('renderRelates folds newlines in meta keys and values (envelope integrity)', () => {
+  const rendered = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v', meta: { 'stale\rinjection': 'x\ny' } }] },
+  ], 200)
+  assert.equal(rendered.text, [
+    'relates:',
+    '  a.md:',
+    '    - [k] v (stale injection=x y)',
+  ].join('\n'))
+})
+
+test('renderRelates is byte-identical when meta is missing or empty', () => {
+  const missing = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v' }] },
+  ], 200)
+  const empty = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v', meta: {} }] },
+  ], 200)
+  const expected = [
+    'relates:',
+    '  a.md:',
+    '    - [k] v',
+  ].join('\n')
+  assert.equal(missing.text, expected)
+  assert.equal(empty.text, expected)
+})
+
+test('renderRelates counts the meta suffix against the render budget', () => {
+  const base = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v' }] },
+  ], 200)
+  const withMeta = renderRelates([
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v', meta: { stale: 'true' } }] },
+  ], base.text.length)
+  // Same budget that admitted the bare line rejects the longer suffixed line.
+  assert.equal(withMeta.truncated, true)
+  assert.equal(withMeta.text, undefined)
+})
+
 test('renderRelates prefers the display form (directory keys render with a trailing slash)', () => {
   const rendered = renderRelates([
     { path: 'Inbox', display: 'Inbox/', items: [{ kind: 'k', label: 'label', value: 'v' }] },
