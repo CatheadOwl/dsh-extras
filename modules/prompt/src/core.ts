@@ -143,23 +143,15 @@ function projectSubjectStrict(subject: string, mentioned: ResolvedPromptPath): s
 }
 
 /**
- * Pre-run subject projection with a safe fallback: an invalid subject cannot
- * break the turn before the provider runs — the materialized `run` throws on
- * the same projection and reports it as the provider's `failed` trace, so the
+ * Pre-run subject key with a safe fallback: an invalid subject cannot break
+ * the turn before the provider runs — the materialized `run` throws on the
+ * same projection and reports it as the provider's `failed` trace, so the
  * fallback only needs to keep the pre-filter, group ordering, and the allowed
- * set conservative (the mentioned path itself).
+ * set conservative (the mentioned path itself). Key-only view over
+ * `subjectAnchorOf`, the single source for the key AND its directory-ness.
  */
 function subjectKeyOf(entry: RegisteredProvider, mentioned: ResolvedPromptPath): string {
-  // A touch pseudo-path IS the subject its projection produced: applying
-  // `subjectOf` again could re-key it somewhere the invalidation never
-  // touched, so the once key and the ledger stay identical.
-  if (mentioned.origin === 'touch') return canonicalPath(mentioned.path)
-  if (entry.subjectOf === undefined) return mentioned.path
-  try {
-    return projectSubjectStrict(entry.subjectOf(mentioned), mentioned)
-  } catch {
-    return mentioned.path
-  }
+  return subjectAnchorOf(entry, mentioned).key
 }
 
 export function createPromptMiddlewareRegistry(): PromptMiddlewareRegistry {
@@ -439,7 +431,7 @@ export class PromptMiddlewareRunner {
       accepted.push(...normalized)
     }
 
-    const merged = mergeRelates(orderedGroupKeys(promptPaths, touchAnchors, providers), accepted)
+    const merged = mergeRelates(orderedGroupAnchors(promptPaths, touchAnchors, providers), accepted)
     const relates = merged.groups
     const rendered = renderRelates(relates, this.config.renderBudgetChars)
     // Mark `once`-mode items injected only when they were actually rendered.
@@ -624,10 +616,9 @@ interface MergeRelatesResult {
   survivors: AcceptedItem[]
 }
 
-function mergeRelates(orderedKeys: readonly string[], items: readonly AcceptedItem[]): MergeRelatesResult {
-  // Insertion-ordered: keys follow the first mention that anchors them.
-  const groups = new Map<string, RelatesItem[]>()
-  for (const key of orderedKeys) groups.set(key, [])
+function mergeRelates(anchors: readonly GroupAnchor[], items: readonly AcceptedItem[]): MergeRelatesResult {
+  // Insertion-ordered: anchors follow the first mention that anchored them.
+  const groups = new Map<string, RelatesItem[]>(anchors.map((anchor) => [anchor.key, []]))
   // Precedence: for each dedupe key, keep the earliest-registered contributor,
   // independent of priority.
   const winners = new Map<string, AcceptedItem>()
@@ -653,46 +644,92 @@ function mergeRelates(orderedKeys: readonly string[], items: readonly AcceptedIt
     }
   }
   return {
-    groups: [...groups]
-      .map(([groupPath, groupItems]) => ({ path: groupPath, items: groupItems }))
-      .filter(group => group.items.length > 0),
+    groups: anchors
+      .filter((anchor) => (groups.get(anchor.key)?.length ?? 0) > 0)
+      .map((anchor) => ({
+        path: anchor.key,
+        ...anchor.display !== anchor.key ? { display: anchor.display } : {},
+        items: groups.get(anchor.key)!,
+      })),
     survivors,
   }
 }
 
 /**
- * Group keys in render order: prompt mentions stay mention-major (each
+ * Subject anchor of one mention for one entry, computed from a SINGLE
+ * `subjectOf` invocation: the identity key plus whether that key names a
+ * directory (the render form's trailing `/`). Directory-ness is read here —
+ * the key-creation point — because that is the last place the structural
+ * fact is visible: the key itself is a slash-stripped canonical string, and
+ * projections produce ancestor-directory keys that never existed with their
+ * slash. One invocation also guarantees a (possibly impure) projection can
+ * never make the key and the display disagree.
+ */
+function subjectAnchorOf(entry: RegisteredProvider, mentioned: ResolvedPromptPath): { key: string; directory: boolean } {
+  // A touch pseudo-path IS the subject its projection produced: applying
+  // `subjectOf` again could re-key it somewhere the invalidation never
+  // touched, so the once key and the ledger stay identical. Anchors
+  // materialize as files.
+  if (mentioned.origin === 'touch') return { key: canonicalPath(mentioned.path), directory: false }
+  if (entry.subjectOf === undefined) return { key: mentioned.path, directory: mentioned.kind === 'directory' }
+  try {
+    const projected = projectSubjectStrict(entry.subjectOf(mentioned), mentioned)
+    // An ancestor projection is a directory by construction; the identity
+    // projection keeps the mentioned path's own kind.
+    return projected === mentioned.path
+      ? { key: projected, directory: mentioned.kind === 'directory' }
+      : { key: projected, directory: true }
+  } catch {
+    // Invalid projection: both the key and the display degrade to the
+    // mentioned path (the materialized `run` reports the throw as the
+    // provider's own `failed` trace).
+    return { key: mentioned.path, directory: mentioned.kind === 'directory' }
+  }
+}
+
+/**
+ * Group anchors in render order: prompt mentions stay mention-major (each
  * mention anchors every prompt-subscribed entry's key before the next
  * mention), then each entry's touch anchors follow in entry order. Keys use
  * the mention itself, its declared subject projection, or the touch subject
  * as-is; subject projections collapse sibling mentions onto one key at its
- * first anchor.
+ * first anchor. Each anchor also carries its display form (directory keys
+ * gain a trailing `/`) — identity and render form are decided together so
+ * they can never disagree about which path they name.
  */
-function orderedGroupKeys(
+interface GroupAnchor {
+  /** Identity: canonical path, dedupe/ledger coordinate — no trailing slash. */
+  key: string
+  /** Render form: `key` plus `/` when the key names a directory. */
+  display: string
+}
+
+function orderedGroupAnchors(
   promptPaths: readonly ResolvedPromptPath[],
   touchAnchors: readonly (readonly ResolvedPromptPath[])[],
   entries: readonly RegisteredProvider[],
-): string[] {
+): GroupAnchor[] {
   const seen = new Set<string>()
-  const keys: string[] = []
-  const add = (key: string): void => {
+  const anchors: GroupAnchor[] = []
+  const add = (entry: RegisteredProvider, path: ResolvedPromptPath): void => {
+    const { key, directory } = subjectAnchorOf(entry, path)
     if (!seen.has(key)) {
       seen.add(key)
-      keys.push(key)
+      anchors.push({ key, display: directory ? `${key}/` : key })
     }
   }
   for (const path of promptPaths) {
     for (const entry of entries) {
       if (!subscribesPrompt(entry.provider)) continue
-      add(subjectKeyOf(entry, path))
+      add(entry, path)
     }
   }
   for (const [index, entry] of entries.entries()) {
     for (const anchor of touchAnchors[index] ?? []) {
-      add(subjectKeyOf(entry, anchor))
+      add(entry, anchor)
     }
   }
-  return keys
+  return anchors
 }
 
 interface RenderResult {
@@ -707,7 +744,7 @@ export function renderRelates(relates: readonly PromptRelatesGroup[], budgetChar
   let renderedItems = 0
   let truncated = false
   outer: for (const group of relates) {
-    const groupLines = [`  ${group.path}:`]
+    const groupLines = [`  ${group.display ?? group.path}:`]
     for (const item of group.items) {
       const detail = item.value ?? item.href ?? ''
       const suffix = detail === '' ? '' : ` ${detail}`

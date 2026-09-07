@@ -163,6 +163,33 @@ test('top tier excludes a deeper same-exact sibling (depth separates)', () => {
   assert.deepEqual(r[0].resolved, ['p/c.md', 'q/c.md']) // depth-2 tie; the depth-3 exact sibling is excluded
 })
 
+// --- case-insensitive matching (comparison folds, candidates keep casing) ---
+
+test('a lowercased mention resolves a differently-cased directory (inbox → Inbox/)', () => {
+  const t = ['workunits/prompt-middleware/', 'Inbox/']
+  const r = resolvePromptPaths('看看 inbox 里的问题', t)
+  const hit = r.find((m) => m.candidate.normalized === 'inbox')
+  assert.ok(hit)
+  assert.equal(hit.total, 1)
+  assert.deepEqual(hit.resolved, ['Inbox/'])
+})
+
+test('case-insensitive ranking still prefers the exact-named leaf across case', () => {
+  // Both candidates match after folding; the verbatim-cased exact leaf wins
+  // the top tier over the extension-stripped sibling.
+  const t = ['Inbox/', 'x/inbox.md']
+  const r = resolvePromptPaths('inbox', t)
+  assert.equal(r[0].total, 2)
+  assert.deepEqual(r[0].resolved, ['Inbox/'])
+})
+
+test('root-anchored citation folds case too (/inbox → root Inbox/)', () => {
+  const t = ['Inbox/', 'x/Inbox/']
+  const r = resolvePromptPaths('/inbox', t)
+  assert.equal(r[0].total, 1)
+  assert.deepEqual(r[0].resolved, ['Inbox/'])
+})
+
 // --- root-anchored citations (repository-root-relative `/` form) ---
 
 test('root-anchored citation resolves the exact root position (bare-ambiguous name rescued)', () => {

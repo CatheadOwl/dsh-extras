@@ -13,7 +13,10 @@
  * - `candidatePaths` may include directories, so a bare `guides` query
  *   matches `guides/`, `topics/guides/`, … at any depth.
  *
- * Matching rules (segments split on `/`), two modes:
+ * Matching rules (segments split on `/`), two modes, all comparisons
+ * case-insensitive (segment-level fold to lower case; the candidate's real
+ * casing is never modified — only the comparison folds, mirroring
+ * case-insensitive filesystems, so `inbox` matches `Inbox/`):
  * - Unanchored (project-relative query, no leading `/`): the query's segments
  *   must equal a trailing slice of the candidate's. A query leaf with no dot
  *   (`registry`) may match a candidate leaf that carries a file extension
@@ -95,7 +98,6 @@ export function suggestPathCandidates(
  * barrel (`index.ts`). Use `suggestPathCandidates` for one-off queries.
  */
 export function pathMatchesSegments(
-  candidate: string,
   candidateSegments: string[],
   query: string,
   querySegments: string[],
@@ -107,17 +109,13 @@ export function pathMatchesSegments(
   // Root-anchored query (the repository-root-relative citation form): the
   // leading `/` pins the path to the repository root, so matching is exact
   // full-position equality — every segment, no trailing slice, no extension
-  // stripping. This branch must precede the `endsWith('/' + query)` shortcut:
+  // stripping. This branch must precede the tail-slice comparison below:
   // `/notes/md-fabric` must NOT tail-match `x/notes/md-fabric`.
   if (query.startsWith('/')) {
     if (candidateSegments.length !== querySegments.length) {
       return false
     }
-    return candidateSegments.every((segment, i) => segment === querySegments[i])
-  }
-
-  if (candidate.endsWith(`/${query}`)) {
-    return true
+    return candidateSegments.every((segment, i) => fold(segment) === fold(querySegments[i]))
   }
 
   const tail = candidateSegments.slice(-querySegments.length)
@@ -126,17 +124,20 @@ export function pathMatchesSegments(
   }
 
   const queryLeaf = querySegments[querySegments.length - 1]
-  if (queryLeaf.includes('.')) {
-    return tail.join('/') === query
+  const foldedQuerySegments = querySegments.map(fold)
+  if (!queryLeaf.includes('.')) {
+    tail[tail.length - 1] = stripLeafExtension(tail[tail.length - 1])
   }
+  return tail.every((segment, i) => fold(segment) === foldedQuerySegments[i])
+}
 
-  tail[tail.length - 1] = stripLeafExtension(tail[tail.length - 1])
-  return tail.join('/') === query
+/** Case-fold one segment for comparison only; candidates keep their real casing. */
+function fold(segment: string): string {
+  return segment.toLowerCase()
 }
 
 function pathCandidateMatches(candidate: string, query: string): boolean {
   return pathMatchesSegments(
-    candidate,
     candidate.split('/').filter(Boolean),
     query,
     query.split('/').filter(Boolean),

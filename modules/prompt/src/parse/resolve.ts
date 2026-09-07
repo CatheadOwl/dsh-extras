@@ -151,7 +151,7 @@ function scanScope(
   const matches: string[] = []
   for (const candidate of scope) {
     const segments = segmentsOf.get(candidate)
-    if (segments !== undefined && pathMatchesSegments(candidate, segments, query, querySegments)) {
+    if (segments !== undefined && pathMatchesSegments(segments, query, querySegments)) {
       matches.push(candidate)
     }
   }
@@ -192,7 +192,9 @@ function rankMatches(paths: string[], query: string): RankedMatch[] {
       path,
       index,
       // 0 = exact leaf, 1 = extension-stripped leaf, so exact sorts first.
-      exact: (path.split('/').filter(Boolean).pop() ?? '') === queryLeaf ? 0 : 1,
+      // Case-insensitive, same fold as the matcher: a query typed in any case
+      // still prefers the candidate whose leaf it names verbatim.
+      exact: (path.split('/').filter(Boolean).pop() ?? '').toLowerCase() === queryLeaf.toLowerCase() ? 0 : 1,
       depth: depth(path),
     }))
     .sort((a, b) => a.exact - b.exact || a.depth - b.depth || a.index - b.index)

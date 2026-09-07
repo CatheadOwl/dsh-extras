@@ -15,6 +15,7 @@ description: prompt 模块注入契约——provider 执行模型与定序、onc
 - 失败粒度：单个 provider 抛错/超时 → 该 provider trace `failed`，不阻断其他 provider、不阻断轮次。
 - 同轮内 merge/dedupe：dedupe 判定键为 `path + kind + href/value`；胜者按注册序裁决（`priority` 不兼做冲突赢家）。`value` 与 `href` 同时给出时渲染优先 `value`，轮内 dedupe key 用 `href`（缺省回退 `value`）。
 - render budget：合并后的内容按 `renderBudgetChars` 截断渲染为 additionalContext（内容模型可见，信封不渲染本插件名），不改写用户消息。
+- 渲染分组键的**显示形与身份形分离**：分组键（dedupe/ledger 坐标）是剥尾斜杠的 canonical path；渲染行用 `PromptRelatesGroup.display`（目录键补尾斜杠，`Inbox/`），让注入块里的 key 一眼是路径而非裸标签。`display` 仅在与 `path` 不同时出现，渲染消费 `display`、一切键运算用 `path`。
 
 ## once 注入去重
 

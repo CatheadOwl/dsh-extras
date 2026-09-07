@@ -55,6 +55,8 @@ const paths = mentions.flatMap((m) => m.resolved)
 
 `candidatePaths`（project 路径列表，**文件 + 目录**）由消费者提供；本库不做文件系统扫描。目录候选建议带尾斜杠（`guides/`），这样尾斜杠 specifier（`kind:'dir'`）才能只取目录；否则回退全树（尽力而为）。附带：裸词 `guides` 去扩展名副作用仍会命中同名文件 `guides.md`。
 
+**匹配与排序全程大小写不敏感**（段级 fold 到小写比较；候选串的真实大小写永不修改，命中后返回的就是真实路径）。`inbox` 命中 `Inbox/`，`/INBOX` 根锚定命中根级 `Inbox/`，叶名精确排序判定同样跨大小写（`inbox` 对 `Inbox/` 仍是精确叶名，优于去扩展名命中 `x/inbox.md`）。与大小写不敏感文件系统的检索直觉一致；大小写不同名的目录在区分大小写文件系统上会被并档，接受这一代价。
+
 ## 归一化规则（v0）
 
 `parsePaths` 产出的 `normalized` 字段做了：`\` → `/`、去 token 首尾空白与配对引号、剥前导 `./`、剥尾随标点（`,` `;` 及句末单独 `.`，`..` 保留）、尾斜杠剥除标 `kind:'dir'`。`../` 保留（越界拦截是消费者的事）。**前导 `/` 保留**——它是 repository-root-relative 引用锚（agent 引用根锚），matcher 据此做根锚定精确整段匹配（`/guides/` → `normalized: '/guides'` + `kind:'dir'`）。**前导 `@` 折算为 `/`**——它是 workspace 引用锚（宿主 GUI `FILE_REFERENCE_PROMPT`），与 `/` 是同一根锚的两种拼写（`@notes/md-fabric/` → `normalized: '/notes/md-fabric'` + `kind:'dir'`）。

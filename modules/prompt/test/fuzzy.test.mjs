@@ -55,6 +55,31 @@ test('de-duplicates repeated candidate hits', () => {
   })
 })
 
+test('matching is case-insensitive: a lowercase query hits a differently-cased candidate', () => {
+  assert.deepEqual(suggestPathCandidates(['workunits/prompt-middleware/', 'Inbox/'], 'inbox'), {
+    matches: ['Inbox/'],
+    total: 1,
+  })
+})
+
+test('matching is case-insensitive: extension stripping and multi-segment queries fold too', () => {
+  assert.deepEqual(suggestPathCandidates(['docs/README.md'], 'readme'), {
+    matches: ['docs/README.md'],
+    total: 1,
+  })
+  assert.deepEqual(suggestPathCandidates(['workunits/prompt-middleware/'], 'Workunits/Prompt-Middleware'), {
+    matches: ['workunits/prompt-middleware/'],
+    total: 1,
+  })
+})
+
+test('matching is case-insensitive: root-anchored queries fold, candidates keep real casing', () => {
+  assert.deepEqual(suggestPathCandidates(['Inbox/', 'x/Inbox/'], '/inbox'), {
+    matches: ['Inbox/'],
+    total: 1,
+  })
+})
+
 test('matches a leaf after stripping the file extension', () => {
   assert.deepEqual(suggestPathCandidates(['coggit/src/registry.ts', 'coggit/src/other.ts'], 'registry'), {
     matches: ['coggit/src/registry.ts'],

@@ -77,11 +77,12 @@ test('subjectOf re-keys the group and the once ledger onto the declared subject'
     { path: 'A/B/C/1.md', kind: 'file', origin: 'prompt-parse' },
     { path: 'A/B/C/2.md', kind: 'file', origin: 'prompt-parse' },
   ], { sessionId: 's1' })
-  // Sibling files collapse into ONE group keyed by the shared directory.
+  // Sibling files collapse into ONE group keyed by the shared directory;
+  // the directory key renders with a trailing slash (display form).
   assert.deepEqual(first.relates, [
-    { path: 'A/B/C', items: [{ kind: 'breadcrumb-description', label: 'breadcrumb-description', value: 'ancestor chain' }] },
+    { path: 'A/B/C', display: 'A/B/C/', items: [{ kind: 'breadcrumb-description', label: 'breadcrumb-description', value: 'ancestor chain' }] },
   ])
-  assert.ok(first.text?.includes('A/B/C:'))
+  assert.ok(first.text?.includes('A/B/C/:'))
 
   // The once ledger keys the subject: another sibling is suppressed next turn.
   const second = await runOne(runner, { path: 'A/B/C/3.md', sessionId: 's1', turnId: '2' })
@@ -103,7 +104,7 @@ test('a file mention and its containing directory mention share one subject grou
   ])
   // 文件与其所在目录的提及渲染为同一分组：同 key（A/B/C）同值，一条 item。
   assert.deepEqual(result.relates, [
-    { path: 'A/B/C', items: [{ kind: 'breadcrumb-description', label: 'breadcrumb-description', value: 'ancestor chain' }] },
+    { path: 'A/B/C', display: 'A/B/C/', items: [{ kind: 'breadcrumb-description', label: 'breadcrumb-description', value: 'ancestor chain' }] },
   ])
   assert.equal((result.text?.match(/\[breadcrumb-description\]/gu) ?? []).length, 1)
 })

@@ -144,7 +144,7 @@ test('once-mode breadcrumb injects once, dedupes across turns, and re-arms after
     assert.equal(injections().length, 1, 'turn 1 must inject the breadcrumb once')
     const turn1Text = injections()[0].data.content[0].text
     assert.ok(turn1Text.includes('breadcrumb-description'), 'turn 1 injection carries the breadcrumb')
-    assert.ok(turn1Text.includes('docs:'), 'turn 1 group is keyed by the file\'s directory')
+    assert.ok(turn1Text.includes('docs/:'), 'turn 1 group is keyed by the file\'s directory (dir display keeps its slash)')
     assert.ok(turn1Text.includes('- [breadcrumb-description] Docs route'), 'turn 1 value is the ancestor chain')
     assert.ok(!turn1Text.includes('docs/guide.md:'), 'no file-keyed breadcrumb group')
 
@@ -287,7 +287,7 @@ test('sibling file mentions share one directory-keyed breadcrumb group (E2E)', a
     assert.equal(injections().length, 1, 'one injection')
     const text = injections()[0].data.content[0].text
     // 两个同名兄弟文件 → 唯一目录键分组，祖先链只输出一次。
-    assert.ok(text.includes('docs/meeting-room/20260822-1436-local-ci-gates:'), 'group keyed by the shared directory')
+    assert.ok(text.includes('docs/meeting-room/20260822-1436-local-ci-gates/:'), 'group keyed by the shared directory (dir display keeps its slash)')
     assert.ok(!text.includes('case-1-doc-sync.md:'), 'no file-keyed group for the first sibling')
     assert.ok(!text.includes('case-2-coggit-misplaced.md:'), 'no file-keyed group for the second sibling')
     assert.equal(text.split('[breadcrumb-description]').length - 1, 1, 'exactly one breadcrumb item')

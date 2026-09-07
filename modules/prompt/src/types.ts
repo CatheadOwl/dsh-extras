@@ -242,7 +242,15 @@ export interface PromptMiddlewareRunOptions {
 }
 
 export interface PromptRelatesGroup {
+  /** Identity key: project-relative canonical path (no trailing slash). */
   path: string
+  /**
+   * Render form of `path`: directory keys carry a trailing `/` so the injected
+   * `relates:` block reads as a path (`Inbox/`), not a bare label. Present only
+   * when it differs from `path`; consumers rendering the key must prefer this
+   * field, everything keyed/deduped must use `path`.
+   */
+  display?: string
   items: RelatesItem[]
 }
 

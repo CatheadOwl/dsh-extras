@@ -218,6 +218,39 @@ test('renderRelates truncates when it exceeds the budget', () => {
   assert.equal(rendered.truncated, true)
 })
 
+test('renderRelates prefers the display form (directory keys render with a trailing slash)', () => {
+  const rendered = renderRelates([
+    { path: 'Inbox', display: 'Inbox/', items: [{ kind: 'k', label: 'label', value: 'v' }] },
+    { path: 'a.md', items: [{ kind: 'k', label: 'label', value: 'v' }] },
+  ], 200)
+  assert.equal(rendered.text, [
+    'relates:',
+    '  Inbox/:',
+    '    - [k] v',
+    '  a.md:',
+    '    - [k] v',
+  ].join('\n'))
+})
+
+test('a directory mention renders its group with a trailing slash (display differs from identity)', async () => {
+  const runner = new PromptMiddlewareRunner()
+  runner.register(provider({
+    name: 'demo',
+    run: async ({ paths }) => paths.map((p) => ({ path: p.path, items: [{ kind: 'k', label: p.path, value: 'v' }] })),
+  }))
+  const result = await runner.run({
+    prompt: 'Inbox',
+    paths: [{ path: 'Inbox', kind: 'directory', origin: 'prompt-parse' }],
+    agent: {},
+    cwd: '.',
+    turnId: '1',
+  })
+  assert.deepEqual(result.relates, [
+    { path: 'Inbox', display: 'Inbox/', items: [{ kind: 'k', label: 'Inbox', value: 'v' }] },
+  ])
+  assert.ok(result.text?.includes('  Inbox/:'))
+})
+
 test('validateProvider rejects an unknown mode', () => {
   assert.throws(() => validateProvider(provider({ name: 'ok-name', mode: 'sometimes' })), /mode must be 'always' or 'once'/)
 })
