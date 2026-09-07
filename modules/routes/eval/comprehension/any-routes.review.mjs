@@ -1,5 +1,5 @@
 /**
- * Blind comprehension review for the any_routes projection.
+ * Blind comprehension review for the any_nav projection.
  *
  * The fixture is frozen, but route views are projected by the current plugin
  * build at observation time. This preserves the useful old-eval property that
@@ -48,7 +48,7 @@ function projectResult(result) {
 
 export default defineReviewExperiment({
   id: 'any-routes-comprehension',
-  summary: 'Can a fresh model navigate the any_routes flat and tree projections?',
+  summary: 'Can a fresh model navigate the any_nav flat and tree projections?',
   prompt,
   rubric: join(here, 'rubric.md'),
   async observe() {

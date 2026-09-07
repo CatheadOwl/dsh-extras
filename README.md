@@ -28,7 +28,7 @@ Tools & consumers:
 | Module | Row id | What it provides | Docs |
 |---|---|---|---|
 | markdown | `markdown` | `md_rename` tool (move a Markdown file and rewrite every internal link) + the `doc-link` gate + the bundled link-transaction library | [modules/markdown/README.md](modules/markdown/README.md) |
-| routes | `routes` | `any_routes` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider (a prompt-middleware provider) | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_nav` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider (a prompt-middleware provider) | [modules/routes/README.md](modules/routes/README.md) |
 
 Each module is an independently toggleable row in the host's plugin composition: no shared state — disable any row and the others behave exactly as before.
 

@@ -1,4 +1,4 @@
-// Real composition test: boots prompt-middleware + any_routes over a real
+// Real composition test: boots prompt-middleware + any_nav over a real
 // agent loop and asserts the `once`-mode breadcrumb injection across multiple
 // turns of ONE session — turn 1 injects, turn 2 (same path) is suppressed,
 // a surface replacement (compact) clears the ledger, turn 3 re-injects.
@@ -97,7 +97,7 @@ function waitForIdle(ctx, agent) {
   })
 }
 
-/** Poll until a predicate holds (any_routes registers its provider off-turn via ctx.inject). */
+/** Poll until a predicate holds (any_nav registers its provider off-turn via ctx.inject). */
 async function waitFor(predicate, timeoutMs = 3000) {
   const start = Date.now()
   while (!predicate()) {
@@ -123,7 +123,7 @@ test('once-mode breadcrumb injects once, dedupes across turns, and re-arms after
     { cwd: root },
   )
   try {
-    // any_routes registers its breadcrumb provider through
+    // any_nav registers its breadcrumb provider through
     // ctx.inject(['promptMiddleware']), which settles off-turn.
     await waitFor(() => ctx.get('promptMiddleware').list().length >= 1)
 
@@ -201,7 +201,7 @@ test('root README never stands in: undescribed ancestors mean no breadcrumb at a
     { cwd: root },
   )
   try {
-    // any_routes registers its breadcrumb provider through
+    // any_nav registers its breadcrumb provider through
     // ctx.inject(['promptMiddleware']), which settles off-turn.
     await waitFor(() => ctx.get('promptMiddleware').list().length >= 1)
 

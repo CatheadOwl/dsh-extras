@@ -17,7 +17,7 @@ export interface BreadcrumbDescriptionOptions {
 /**
  * Local structural mirror of prompt-middleware's frozen `RelatesResolveResult`.
  * The provider is registered through the `ctx.inject(['promptMiddleware'], ...)`
- * soft dependency, so any_routes keeps no hard type/runtime import of
+ * soft dependency, so any_nav keeps no hard type/runtime import of
  * prompt-middleware (same registration shape as coggit's cognition-link).
  */
 export interface BreadcrumbRelatesResult {
@@ -54,7 +54,7 @@ interface BreadcrumbCrumb {
 }
 
 const PROVIDER_NAME = 'breadcrumb-description-enricher'
-const PROVIDER_DESCRIPTION = 'Annotates mentioned paths with the description chain built from their ancestor directories\' READMEs (any_routes breadcrumb).'
+const PROVIDER_DESCRIPTION = 'Annotates mentioned paths with the description chain built from their ancestor directories\' READMEs (any_nav breadcrumb).'
 const PROVIDER_KIND = 'breadcrumb-description'
 // annotation band (100–199), after cognition-link's canonical band (0–99).
 const PROVIDER_PRIORITY = 100
@@ -161,7 +161,7 @@ export async function resolveBreadcrumbPath(
   return {
     value: renderBreadcrumbCrumbs(crumbs),
     meta: {
-      source: 'any_routes',
+      source: 'any_nav',
       markdownPaths: crumbs.map((crumb) => crumb.markdownPath).join(', '),
     },
   }

@@ -21,7 +21,7 @@ dsh 是微内核 harness：插件在 Cordis fiber 树上运行，能力以**服�
 | gates | `ctx.tools`（`gates_run`）、`agent/turn-stopping` 检查点（轮末阻塞驱动）、命令/技能注册面 |
 | markdown | `ctx.tools`（`md_rename`）、`agent/turn-stopping`（doc-link gate 的 defer 档旁路） |
 | prompt | `agent/pre-step` 拦截点（driver 挂载点）、Typert Remote / Web 配置面 |
-| routes | `ctx.tools`（`any_routes`）+ prompt 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
+| routes | `ctx.tools`（`any_nav`）+ prompt 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
 | client（锚点包） | Web 插槽（`settings.plugins.tab`）——聚合 §2 两个基座的 Settings Tab |
 
 这些边**朝向宿主**，随 dsh base bundle 提供，不在本包的依赖记账范围。
@@ -51,7 +51,7 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
 配套约束：
 
 - **注册必须 return disposer**——基座注册表是纯 Map，disposer 是唯一回滚通道。
-- **基座行关闭时承载方软降级**：不装 gates 时消费方插件照常工作（少一个 gate）；不装 prompt 行时 routes 的 breadcrumb 注入静默不生效（`any_routes` 不受影响）。
+- **基座行关闭时承载方软降级**：不装 gates 时消费方插件照常工作（少一个 gate）；不装 prompt 行时 routes 的 breadcrumb 注入静默不生效（`any_nav` 不受影响）。
 - 基座自己也消费宿主接缝（§1），且**不内置业务逻辑**：gates/prompt 只实现承载层，cognition、面包屑等业务都在承载方。
 - gates 另有一条**配置面承载**：仓库级 `gates.yml` 的 `module:` 形态可把本包 markdown 行的 `gate-check` 作为外部模块物化为 gate——项目功能承载在 gates 执行骨架上，但既非插件注册也非 npm 依赖。
 

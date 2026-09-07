@@ -12,6 +12,13 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Changed
 
+- `routes` module: the model-facing tool is renamed `any_routes` → `any_nav`.
+  Motivation: "route" carries a web-specific meaning (URL routing) that
+  misdescribes the tool (a navigation view over a Markdown knowledge base);
+  `nav` keeps the snake-case tool-name convention while dropping the clash.
+  Breaking for prompts and eval fixtures that hardcode the old tool name:
+  the breadcrumb provider's `meta.source` string becomes `any_nav` too. The
+  npm subpath specifier `./routes` and the loader row id are unchanged.
 - `md-metadata` gate: exemption widenings plus a maintainable list.
   - Homepage README exemption now accepts `.gitignore` as a root marker
     alongside `package.json` — a `README.md` (or variant) in a directory

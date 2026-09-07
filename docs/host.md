@@ -20,4 +20,4 @@ description: 与宿主的关系——peer 闭包与组合行形态、为什么�
 - **gates**：turn 收尾的把关不该靠各插件裸抢 hook，而应是一个声明式注册、统一调度的 gate 组合面；
 - **markdown**：内链卫生不该靠人肉维护——搬移即改写（`md_rename`），turn 收尾自动把关（`doc-link` gate）；
 - **prompt**：项目知识的注入是声明式的——provider 声明 → 预算渲染 → 会话注入，不手写 prompt；
-- **routes**：大 docs 树先路由后深读——`any_routes` 路由视图 + breadcrumb relates 让知识库以结构可导航。
+- **routes**：大 docs 树先路由后深读——`any_nav` 路由视图 + breadcrumb relates 让知识库以结构可导航。

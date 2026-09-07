@@ -1,10 +1,10 @@
 ---
-description: any_routes 的规范化 eval：以共享 review experiment 描述理解实验，以 dsh headless 执行
+description: any_nav 的规范化 eval：以共享 review experiment 描述理解实验，以 dsh headless 执行
 ---
 
-# any_routes eval
+# any_nav eval
 
-本目录只保存 **any_routes 自己的试验设计**；任务组装、重复执行、产物落盘由共享框架 `@catheadowl/dsh-eval`（extras 的 devDependency，`dsh-review` bin 消费）提供。
+本目录只保存 **any_nav 自己的试验设计**；任务组装、重复执行、产物落盘由共享框架 `@catheadowl/dsh-eval`（extras 的 devDependency，`dsh-review` bin 消费）提供。
 
 ## 目录
 
@@ -18,11 +18,11 @@ eval/
   schema-intent/
     schema-intent.review.mjs  # 试验定义：只喂 schema + 场景，问「下一步动作」
     fixtures.json             # 冻结场景：任务 + 动作闭集
-    prompt.md                 # MCQ：每场景从 {read,grep,any_routes} 选一
+    prompt.md                 # MCQ：每场景从 {read,grep,any_nav} 选一
     rubric.md                 # 隐藏答案键：correct/wrong + accepted intent
 ```
 
-`comprehension/` 测量：新模型能否仅凭 `any_routes` 的工具说明和输出理解 `depth`、`anchor`、`[truncated: N]`、flat/tree 对应关系，并走到目标文档。字段形状本身仍由 `test/routes.test.mjs` 与 `test/navigation.test.mjs` 负责。
+`comprehension/` 测量：新模型能否仅凭 `any_nav` 的工具说明和输出理解 `depth`、`anchor`、`[truncated: N]`、flat/tree 对应关系，并走到目标文档。字段形状本身仍由 `test/routes.test.mjs` 与 `test/navigation.test.mjs` 负责。
 
 `schema-intent/` 测另一个维度：只给工具 schema、不给输出，让 fresh model 从闭集里选「下一步动作」，判定描述本身是否会引导 over-use / under-use / 错误动作。它和 `comprehension/` 互补——后者测「能否读对输出」，前者测「契约是否误导意图」。工具 schema 复用 `comprehension/fixtures.json` 的 `tool` 字段，作为单一冻结来源。
 

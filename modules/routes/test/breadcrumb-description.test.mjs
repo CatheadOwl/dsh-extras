@@ -64,7 +64,7 @@ test('breadcrumb resolver emits ancestor README descriptions only, never the fil
     result.meta.markdownPaths,
     'docs/README.md, docs/nested/README.md',
   )
-  assert.equal(result.meta.source, 'any_routes')
+  assert.equal(result.meta.source, 'any_nav')
 })
 
 test('scan-root README never stands in for a target without its own description', async (t) => {

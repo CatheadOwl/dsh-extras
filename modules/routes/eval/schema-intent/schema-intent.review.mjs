@@ -1,5 +1,5 @@
 /**
- * Schema-intent review: does the any_routes tool schema, on its own, steer a
+ * Schema-intent review: does the any_nav tool schema, on its own, steer a
  * fresh model toward the correct next action — and not toward over/under-use?
  *
  * The tool schema is the frozen copy in ../comprehension/fixtures.json (single
@@ -18,7 +18,7 @@ const prompt = readFileSync(join(here, 'prompt.md'), 'utf8')
 
 export default defineReviewExperiment({
   id: 'any-routes-schema-intent',
-  summary: 'Does the any_routes tool schema alone steer a fresh model to the right next action?',
+  summary: 'Does the any_nav tool schema alone steer a fresh model to the right next action?',
   prompt,
   rubric: join(here, 'rubric.md'),
   async observe() {

@@ -1,10 +1,10 @@
 ---
-description: modules/routes 的行为细则——any_routes 工具与 breadcrumb-description-enricher 的遍历边界、depth 截断语义、路由视图规则、diagnostics 含义与开发循环。
+description: modules/routes 的行为细则——any_nav 工具与 breadcrumb-description-enricher 的遍历边界、depth 截断语义、路由视图规则、diagnostics 含义与开发循环。
 ---
 
 # routes 工作细节
 
-`modules/routes` 的两个模型面（`any_routes` 工具与 breadcrumb-description-enricher）的行为细节：遍历边界、depth 截断语义、diagnostics 含义、路由视图规则，以及开发循环。模块入口见 [../README.md](../README.md)。
+`modules/routes` 的两个模型面（`any_nav` 工具与 breadcrumb-description-enricher）的行为细节：遍历边界、depth 截断语义、diagnostics 含义、路由视图规则，以及开发循环。模块入口见 [../README.md](../README.md)。
 
 ## 遍历边界（traversal boundaries）
 

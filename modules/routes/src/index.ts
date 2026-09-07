@@ -50,7 +50,7 @@ const DEFAULT_EXCLUDE_DIRS = [
   'out',
 ]
 
-export const name = 'any_routes'
+export const name = 'any_nav'
 export const inject = ['tools']
 
 export const Config: z<Config> = z.object({
@@ -79,7 +79,7 @@ export function apply(ctx: Context, config: Config): void {
   })
 
   ctx.tools.register(defineTool({
-    name: 'any_routes',
+    name: 'any_nav',
     description: ANY_ROUTES_DESCRIPTION,
     parameters: {
       routePath: {

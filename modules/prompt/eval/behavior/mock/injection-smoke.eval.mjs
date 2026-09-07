@@ -1,7 +1,7 @@
 /**
  * Keyless wiring smoke: a scripted model forces one turn whose user prompt
  * mentions a Markdown path. The real `agent/pre-step` → prompt-middleware →
- * any_routes breadcrumb provider chain must emit exactly ONE plugin-sourced
+ * any_nav breadcrumb provider chain must emit exactly ONE plugin-sourced
  * `user/message` carrying `relates:`. Proves the sessionId wiring, provider
  * registration, and injection land in the session log — not the cross-turn
  * `once` dedupe (the one-shot headless CLI runs a single turn).

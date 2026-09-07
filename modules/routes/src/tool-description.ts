@@ -1,5 +1,5 @@
 /**
- * Model-facing wording for the `any_routes` tool. Lives in its own module so
+ * Model-facing wording for the `any_nav` tool. Lives in its own module so
  * the row's loader entry stays on the loader contract while the
  * description-contract test keeps importing the single SSOT.
  */

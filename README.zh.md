@@ -28,7 +28,7 @@ dsh plugin add @catheadowl/dsh-extras
 | 模块 | 行 id | 提供什么 | 文档 |
 |---|---|---|---|
 | markdown | `markdown` | `md_rename` 工具（搬移并改写 Markdown 内链）+ `doc-link` gate + 内置链接事务库 | [modules/markdown/README.md](modules/markdown/README.md) |
-| routes | `routes` | `any_routes` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider（一个 prompt 中间件 provider） | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_nav` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider（一个 prompt 中间件 provider） | [modules/routes/README.md](modules/routes/README.md) |
 
 每个模块是宿主插件组合里可独立开关的一行：不共享状态，关掉任何一行，其余模块行为不变。
 

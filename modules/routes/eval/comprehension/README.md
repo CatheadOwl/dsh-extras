@@ -1,4 +1,4 @@
-# any_routes comprehension review
+# any_nav comprehension review
 
 这是 [`../README.md`](../README.md) 所述的理解设计评审。`fixtures.json` 保存稳定的 Markdown KB 输入与导航 hops；`any-routes.review.mjs` 用当前 `lib/routes.js` 实时生成 flat/tree 输出，并把临时路径标准化后填入 `prompt.md`。reviewer 看不到 `rubric.md`。
 
