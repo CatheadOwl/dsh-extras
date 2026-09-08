@@ -3,5 +3,3 @@ packages:
 
 autoInstallPeers: false
 
-overrides:
-  '@catheadowl/dsh-eval': link:../eval
