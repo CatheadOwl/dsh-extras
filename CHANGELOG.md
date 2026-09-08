@@ -8,54 +8,45 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
-## [Unreleased]
+## [0.2.0] — 2026-09-09
 
 ### Changed
 
-- `routes` module: the model-facing tool is renamed `any_routes` → `any_nav`.
-  Motivation: "route" carries a web-specific meaning (URL routing) that
-  misdescribes the tool (a navigation view over a Markdown knowledge base);
-  `nav` keeps the snake-case tool-name convention while dropping the clash.
-  Breaking for prompts and eval fixtures that hardcode the old tool name:
-  the breadcrumb provider's `meta.source` string becomes `any_nav` too. The
-  npm subpath specifier `./routes` and the loader row id are unchanged.
-- `md-metadata` gate: exemption widenings plus a maintainable list.
-  - Homepage README exemption now accepts `.gitignore` as a root marker
-    alongside `package.json` — a `README.md` (or variant) in a directory
-    carrying either marker is skipped (covers repository roots without a
-    `.git` entry in the tree, e.g. subtree projection mirrors). Non-README
-    md under such a root stays covered.
-  - Fixed-convention basenames are exempt wherever they sit, tracked in one
-    maintainable list: `AGENTS.md`, `CLAUDE.md` (agent-harness-owned format),
-    `CHANGELOG.md`, `CONTRIBUTING.md` (external-convention files).
-  - New `exempt-basenames` gate option: repos append their own exact
-    basenames via `gates.yml` (appended to the defaults, case-insensitive
-    exact match, malformed declarations fail loud) — the same options
-    overlay seam as `doc-link`'s `frozen-dirs`.
+- **Breaking (0.x minor)**: `routes` tool renamed `any_routes` → `any_nav`; the
+  breadcrumb provider's `meta.source` string follows. Update prompts and eval
+  fixtures that hardcode the old name — the `./routes` subpath and the loader
+  row id are unchanged.
+- `markdown` (`md-metadata`) gate: homepage exemption widened — a `README.md`
+  at a root carrying `package.json` **or** `.gitignore` is skipped;
+  fixed-convention basenames (`AGENTS.md`, `CLAUDE.md`, `CHANGELOG.md`,
+  `CONTRIBUTING.md`) are exempt wherever they sit; repos can append their own
+  via the new `exempt-basenames` gate option.
+- `gates`: the config-guide skill is now visible to model sessions (was
+  user-only) — gate executors are frequently models.
+- Behavior tightening: imperative prompt contributions anchored at
+  once-filtered paths are now discarded as unknown (previously accepted).
 
 ### Added
 
-- `prompt` module: tool-touch sensor lane. The framework now listens to
-  `tools/result` (`read`/`edit`) itself and offers a second signal source to
-  providers:
-  - `sources?: Array<'prompt' | 'touch'>` — per-provider signal subscription;
-    omitted keeps the previous prompt-only behavior exactly.
-  - `touchSubjects?(touchedPath): string[]` — a pure reverse projection; one
-    declaration drives both once-ledger invalidation (runs for every
-    declarer, regardless of subscription or switches) and, for touch
-    subscribers, pseudo-path re-offers at the next pre-step (`origin:
-    'touch'` + `touchTool` provenance on the path).
-  - Usage guide with the canonical pairing-provider pattern (steady-state
-    `undefined`, self-edit reconciliation, `subjectOf`/`touchSubjects` mirror
-    alignment) lives in the module's `docs/cookbook.md`; contract text in
-    `docs/contract.md` ("tool-touch sensor lane").
+- `prompt`: tool-touch sensor lane — providers can subscribe to a second
+  signal source (`sources: Array<'prompt' | 'touch'>`) and declare a
+  `touchSubjects` reverse projection (session-context aware) to re-offer
+  touched subjects at the next pre-step, with the touch signal sourced from
+  read/edit tool results. Pairing-provider guide in the module's
+  `docs/cookbook.md`.
+- `prompt`: `introspect()` read-only snapshot — per-provider sources,
+  `effectiveEnabled`, and `disabledBy` provenance; consumed by the Settings
+  tab.
+- `prompt`: optional provider `description` field, rendered in the Settings
+  tab; fail-loud at registration when malformed.
+- `prompt`: meta annotation channel — `renderRelates` can project a neutral
+  visible suffix onto relates lines.
 
-### Compatibility
+### Fixed
 
-- Providers that declare nothing new behave identically (locked by an
-  end-to-end v0-equivalence composition test). One deliberate tightening for
-  imperative providers: contributions anchored at once-filtered paths are now
-  discarded as unknown instead of accepted.
+- `prompt`: subject matching and leaf ordering are case-insensitive end to
+  end; directory group keys render with a trailing slash while dedupe/once
+  ledgers keep canonical paths (display form vs identity form separated).
 
 ## [0.1.2] — 2026-09-05
 
@@ -82,5 +73,6 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 Deprecated shortly after publish; superseded by [0.1.1]. Use 0.1.1 or later.
 
+[0.2.0]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.2.0
 [0.1.2]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.1.2
 [0.1.1]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.1.1

@@ -53,8 +53,12 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
 - **PKG-10〈changelog-face〉**：`CHANGELOG.md` 是包的发布面义务——住在包根、
   随 `files` 白名单进 tarball、每个 version bump 补一条（version/日期/发布
   内容，Keep a Changelog 格式）；措辞面向消费者，开发仓控制面叙事不进
-  changelog（与 PKG-6 同口径）。下线能力史先于任何发布版存在时不写
-  「Removed」——从未随发布版存在的东西无 changelog 义务。
+  changelog（与 PKG-6 同口径）。条目**精简**：每个消费者可感知的功能性变更
+  一条短句（what + breaking 迁移提示）；动机长文、子项细节、发布工作流/
+  CI/内部闸/docs-only 改动不进发布面，raw 提交记录与裁剪账留开发仓控制面
+  （每版本一档，不随包发布——含控制面叙事，进包即违 PKG-6）。下线能力史
+  先于任何发布版存在时不写「Removed」——从未随发布版存在的东西无 changelog
+  义务。
   探针：版本 bump 的 change-set 里 CHANGELOG.md 出现且含新版本号。
   基线：should-fix。
 
