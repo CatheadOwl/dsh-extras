@@ -47,6 +47,15 @@ interface CollectionResult {
   truncatedDirs: TruncatedDir[]
 }
 
+/**
+ * Shared mutable flag for the recursive walk: set when the maxFiles budget
+ * stops iteration while entries remain unexamined, so the caller can report
+ * the truncation loudly instead of silently dropping entries.
+ */
+interface FileLimitState {
+  hit: boolean
+}
+
 export async function collectMarkdownEntries(
   root: string,
   options: ScanOptions & { scanRoot: string },
@@ -88,7 +97,16 @@ export async function collectMarkdownEntries(
   const inheritedRules = options.respectGitignore
     ? await readInheritedGitignoreRules(root, options.scanRoot)
     : []
-  const collected = await collectMarkdownFiles(root, options.scanRoot, options, diagnostics, 0, inheritedRules, false)
+  const fileLimit: FileLimitState = { hit: false }
+  const collected = await collectMarkdownFiles(root, options.scanRoot, options, diagnostics, 0, inheritedRules, false, fileLimit)
+  if (fileLimit.hit) {
+    diagnostics.push({
+      code: 'file-limit-reached',
+      severity: 'warning',
+      message: `Markdown file limit (${options.maxFiles}) reached while scanning; entries past the limit were not examined and the route view may be incomplete. Raise maxFiles to see the remaining routes.`,
+      path: routePath(root, options.scanRoot) || '.',
+    })
+  }
   const entries = await Promise.all(collected.files.map((file) => buildEntry(root, file, diagnostics)))
   const truncatedEntries = collected.truncatedDirs.map((truncated) => buildTruncatedEntry(root, truncated))
   return [...entries, ...truncatedEntries]
@@ -99,7 +117,7 @@ export async function collectRouteHintCandidates(
   options: ScanOptions,
   diagnostics: RouteDiagnostic[],
 ): Promise<PathHintCandidate[]> {
-  const collected = await collectMarkdownFiles(root, root, options, diagnostics, 0, [], true)
+  const collected = await collectMarkdownFiles(root, root, options, diagnostics, 0, [], true, { hit: false })
   const files = collected.files
   const candidates = new Map<string, Set<string>>()
   for (const file of files) {
@@ -128,8 +146,12 @@ async function collectMarkdownFiles(
   depth: number,
   inheritedGitignoreRules: readonly GitignoreRule[],
   readCurrentGitignore: boolean,
+  fileLimit: FileLimitState,
 ): Promise<CollectionResult> {
-  if (options.maxFiles <= 0) return { files: [], truncatedDirs: [] }
+  if (options.maxFiles <= 0) {
+    fileLimit.hit = true
+    return { files: [], truncatedDirs: [] }
+  }
 
   let children: Dirent[]
   try {
@@ -153,7 +175,12 @@ async function collectMarkdownFiles(
   children.sort((left: Dirent, right: Dirent) => left.name.localeCompare(right.name))
 
   for (const child of children) {
-    if (files.length >= options.maxFiles) break
+    if (files.length >= options.maxFiles) {
+      // Budget exhausted while entries remain: mark it so the caller reports the
+      // truncation — a route view must never silently drop entries.
+      fileLimit.hit = true
+      break
+    }
     if (options.excludeDotEntries && child.name.startsWith('.')) continue
     const childPath = path.join(dir, child.name)
     const childIsDirectory = child.isDirectory()
@@ -168,7 +195,7 @@ async function collectMarkdownFiles(
         // README so the route line keeps its description. The omitted count is the
         // recursive .md total (what would expand), keeping `[truncated: N]` stable
         // regardless of which scan root observes this folder.
-        const truncated = await describeTruncatedDir(childPath, options)
+        const truncated = await describeTruncatedDir(childPath, options, gitignoreRules)
         if (truncated.markdownCount > 0) {
           truncatedDirs.push(truncated)
         }
@@ -177,7 +204,7 @@ async function collectMarkdownFiles(
       const nested = await collectMarkdownFiles(root, childPath, {
         ...options,
         maxFiles: options.maxFiles - files.length,
-      }, diagnostics, depth + 1, gitignoreRules, true)
+      }, diagnostics, depth + 1, gitignoreRules, true, fileLimit)
       files.push(...nested.files)
       truncatedDirs.push(...nested.truncatedDirs)
       continue
@@ -192,13 +219,25 @@ async function collectMarkdownFiles(
   return { files, truncatedDirs }
 }
 
-/** Shallow README read at a depth-boundary directory, plus a recursive .md count for the omitted total. */
-async function describeTruncatedDir(dir: string, options: ScanOptions): Promise<TruncatedDir> {
+/**
+ * Shallow README read at a depth-boundary directory, plus a recursive .md count for the omitted total.
+ * The count inherits the caller's gitignore rules and reads each nested directory's own .gitignore as
+ * it descends, so `omittedMarkdownCount` matches what an actual expansion of this folder would list.
+ */
+async function describeTruncatedDir(
+  dir: string,
+  options: ScanOptions,
+  inheritedGitignoreRules: readonly GitignoreRule[],
+): Promise<TruncatedDir> {
   let mdCount = 0
   let readmePath: string | null = null
   let description: string | null = null
 
-  const walk = async (currentDir: string, isRoot: boolean): Promise<void> => {
+  const rootRules = options.respectGitignore
+    ? [...inheritedGitignoreRules, ...(await readGitignoreRules(dir))]
+    : []
+
+  const walk = async (currentDir: string, isRoot: boolean, gitignoreRules: readonly GitignoreRule[]): Promise<void> => {
     let children: Dirent[]
     try {
       children = await readdir(currentDir, { withFileTypes: true })
@@ -208,9 +247,14 @@ async function describeTruncatedDir(dir: string, options: ScanOptions): Promise<
     for (const child of children) {
       if (options.excludeDotEntries && child.name.startsWith('.')) continue
       const childPath = path.join(currentDir, child.name)
-      if (child.isDirectory()) {
+      const childIsDirectory = child.isDirectory()
+      if (options.respectGitignore && isGitignored(childPath, childIsDirectory, gitignoreRules)) continue
+      if (childIsDirectory) {
         if (options.excludeDirs.includes(child.name)) continue
-        await walk(childPath, false)
+        const nestedRules = options.respectGitignore
+          ? [...gitignoreRules, ...(await readGitignoreRules(childPath))]
+          : gitignoreRules
+        await walk(childPath, false, nestedRules)
       } else if (child.isFile() && child.name.toLowerCase().endsWith('.md')) {
         if (isExcludedFileName(child.name, options.excludeFiles)) continue
         mdCount++
@@ -226,7 +270,7 @@ async function describeTruncatedDir(dir: string, options: ScanOptions): Promise<
     }
   }
 
-  await walk(dir, true)
+  await walk(dir, true, rootRules)
   return { dir, markdownCount: mdCount, readmePath, description }
 }
 

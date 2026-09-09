@@ -237,6 +237,88 @@ test('excludeFiles matching is case-insensitive', async (t) => {
   )
 })
 
+test('hitting the maxFiles budget emits a file-limit-reached diagnostic, never a silent truncation', async (t) => {
+  const root = await makeFixture(t)
+  const result = await buildAnyRoutes(root, { depth: 1, format: 'flat', ...BASE_OPTIONS, maxFiles: 1 })
+
+  // AGENTS.md sorts first and consumes the whole budget; the rest of the tree
+  // is skipped — but loudly: the diagnostic is the point of this behavior.
+  assert.deepEqual(result.routes, ['AGENTS.md'], JSON.stringify(result.routes))
+  const limit = result.diagnostics.find((d) => d.code === 'file-limit-reached')
+  assert.ok(limit, `expected file-limit-reached diagnostic, got: ${JSON.stringify(result.diagnostics)}`)
+  assert.equal(limit.severity, 'warning')
+  assert.equal(limit.path, '.')
+  assert.ok(limit.message.includes('(1)'), `message must state the limit, got: ${limit.message}`)
+})
+
+test('no file-limit diagnostic when everything fits within maxFiles', async (t) => {
+  const root = await makeFixture(t)
+  const result = await buildAnyRoutes(root, { depth: 1, format: 'flat', ...BASE_OPTIONS, maxFiles: 100 })
+
+  assert.ok(!result.diagnostics.some((d) => d.code === 'file-limit-reached'),
+    `must not report a limit that was not hit, got: ${JSON.stringify(result.diagnostics)}`)
+})
+
+test('truncated count is gitignore-aware: N equals what expanding the folder would list', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'any-routes-gitignore-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+
+  const write = async (rel, content) => {
+    const file = path.join(root, ...rel.split('/'))
+    await mkdir(path.dirname(file), { recursive: true })
+    await writeFile(file, content, 'utf8')
+  }
+  await write('.gitignore', 'generated/\n')
+  await write('docs/README.md', '---\ndescription: Docs root\n---\n# Docs\n')
+  await write('docs/ok.md', '# OK\n')
+  // Root rule: the whole generated/ subtree is ignored.
+  await write('docs/generated/lots.md', '# generated\n')
+  // Nested rule: docs/.gitignore only ignores secret.md within docs.
+  await write('docs/.gitignore', 'secret.md\n')
+  await write('docs/secret.md', '# secret\n')
+
+  const result = await buildAnyRoutes(root, {
+    depth: 0,
+    format: 'flat',
+    ...BASE_OPTIONS,
+    respectGitignore: true,
+    excludeDotEntries: true,
+  })
+
+  // docs recursive visible .md = README + ok.md = 2; generated/ and secret.md
+  // are gitignored, so both the expansion and the count must exclude them.
+  assert.ok(
+    result.routes.includes('[truncated: 2] docs | Docs root'),
+    `truncated count must exclude gitignored content, got: ${JSON.stringify(result.routes)}`,
+  )
+})
+
+test('truncated count stays raw when respectGitignore is disabled', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'any-routes-no-ignore-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+
+  const write = async (rel, content) => {
+    const file = path.join(root, ...rel.split('/'))
+    await mkdir(path.dirname(file), { recursive: true })
+    await writeFile(file, content, 'utf8')
+  }
+  await write('.gitignore', 'generated/\n')
+  await write('docs/README.md', '---\ndescription: Docs root\n---\n# Docs\n')
+  await write('docs/generated/lots.md', '# generated\n')
+
+  const result = await buildAnyRoutes(root, {
+    depth: 0,
+    format: 'flat',
+    ...BASE_OPTIONS,
+    respectGitignore: false,
+  })
+
+  assert.ok(
+    result.routes.includes('[truncated: 2] docs | Docs root'),
+    `count must include ignored content when respectGitignore is off, got: ${JSON.stringify(result.routes)}`,
+  )
+})
+
 function findNode(nodes, targetPath) {
   for (const node of nodes ?? []) {
     if (node.path === targetPath) return node
