@@ -164,7 +164,10 @@ export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
 
     // 1) Incremental dirt scan over new durable events. A shrunken log
     // (unexpected mutation) resets the state into a fresh full scan.
-    const events = agent.session.events as unknown as readonly SessionEventLike[]
+    // `snapshotEvents()` replaced the removed `events` getter upstream
+    // (5660f44d29); reading the dead property surfaced as a turn/end
+    // "Cannot read properties of undefined (reading 'length')" error.
+    const events = agent.session.snapshotEvents() as unknown as readonly SessionEventLike[]
     if (events.length < state.nextEventIndex) {
       state.nextEventIndex = 0
       state.dirt = emptyDirt()

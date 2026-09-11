@@ -170,7 +170,7 @@ test('a failing defer gate does not steer the turn and keeps the window dirty', 
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -209,7 +209,7 @@ test('a failing blocking gate still steers the turn (budget cycle)', async () =>
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-block-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('block-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -246,7 +246,7 @@ test('a blocking gate with its stop dimension off never steers the turn', async 
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-stop-off-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('stop-off-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -291,7 +291,7 @@ test('a failing defer gate with a subagent fixer dispatches a child off-turn', a
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-fix-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-fix-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -334,7 +334,7 @@ test('ctx.gates.runAndRepair dispatches a fixer without the turn-stopping driver
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-service-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-service-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -394,7 +394,7 @@ test('a subagent fixer passes its request overlay through to ctx.subagents.start
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-passthrough-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-passthrough-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -441,7 +441,7 @@ test('a command fixer that fails keeps the window dirty so the gate re-runs', as
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-cmd-fail-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-cmd-fail-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -481,7 +481,7 @@ test('a subagent fixer degrades gracefully when ctx.subagents is absent', async 
   })
 
   const root = mkdtempSync(join(tmpdir(), 'gates-defer-nosub-'))
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('defer-nosub-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -536,8 +536,8 @@ test('parallel agents each get steered only on their own broken links (W10 attri
     check: async (r, changes) => docLinkCheck(r, changes),
   })
 
-  const makeAgent = (sessionId) => {
-    const agent = ctx.agentLoop.create(
+  const makeAgent = async (sessionId) => {
+    const agent = await ctx.agentLoop.create(
       SessionId(sessionId),
       { provider: 'mock', model: 'mock' },
       { cwd: root },
@@ -549,11 +549,11 @@ test('parallel agents each get steered only on their own broken links (W10 attri
   }
 
   try {
-    const A = makeAgent('doclink-a')
+    const A = await makeAgent('doclink-a')
     A.agent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))
     await waitForIdle(ctx, A.agent)
 
-    const B = makeAgent('doclink-b')
+    const B = await makeAgent('doclink-b')
     B.agent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))
     await waitForIdle(ctx, B.agent)
 
@@ -609,7 +609,7 @@ test('an opaque tool call steers every broken link (W10 opaque → true clause)'
     check: async (r, changes) => docLinkCheck(r, changes),
   })
 
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('doclink-opaque'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -669,7 +669,7 @@ test('writing a link target steers the inbound broken #fragment (W10 target ∈ 
     check: async (r, changes) => docLinkCheck(r, changes),
   })
 
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('doclink-target'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
