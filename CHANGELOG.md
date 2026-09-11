@@ -8,7 +8,7 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
-## [Unreleased]
+## [0.2.1] — 2026-09-11
 
 ### Fixed
 
@@ -25,6 +25,10 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 - `gates`: host capability assertion at activation — a host dsh lacking
   `Session#snapshotEvents` now fails loud with a named host-version error at
   load time instead of dying opaque once per turn.
+- `routes` (`any_nav`): a silent `maxFiles` budget stop now emits a
+  `file-limit-reached` diagnostic, and `[truncated: N]` counts honor
+  `.gitignore` rules along the scan (including nested ones), so N equals what
+  descending into that directory would actually list.
 
 ### Compatibility
 
@@ -99,6 +103,7 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 Deprecated shortly after publish; superseded by [0.1.1]. Use 0.1.1 or later.
 
+[0.2.1]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.2.1
 [0.2.0]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.2.0
 [0.1.2]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.1.2
 [0.1.1]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.1.1
