@@ -32,6 +32,7 @@ import type { DirtSummary, SessionEventLike } from './dirty.js'
 import { GatesController } from './controller.js'
 import { ConfigSchema, GatesService } from './service.js'
 import type { Config as GatesConfig } from './service.js'
+import { assertHostSessionApi } from './host-api.js'
 import { registerGatesConfigGuideSkill } from './skills.js'
 import type { GateDefinition, GateResult } from './types.js'
 
@@ -101,6 +102,7 @@ function registerGatesTool(ctx: Context): void {
 }
 
 export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
+  assertHostSessionApi()
   await ctx.plugin(GatesService, config)
   const service = gatesService(ctx)
 

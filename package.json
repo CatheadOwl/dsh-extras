@@ -64,7 +64,7 @@
     "build": "pnpm run build:gates && pnpm run build:markdown && pnpm run build:prompt && pnpm run build:routes && pnpm run build:client",
     "build:gates": "tsc -p modules/gates/tsconfig.json",
     "check-types:gates": "tsc --noEmit -p modules/gates/tsconfig.json",
-    "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs",
+    "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/host-api.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs",
     "test:gates:composition": "cd modules/gates && node --test --test-isolation=none test/composition.test.mjs",
     "verify:gates": "pnpm run check-types:gates && pnpm run build:gates && pnpm run test:gates",
     "build:markdown": "tsc -p modules/markdown/tsconfig.json",

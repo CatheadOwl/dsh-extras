@@ -8,6 +8,32 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
+## [Unreleased]
+
+### Fixed
+
+- `gates`: the turn-stopping driver crashed once per turn with
+  `Cannot read properties of undefined (reading 'length')` on dsh hosts from
+  0.1.2-alpha.4 onward — upstream removed the `session.events` getter
+  (5660f44d29) in favor of `snapshotEvents()`. Beyond the error line, turn-end
+  gates had silently stopped running since the host upgrade; the driver now
+  reads `snapshotEvents()` and the composition tests await the async
+  `agentLoop.create`.
+
+### Added
+
+- `gates`: host capability assertion at activation — a host dsh lacking
+  `Session#snapshotEvents` now fails loud with a named host-version error at
+  load time instead of dying opaque once per turn.
+
+### Compatibility
+
+- **Minimum host: a dsh release from 0.1.2-alpha.4 onward** (requires
+  `Session#snapshotEvents`). Host peer ranges stay `*` deliberately: the host
+  is pre-stable 0.x across two version axes (CLI releases vs per-package
+  versions), so a semver floor neither maps to what consumers install nor
+  survives link-resolved profiles; the startup assertion is the enforced bound.
+
 ## [0.2.0] — 2026-09-09
 
 ### Changed
