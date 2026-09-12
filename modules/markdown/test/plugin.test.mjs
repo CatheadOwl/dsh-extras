@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 
 import { apply } from '../lib/index.js'
+import { MD_RENAME_DESCRIPTION } from '../lib/tool-description.js'
 
 const roots = []
 
@@ -51,6 +52,29 @@ test('apply registers exactly one md_rename tool', () => {
   apply(ctx)
   assert.equal(defs.length, 1)
   assert.equal(defs[0].name, 'md_rename')
+})
+
+test('the registered description is the tool-description SSOT, label boundary included', () => {
+  const { ctx, defs } = makeCtx()
+  apply(ctx)
+  assert.equal(defs[0].description, MD_RENAME_DESCRIPTION)
+  assert.match(MD_RENAME_DESCRIPTION, /label that merely writes its own destination out/)
+})
+
+test('md_rename reports the labels it rewrote alongside the destinations', async () => {
+  const { ctx, defs } = makeCtx()
+  apply(ctx)
+  const root = fixture({
+    'README.md': '[docs/guide.md](docs/guide.md)\n[the guide](docs/guide.md)\n',
+    'docs/guide.md': '# Guide\n',
+  })
+  const result = await defs[0].execute({ oldPath: 'docs/guide.md', newPath: 'docs/intro.md' }, makeExec(root))
+  assert.equal(result.status, 'moved')
+  assert.deepEqual(result.relabels, [
+    { file: 'README.md', line: 1, from: 'docs/guide.md', to: 'docs/intro.md' },
+  ])
+  // The mirror moves with the destination; the prose label only follows the path.
+  assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[docs/intro.md](docs/intro.md)\n[the guide](docs/intro.md)\n')
 })
 
 test('md_rename moves a file and rewrites the in-link', async () => {
@@ -97,7 +121,9 @@ test('md_rename repairs links only when the move already happened (status repair
   assert.deepEqual([...result.edited].sort(), ['README.md', 'moved/guide.md'])
   // No move was performed and the links were rewritten to the new location.
   assert.equal(existsSync(join(root, 'a.md')), false)
-  assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[a](moved/guide.md)\n')
+  // The mirror label follows the new name (`a` was written in the no-extension
+  // shape, so the label keeps that shape).
+  assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide](moved/guide.md)\n')
   assert.equal(readFileSync(join(root, 'moved', 'guide.md'), 'utf8'), '# A\n\n[home](../README.md)\n')
 })
 

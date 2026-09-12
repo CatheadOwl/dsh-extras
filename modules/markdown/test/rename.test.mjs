@@ -10,6 +10,7 @@ import {
   checkRepository,
   planRename,
   rebaseHref,
+  relabelFor,
 } from '../lib/links/index.js'
 
 const roots = []
@@ -228,5 +229,241 @@ describe('planRename frozen sources (isFrozen option)', () => {
     assert.match(frozenSkip.reason, /frozen/)
     // Active holders were still rewritten.
     assert.equal(readFileSync(join(root, 'work', 'README.md'), 'utf8'), '[archived doc](../docs/archived/old.md)\n')
+  })
+})
+
+describe('relabelFor (pure mirror rule)', () => {
+  it('recomputes the same rendering the author used', () => {
+    assert.equal(relabelFor('docs/guide.md', 'docs/guide.md', 'notes/intro.md'), 'notes/intro.md')
+    assert.equal(relabelFor('docs/guide', 'docs/guide.md', 'notes/intro.md'), 'notes/intro')
+    assert.equal(relabelFor('guide.md', '../docs/guide.md', 'notes/intro.md'), 'intro.md')
+    assert.equal(relabelFor('guide', 'docs/guide.md', 'notes/intro.md'), 'intro')
+  })
+
+  it('leaves author prose alone, however path-shaped it looks', () => {
+    assert.equal(relabelFor('the guide', 'docs/guide.md', 'notes/intro.md'), undefined)
+    assert.equal(relabelFor('docs/touch.md', 'docs/guide.md', 'notes/intro.md'), undefined)
+    assert.equal(relabelFor('`guide.md`', 'docs/guide.md', 'notes/intro.md'), undefined)
+  })
+
+  it('keeps the label when it already renders the new destination (pure move)', () => {
+    assert.equal(relabelFor('guide.md', '../docs/guide.md', '../notes/guide.md'), undefined)
+    assert.equal(relabelFor('a.md', 'a.md', 'docs/a.md'), undefined)
+  })
+
+  it('follows the name, not the path, when a bare-filename link moves away', () => {
+    // Identity and last segment both matched the old path; the name rendering
+    // wins, so the label keeps the author's own extension style.
+    assert.equal(relabelFor('a', 'a.md', 'moved/guide.md'), 'guide')
+    assert.equal(relabelFor('a.md', 'a.md', 'docs/b.md'), 'b.md')
+  })
+
+  it('never proposes a rendering that cannot be written inside [...]', () => {
+    assert.equal(relabelFor('a.md', 'a.md', 'weird].md'), undefined)
+  })
+})
+
+describe('planRename mirrored labels', () => {
+  const frozenArchived = root => (abs) =>
+    abs.slice(root.length + 1).split(/[\\/]/).slice(0, -1).includes('archived')
+
+  it('relabels a self-titled in-link and reports it', () => {
+    const root = fixture({
+      'README.md': '[docs/guide.md](docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { certain, plan } = planRename(root, 'docs/guide.md', 'docs/intro.md')
+    assert.equal(certain, true)
+    assert.equal(plan.editsByFile.size, 1)
+    assert.deepEqual(plan.relabels, [
+      { file: 'README.md', line: 1, from: 'docs/guide.md', to: 'docs/intro.md' },
+    ])
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[docs/intro.md](docs/intro.md)\n')
+    assert.deepEqual(checkRepository(root), [])
+  })
+
+  it('keeps the house rendering (path without the .md extension)', () => {
+    const root = fixture({
+      'README.md': 'see [docs/glossary](docs/glossary.md) for terms\n',
+      'docs/glossary.md': '# G\n',
+    })
+    const { plan } = planRename(root, 'docs/glossary.md', 'docs/lexicon.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), 'see [docs/lexicon](docs/lexicon.md) for terms\n')
+    assert.deepEqual(plan.relabels, [
+      { file: 'README.md', line: 1, from: 'docs/glossary', to: 'docs/lexicon' },
+    ])
+  })
+
+  it('relabels a basename mirror held in another directory', () => {
+    const root = fixture({
+      'work/README.md': '[guide.md](../docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { plan } = planRename(root, 'docs/guide.md', 'docs/intro.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'work', 'README.md'), 'utf8'), '[intro.md](../docs/intro.md)\n')
+  })
+
+  it('relabels the moved file\'s own out-link mirror, reported at its pre-move path', () => {
+    const root = fixture({
+      'guide.md': '# Guide\n\n[docs/glossary](docs/glossary.md)\n',
+      'docs/glossary.md': '# G\n',
+    })
+    const { plan } = planRename(root, 'guide.md', 'notes/deep/guide.md')
+    applyRenamePlan(plan)
+    // The label mirrors the cited href (path without `.md`), so it follows the
+    // rebased `../` chain out of the new depth.
+    assert.equal(readFileSync(join(root, 'notes', 'deep', 'guide.md'), 'utf8'),
+      '# Guide\n\n[../../docs/glossary](../../docs/glossary.md)\n')
+    assert.deepEqual(plan.relabels, [
+      { file: 'guide.md', line: 3, from: 'docs/glossary', to: '../../docs/glossary' },
+    ])
+  })
+
+  it('keeps a name-unchanged link\'s label, and follows the one that names the path', () => {
+    const root = fixture({
+      'README.md': '[a.md](docs/a.md)\n[docs/a.md](docs/a.md)\n',
+      'docs/a.md': '# A\n',
+    })
+    const { plan } = planRename(root, 'docs', 'notes')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[a.md](notes/a.md)\n[notes/a.md](notes/a.md)\n')
+    assert.deepEqual(plan.relabels, [
+      { file: 'README.md', line: 2, from: 'docs/a.md', to: 'notes/a.md' },
+    ])
+  })
+
+  it('leaves prose labels and path-shaped non-mirrors alone, silently', () => {
+    const root = fixture({
+      'README.md': '[the guide](docs/guide.md)\n[docs/touch.md](docs/cookbook.md)\n',
+      'docs/guide.md': '# Guide\n',
+      'docs/cookbook.md': '# C\n',
+    })
+    const { plan } = planRename(root, 'docs/guide.md', 'docs/intro.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'),
+      '[the guide](docs/intro.md)\n[docs/touch.md](docs/cookbook.md)\n')
+    assert.deepEqual(plan.relabels, [])
+    assert.deepEqual(plan.skips, [])
+  })
+
+  it('rewrites a definition destination but never its key label', () => {
+    const root = fixture({
+      'README.md': '[guide]: docs/guide.md\n\nsee [the guide][guide]\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { plan } = planRename(root, 'docs/guide.md', 'notes/guide.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide]: notes/guide.md\n\nsee [the guide][guide]\n')
+    assert.deepEqual(plan.relabels, [])
+  })
+
+  it('relabels an image alt that mirrors the image path', () => {
+    const root = fixture({
+      'README.md': '![arch.png](docs/arch.png)\n',
+      'docs/arch.png': 'png\n',
+    })
+    const { plan } = planRename(root, 'docs/arch.png', 'docs/diagram.png')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '![diagram.png](docs/diagram.png)\n')
+    assert.deepEqual(plan.relabels, [
+      { file: 'README.md', line: 1, from: 'arch.png', to: 'diagram.png' },
+    ])
+  })
+
+  it('drops the label edit with the rest of a frozen source\'s rewrite', () => {
+    const root = fixture({
+      'archived/holder.md': '[guide.md](../docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+    })
+    const { certain, plan } = planRename(root, 'docs/guide.md', 'docs/intro.md', { isFrozen: frozenArchived(root) })
+    assert.equal(certain, true)
+    assert.equal(plan.editsByFile.size, 0)
+    assert.deepEqual(plan.relabels, [])
+    assert.match(plan.skips[0].reason, /frozen/)
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'archived', 'holder.md'), 'utf8'), '[guide.md](../docs/guide.md)\n')
+  })
+})
+
+// The mirror rule's whole safety argument is "exact equality against a closed
+// rendering set". These pin the near-misses: every one of them must keep its
+// bytes while the destination is still rewritten.
+describe('mirrored labels — false positives stay untouched', () => {
+  it('keeps a stale path-shaped label when its OWN destination moves', () => {
+    // The label names what the file was called before an EARLIER rename. The
+    // rule judges against the current href, so this is prose: the destination
+    // must follow and the text must not (no rot repair, and no new rot).
+    const root = fixture({
+      'README.md': '[docs/touch.md](docs/cookbook.md)\n',
+      'docs/cookbook.md': '# C\n',
+    })
+    const { plan } = planRename(root, 'docs/cookbook.md', 'docs/cooking.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[docs/touch.md](docs/cooking.md)\n')
+    assert.deepEqual(plan.relabels, [])
+    assert.deepEqual(plan.skips, [])
+  })
+
+  it('rewrites a code-span label\'s destination but leaves the label', () => {
+    const root = fixture({
+      'README.md': 'see [`guide.md`](docs/guide.md)\n',
+      'docs/guide.md': '# G\n',
+    })
+    const { plan } = planRename(root, 'docs/guide.md', 'docs/intro.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), 'see [`guide.md`](docs/intro.md)\n')
+    assert.deepEqual(plan.relabels, [])
+  })
+
+  it('leaves a directory-homepage label (README.md target) alone', () => {
+    const root = fixture({
+      'README.md': '[docs](docs/README.md)\n',
+      'docs/README.md': '# Docs\n',
+    })
+    const { plan } = planRename(root, 'docs/README.md', 'docs/guide.md')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[docs](docs/guide.md)\n')
+    assert.deepEqual(plan.relabels, [])
+  })
+
+  it('leaves a non-mirroring image alt alone while the destination follows', () => {
+    const root = fixture({
+      'README.md': '![architecture](docs/arch.png)\n',
+      'docs/arch.png': 'png\n',
+    })
+    const { plan } = planRename(root, 'docs/arch.png', 'docs/diagram.png')
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '![architecture](docs/diagram.png)\n')
+    assert.deepEqual(plan.relabels, [])
+  })
+
+  it('treats near-misses as prose (case, whitespace, ./ prefix, suffix)', () => {
+    assert.equal(relabelFor('docs/Glossary.md', 'docs/glossary.md', 'docs/lexicon.md'), undefined)
+    assert.equal(relabelFor('docs/glossary.md ', 'docs/glossary.md', 'docs/lexicon.md'), undefined)
+    assert.equal(relabelFor('docs/ glossary', 'docs/glossary.md', 'docs/lexicon.md'), undefined)
+    // A self-titled link WITH a fragment/suffix is outside the closed set: the
+    // label keeps the full authored url, which no rendering produces.
+    assert.equal(relabelFor('guide.md#start', 'guide.md', 'intro.md'), undefined)
+    // `./x.md` is path-shaped but is not a rendering of `x.md` (v1 non-coverage).
+    assert.equal(relabelFor('./guide.md', 'guide.md', 'intro.md'), undefined)
+  })
+
+  it('keeps a label that already names the NEW file (no reverse inference)', () => {
+    // The href still points at the old path; the text happens to name the new
+    // one. Not a rendering of the CURRENT destination → never touched, and the
+    // tool never rewrites hrefs to match a label.
+    assert.equal(relabelFor('lexicon', 'docs/glossary.md', 'docs/lexicon.md'), undefined)
+  })
+
+  it('still rewrites the exact renderings — the bare stem is the intended semantics', () => {
+    assert.equal(relabelFor('a', 'a.md', 'b.md'), 'b') // in-place rename, no-extension shape
+    // The bare stem is this repo's canonical label for a file name (406 links);
+    // following it is the rule's point, not a tolerated edge case (ADR 0005).
+    assert.equal(relabelFor('glossary', 'docs/glossary.md', 'docs/lexicon.md'), 'lexicon')
+    assert.equal(relabelFor('arch.png', 'docs/arch.png', 'docs/diagram.png'), 'diagram.png')
+    assert.equal(relabelFor('arch', 'docs/arch.png', 'docs/diagram.png'), undefined) // no `.md` to drop → prose
   })
 })

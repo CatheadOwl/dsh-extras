@@ -8,6 +8,25 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
+## [Unreleased]
+
+### Changed
+
+- `markdown` (`md_rename`): a link label that writes its own destination out —
+  the path itself, or its last segment, with or without the `.md` extension —
+  now follows the target when the file is renamed or moved, so an index can no
+  longer keep advertising the old name after the target left. Any other label is
+  author prose and stays byte-untouched; reference-definition keys (they are the
+  key `[label]` usages resolve through) and markup labels (`` [`x.md`](x.md) ``)
+  are never relabeled. A label is never a conflict and never blocks a
+  destination rewrite, and a frozen source skips the whole rewrite as before.
+
+### Added
+
+- `markdown` (`md_rename`): the tool result now reports `relabels` (`{file,
+  line, from, to}`) next to `edited` and `skips`, so the label half of an edit
+  is auditable rather than implicit.
+
 ## [0.2.1] — 2026-09-11
 
 ### Fixed

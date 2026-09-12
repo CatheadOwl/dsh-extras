@@ -70,6 +70,24 @@ describe('extractReferences (AST, aligned)', () => {
       ['link', 'http://127.0.0.1:3080', undefined],
     ])
   })
+
+  it('locates the label of an inline link and an image, but never a definition key', () => {
+    const source = '[the docs](docs/a.md)\n\n![arch](img/a.png)\n\n[manual]: docs/b.md\n'
+    const refs = extractReferences(source)
+    assert.deepEqual(refs.map(ref => [ref.kind, ref.label?.text]), [
+      ['link', 'the docs'],
+      ['image', 'arch'],
+      ['definition', undefined],
+    ])
+    assert.equal(source.slice(refs[0].label.start, refs[0].label.end), 'the docs')
+  })
+
+  it('attaches no label to a markup label (rewriting it would drop the formatting)', () => {
+    const refs = extractReferences('[`a.md`](a.md)\n\n[**b**](b.md)\n')
+    assert.deepEqual(refs.map(ref => ref.label), [undefined, undefined])
+    // Only the label is withheld; both destinations stay rebasable.
+    assert.deepEqual(refs.map(ref => [ref.start !== undefined, ref.end !== undefined]), [[true, true], [true, true]])
+  })
 })
 
 describe('resolveReference (aligned)', () => {

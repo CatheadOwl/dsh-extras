@@ -33,7 +33,9 @@ export default {
   ],
   async inspect(workspace) {
     if (pathExists(workspace, 'a.md')) throw new Error('the agent recreated the old path')
-    if (readText(workspace, 'README.md') !== '[a](moved/guide.md)\n') {
+    // `a` is a mirror label of `a.md` (the no-extension shape), so it follows
+    // the new name; a prose label would have stayed put.
+    if (readText(workspace, 'README.md') !== '[guide](moved/guide.md)\n') {
       throw new Error(`in-link not repaired: ${JSON.stringify(readText(workspace, 'README.md'))}`)
     }
     if (readText(workspace, 'moved/guide.md') !== '# A\n\n[home](../README.md)\n') {

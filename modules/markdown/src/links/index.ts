@@ -10,11 +10,12 @@ export {
   parseMarkdown,
   visitMarkdown,
   markdownDestination,
+  markdownLabel,
   splitMarkdownUrlTarget,
   isExternalOrAbsoluteMarkdownUrl,
   markdownHeadingLines,
 } from './markdown.js'
-export type { MarkdownDestination, MarkdownDestinationNode, MarkdownHeadingLine, MarkdownProseLine } from './markdown.js'
+export type { MarkdownDestination, MarkdownDestinationNode, MarkdownHeadingLine, MarkdownLabel, MarkdownProseLine } from './markdown.js'
 export { githubSlug, documentAnchors, documentAnchorPairs, anchorCache } from './anchors.js'
 export type { DocumentAnchorPair } from './anchors.js'
 export {
@@ -43,12 +44,13 @@ export {
   checkRepository,
 } from './resolve.js'
 export type { CheckRepositoryOptions, LinkReference, Resolution, LinkViolation, ReferenceKind, TargetProbe } from './resolve.js'
-export { rebaseDestination } from './rebase.js'
-export { rebaseHref, planRename, applyRenamePlan, REASON_NO_RENAME_EVIDENCE } from './rename.js'
+export { rebaseDestination, rebaseLabel } from './rebase.js'
+export { rebaseHref, planRename, applyRenamePlan, relabelFor, REASON_NO_RENAME_EVIDENCE } from './rename.js'
 export type {
   PlanRenameOptions,
   RenameSkip,
   RenameConflict,
+  RenameRelabel,
   RenamePlan,
   RenamePlanResult,
   RenameApplyResult,

@@ -20,13 +20,17 @@
  * The data plane reuses the mdast seams (extractReferences / resolveReference /
  * rebaseDestination): a reference is located byte-exactly and its destination
  * substring replaced, preserving the fragment/query suffix and every other byte.
+ * When the authored label is the destination written out — the path, its last
+ * segment, with or without `.md` — the label is recomputed the same way: a
+ * mirror is re-derived, never guessed (`relabelFor`), and any other label is
+ * author prose and stays byte-untouched.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, relative, resolve } from 'node:path'
 
 import { gitGrep, gitMove, gitStatusPorcelain, gitTopLevel, gitTreeHas } from './git.js'
 import { splitMarkdownUrlTarget } from './markdown.js'
-import { rebaseDestination } from './rebase.js'
+import { rebaseDestination, rebaseLabel } from './rebase.js'
 import {
   extractReferences,
   pathInside,
@@ -60,6 +64,16 @@ export interface RenameSkip {
   reason: string
 }
 
+/** One label rewritten because it mirrored the reference's own destination. */
+export interface RenameRelabel {
+  file: string
+  line: number
+  /** Label text before the rewrite. */
+  from: string
+  /** The same rendering recomputed on the new destination. */
+  to: string
+}
+
 /** One blocking issue: makes `certain` false, forbids apply. */
 export interface RenameConflict {
   file: string
@@ -78,6 +92,12 @@ export interface RenamePlan {
   /** Absolute post-move path → fully rewritten content (out-link + in-link edits). */
   editsByFile: Map<string, string>
   skips: RenameSkip[]
+  /**
+   * Labels rewritten alongside a destination (mirror labels only — see
+   * `relabelFor`). Reported so the cosmetic half of the edit is auditable;
+   * never a conflict, and never a skip (a skipped reference keeps its label).
+   */
+  relabels: RenameRelabel[]
   conflicts: RenameConflict[]
   /**
    * Post-hoc repair: the move already happened under git's witness, so apply
@@ -116,6 +136,8 @@ export interface RenameApplyResult {
 interface Rewrite {
   reference: LinkReference
   newHref: string
+  /** Mirrored label written in the same reference; absent = the label is author prose (untouched). */
+  newLabel?: string
 }
 
 function isInside(dir: string, target: string): boolean {
@@ -145,15 +167,79 @@ function listMarkdownUnder(path: string): string[] {
 /**
  * Apply a set of byte edits to one source. Edits are non-overlapping
  * (distinct AST nodes), so applying in descending start order keeps every
- * remaining edit's offsets valid in the evolving buffer.
+ * remaining edit's offsets valid in the evolving buffer. Within one reference
+ * the label always sits strictly before the destination, so destination-first
+ * is descending order there too.
  */
 function applyRebase(source: string, rewrites: Rewrite[]): string {
   const ordered = [...rewrites].sort((a, b) => (b.reference.start ?? 0) - (a.reference.start ?? 0))
   let out = source
-  for (const { reference, newHref } of ordered) {
+  for (const { reference, newHref, newLabel } of ordered) {
     out = rebaseDestination(out, reference, newHref)
+    if (newLabel !== undefined) out = rebaseLabel(out, reference, newLabel)
   }
   return out
+}
+
+/** Characters that would break the label syntax if written inside `[...]` verbatim. */
+const LABEL_UNSAFE = /[[\]\\\r\n]/
+
+/** `docs/guide.md` → `docs/guide`; a path without the extension is unchanged. */
+function withoutMarkdownExtension(path: string): string {
+  return path.toLowerCase().endsWith('.md') ? path.slice(0, -3) : path
+}
+
+/** `docs/guide.md` → `guide.md`. */
+function lastSegment(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1)
+}
+
+/**
+ * The label renderings a rename may recompute: each writes the reference's own
+ * destination the way a reader addresses it. The list is closed on purpose — a
+ * label that is none of these is author prose, and prose is never rewritten.
+ * Name renderings come first: when several match, the destination was a bare
+ * filename in the link's own directory, and a same-directory link labels the
+ * FILE, not the path it happened to be reachable by (see `relabelFor`).
+ */
+const MIRRORED_LABELS: ReadonlyArray<(path: string) => string> = [
+  lastSegment,
+  path => withoutMarkdownExtension(lastSegment(path)),
+  path => path,
+  withoutMarkdownExtension,
+]
+
+/**
+ * The label a rewrite must carry: when `label` is one of `MIRRORED_LABELS` of
+ * the reference's current destination, the same rendering recomputed on the new
+ * destination — the mirror relation is re-derived, not guessed at.
+ *
+ * `undefined` means "leave the label alone", for three deterministic reasons:
+ * no rendering matched (author prose), a matched rendering of the new
+ * destination already equals the label (a pure move — the mirror still holds,
+ * so zero bytes change), or every matched rendering of the new destination is
+ * unrepresentable inside `[...]`.
+ *
+ * Several renderings can match only where the authored destination was a bare
+ * filename (identity and last segment then read the same); the earliest entry
+ * wins, so the label keeps the author's own shape — `[a](a.md)` follows the
+ * target's new NAME with no extension, `[a.md](a.md)` with one, and neither
+ * turns into a path.
+ * @param label - the authored label text (brackets excluded).
+ * @param oldPath - the reference's current destination path (suffix stripped).
+ * @param newPath - the rebased destination path.
+ */
+export function relabelFor(label: string, oldPath: string, newPath: string): string | undefined {
+  let chosen: string | undefined
+  let mirrorsNewDestination = false
+  for (const render of MIRRORED_LABELS) {
+    if (render(oldPath) !== label) continue
+    const next = render(newPath)
+    if (LABEL_UNSAFE.test(next)) continue
+    if (next === label) mirrorsNewDestination = true
+    else chosen ??= next
+  }
+  return mirrorsNewDestination ? undefined : chosen
 }
 
 function conflict(file: string, ref: Pick<LinkReference, 'line' | 'url'>, reason: string): RenameConflict {
@@ -162,6 +248,22 @@ function conflict(file: string, ref: Pick<LinkReference, 'line' | 'url'>, reason
 
 function skip(file: string, ref: Pick<LinkReference, 'line' | 'url'>, reason: string): RenameSkip {
   return { file, line: ref.line, url: ref.url, reason }
+}
+
+/**
+ * Shared tail of every rewrite site (all four passes): verify the rebased
+ * destination is representable, attach the mirrored label when the authored one
+ * renders the destination, then record the rewrite. One helper so the label
+ * rule can never drift between passes.
+ */
+function recordRewrite(file: string, ref: LinkReference, newHref: string, rewrites: Rewrite[], skips: RenameSkip[]): void {
+  if (BARE_DESTINATION_UNSAFE.test(newHref)) {
+    skips.push(skip(file, ref, `rebased href ${JSON.stringify(newHref)} is not representable as a bare markdown target`))
+    return
+  }
+  const label = ref.label
+  const newLabel = label === undefined ? undefined : relabelFor(label.text, splitMarkdownUrlTarget(ref.url).path, newHref)
+  rewrites.push(newLabel === undefined ? { reference: ref, newHref } : { reference: ref, newHref, newLabel })
 }
 
 /** Skip reason when a rewrite was planned but its source file is frozen (read-only by policy). */
@@ -175,6 +277,35 @@ const REASON_FROZEN_SOURCE = 'source file is frozen (read-only by policy; refere
 function discardFrozenRewrites(file: string, rewrites: Rewrite[], skips: RenameSkip[]): void {
   for (const { reference } of rewrites) {
     skips.push(skip(file, reference, REASON_FROZEN_SOURCE))
+  }
+}
+
+/**
+ * Commit one source's planned rewrites: nothing to do when there are none; a
+ * frozen source converts each would-be rewrite into a reported skip; otherwise
+ * the file is written at `file` and every label it rewrote is reported against
+ * `reportFile` (the pre-move path for L1 out-links, the post-move path
+ * elsewhere — each pass's existing reporting convention).
+ */
+function commitRewrites(
+  file: string,
+  reportFile: string,
+  source: string,
+  rewrites: Rewrite[],
+  frozen: boolean,
+  editsByFile: Map<string, string>,
+  skips: RenameSkip[],
+  relabels: RenameRelabel[],
+): void {
+  if (rewrites.length === 0) return
+  if (frozen) {
+    discardFrozenRewrites(reportFile, rewrites, skips)
+    return
+  }
+  editsByFile.set(file, applyRebase(source, rewrites))
+  for (const { reference, newLabel } of rewrites) {
+    if (newLabel === undefined || reference.label === undefined) continue
+    relabels.push({ file: reportFile, line: reference.line, from: reference.label.text, to: newLabel })
   }
 }
 
@@ -245,6 +376,7 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
   const isFrozen = options.isFrozen
   const conflicts: RenameConflict[] = []
   const skips: RenameSkip[] = []
+  const relabels: RenameRelabel[] = []
 
   const emptyPlan = (): RenamePlan => ({
     root: repoRoot,
@@ -252,6 +384,7 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
     newPath: newAbs,
     editsByFile: new Map(),
     skips,
+    relabels,
     conflicts,
     linkOnly: false,
   })
@@ -327,16 +460,9 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
         }
         const newHref = rebaseHref(newFile, target)
         if (newHref === splitMarkdownUrlTarget(ref.url).path) continue // depth-preserving move → href unchanged
-        if (BARE_DESTINATION_UNSAFE.test(newHref)) {
-          skips.push(skip(newRel, ref, `rebased href ${JSON.stringify(newHref)} is not representable as a bare markdown target`))
-          continue
-        }
-        rewrites.push({ reference: ref, newHref })
+        recordRewrite(newRel, ref, newHref, rewrites, skips)
       }
-      if (rewrites.length > 0) {
-        if (!frozen) editsByFile.set(newFile, applyRebase(source, rewrites))
-        else discardFrozenRewrites(newRel, rewrites, skips)
-      }
+      commitRewrites(newFile, newRel, source, rewrites, frozen, editsByFile, skips, relabels)
     }
 
     // 2p. In-link rewrite, resolved lexically (plan-layer difference #1):
@@ -366,21 +492,14 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
           continue
         }
         const newHref = rebaseHref(candidateAbs, newTarget)
-        if (BARE_DESTINATION_UNSAFE.test(newHref)) {
-          skips.push(skip(posixRelative(repoRoot, candidateAbs), ref, `rebased href ${JSON.stringify(newHref)} is not representable as a bare markdown target`))
-          continue
-        }
-        rewrites.push({ reference: ref, newHref })
+        recordRewrite(candidateRel, ref, newHref, rewrites, skips)
       }
-      if (rewrites.length > 0) {
-        if (isFrozen?.(candidateAbs) !== true) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
-        else discardFrozenRewrites(candidateRel, rewrites, skips)
-      }
+      commitRewrites(candidateAbs, candidateRel, source, rewrites, isFrozen?.(candidateAbs) === true, editsByFile, skips, relabels)
     }
 
     return {
       certain: conflicts.length === 0,
-      plan: { root: repoRoot, oldPath: oldAbs, newPath: newAbs, editsByFile, skips, conflicts, linkOnly: true },
+      plan: { root: repoRoot, oldPath: oldAbs, newPath: newAbs, editsByFile, skips, relabels, conflicts, linkOnly: true },
     }
   }
 
@@ -406,19 +525,12 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
       }
       const newHref = rebaseHref(newFile, resolution.abs!)
       if (newHref === splitMarkdownUrlTarget(ref.url).path) continue // depth-preserving move → href unchanged
-      if (BARE_DESTINATION_UNSAFE.test(newHref)) {
-        skips.push(skip(posixRelative(repoRoot, oldFile), ref, `rebased href ${JSON.stringify(newHref)} is not representable as a bare markdown target`))
-        continue
-      }
-      rewrites.push({ reference: ref, newHref })
+      recordRewrite(posixRelative(repoRoot, oldFile), ref, newHref, rewrites, skips)
     }
-    if (rewrites.length > 0) {
-      // Freeze judged at the pre-move position: a file moving INTO a frozen
-      // directory (the archival move) is fully rewritten — that edit is the
-      // policy-authorized last one.
-      if (isFrozen?.(oldFile) !== true) editsByFile.set(newFile, applyRebase(source, rewrites))
-      else discardFrozenRewrites(posixRelative(repoRoot, oldFile), rewrites, skips)
-    }
+    // Freeze judged at the pre-move position: a file moving INTO a frozen
+    // directory (the archival move) is fully rewritten — that edit is the
+    // policy-authorized last one.
+    commitRewrites(newFile, posixRelative(repoRoot, oldFile), source, rewrites, isFrozen?.(oldFile) === true, editsByFile, skips, relabels)
   }
 
   // 2. In-link rewrite: references elsewhere that resolve INTO old, rewritten
@@ -454,21 +566,14 @@ export function planRename(root: string, oldPath: string, newPath: string, optio
       }
       const newTarget = shiftPrefix(oldAbs, newAbs, resolution.abs!)
       const newHref = rebaseHref(candidateAbs, newTarget)
-      if (BARE_DESTINATION_UNSAFE.test(newHref)) {
-        skips.push(skip(posixRelative(repoRoot, candidateAbs), ref, `rebased href ${JSON.stringify(newHref)} is not representable as a bare markdown target`))
-        continue
-      }
-      rewrites.push({ reference: ref, newHref })
+      recordRewrite(candidateRel, ref, newHref, rewrites, skips)
     }
-    if (rewrites.length > 0) {
-      if (isFrozen?.(candidateAbs) !== true) editsByFile.set(candidateAbs, applyRebase(source, rewrites))
-      else discardFrozenRewrites(candidateRel, rewrites, skips)
-    }
+    commitRewrites(candidateAbs, candidateRel, source, rewrites, isFrozen?.(candidateAbs) === true, editsByFile, skips, relabels)
   }
 
   return {
     certain: conflicts.length === 0,
-    plan: { root: repoRoot, oldPath: oldAbs, newPath: newAbs, editsByFile, skips, conflicts, linkOnly: false },
+    plan: { root: repoRoot, oldPath: oldAbs, newPath: newAbs, editsByFile, skips, relabels, conflicts, linkOnly: false },
   }
 }
 

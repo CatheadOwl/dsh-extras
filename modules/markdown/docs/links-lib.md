@@ -14,11 +14,11 @@ description: md-links 纯库槽位——Markdown 链接完整性数据面（mdas
 
 | 模块 | 来源 | 职责 |
 |------|------|------|
-| `markdown.ts` | fork（上游 `scripts/markdown.ts`） | 解析缝：GFM 解析（`parseMarkdown`）、树遍历（`visitMarkdown`）、字节保真目的地定位（`markdownDestination`）、URL 切分/外链判定（`splitMarkdownUrlTarget` / `isExternalOrAbsoluteMarkdownUrl`）、标题行（`markdownHeadingLines`） |
+| `markdown.ts` | fork（上游 `scripts/markdown.ts`）+ 自写扩展 | 解析缝：GFM 解析（`parseMarkdown`）、树遍历（`visitMarkdown`）、字节保真目的地定位（`markdownDestination`）、自写扩展标签定位（`markdownLabel`：`[...]` 文本的绝对 offset 与源文本，复用 fork 的标签扫描器）、URL 切分/外链判定（`splitMarkdownUrlTarget` / `isExternalOrAbsoluteMarkdownUrl`）、标题行（`markdownHeadingLines`） |
 | `anchors.ts` | fork（上游 `scripts/verify-md-links.ts`） | 锚点缝：GitHub 标题 slug（`githubSlug`）、文档锚点集（`documentAnchors`）、逐文件锚点缓存（`anchorCache`）；自写扩展 `documentAnchorPairs`（标题 → 精确锚点对，供 remedy hint） |
-| `resolve.ts` | 自写（语义对齐上游） | 解析缝之上：`extractReferences`（AST 提取 link/image/definition）、`resolveReference`（逐引用解析，可选 per-scan `TargetProbe` 存在性缓存）、`canonicalPath`（归责规范路径：绝对、`/` 分隔、lexical）、`checkRepository`（整仓校验，可选 `include` 谓词缝；内部建 `targetProbeCache` 去重 5:1 重复目标的存在性探测）；跳过 `//`/`/`/scheme，`#frag` 解析到源文件自身 |
-| `rebase.ts` | 自写（宿主只查不改） | rebase 缝：`rebaseDestination`（字节保真目的地改写，只换 path、保留 `#`/`?` suffix） |
-| `rename.ts` | 自写（宿主只查不改） | rename 事务内核：`rebaseHref`（document-relative href）/ `planRename`（可选 `isFrozen` 谓词：冻结源文件随计划移动但内容永不改写，would-be 改写转 skip + report；策略由承载面注入，lib 零策略）/ `applyRenamePlan`（plan-then-apply，工作树绝不半改） |
+| `resolve.ts` | 自写（语义对齐上游） | 解析缝之上：`extractReferences`（AST 提取 link/image/definition；引用带字节目的地，内联 link/image 另带可改写标签 `LinkReference.label`——definition 的标签是引用键、带标记的标签会丢格式，两者都不带）、`resolveReference`（逐引用解析，可选 per-scan `TargetProbe` 存在性缓存）、`canonicalPath`（归责规范路径：绝对、`/` 分隔、lexical）、`checkRepository`（整仓校验，可选 `include` 谓词缝；内部建 `targetProbeCache` 去重 5:1 重复目标的存在性探测）；跳过 `//`/`/`/scheme，`#frag` 解析到源文件自身 |
+| `rebase.ts` | 自写（宿主只查不改） | rebase 缝：`rebaseDestination`（字节保真目的地改写，只换 path、保留 `#`/`?` suffix）与 `rebaseLabel`（字节保真标签改写，只换 `[...]` 内文本） |
+| `rename.ts` | 自写（宿主只查不改） | rename 事务内核：`rebaseHref`（document-relative href）/ `relabelFor`（纯镜像规则：标签是自指目的地的渲染时按同形重算，散文标签与不可表示渲染一律返回 `undefined`）/ `planRename`（可选 `isFrozen` 谓词：冻结源文件随计划移动但内容永不改写，would-be 改写转 skip + report；策略由承载面注入，lib 零策略；`relabels` 报告被改写的标签）/ `applyRenamePlan`（plan-then-apply，工作树绝不半改） |
 | `normalize.ts` | 自写（宿主只查不改） | root-relative 归一化：`planRootRelativeNormalization` / `applyRootRelativeNormalization`（`/` 内部链接 → document-relative，补 `resolve.ts` 的 `/` 跳过） |
 | `git.ts` | 自写（宿主用 glob，非 git） | git 扫描缝：`gitTopLevel`/`gitLinkPaths`/`gitLsFiles`（gitignore 正确 + gitlink 边界；临时文件捕获规避沙箱管道 EPERM） |
 | `index.ts` | — | 公共 `exports` 重导出 |

@@ -2,9 +2,11 @@
  * markdown module: the Markdown toolchain row of `@catheadowl/dsh-extras` — one
  * fiber registering all three model-facing surfaces:
  *
- * - the `md_rename` tool (move + deterministic all-or-nothing link rewrite),
- *   a thin wrapper over the in-module `./links` pure lib (plan/apply:
- *   `planRename` / `applyRenamePlan`; conflict → report, never guess);
+ * - the `md_rename` tool (move + deterministic all-or-nothing link rewrite:
+ *   destination rebase plus the mirrored label of a reference that writes out
+ *   its own destination), a thin wrapper over the in-module `./links` pure lib
+ *   (plan/apply: `planRename` / `applyRenamePlan`; conflict → report, never
+ *   guess); its model-facing wording lives in `./tool-description` (TD-1 SSOT);
  * - the `doc-link` gate (Markdown link integrity at turn-stop and manual runs),
  *   soft-registered through `registerGate` (gates absent → loads, registers
  *   nothing) with the data plane and attribution policy in `./markdown/gate-check`;
@@ -25,10 +27,11 @@ import z from '@deepseek-ai/schemastery'
 import { registerGate, projectGateOptions } from '@catheadowl/dsh-extras/gates/register'
 import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/gates/register'
 import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename, repositoryRoot } from './links/index.js'
-import type { RenameConflict, RenameSkip } from './links/index.js'
+import type { RenameConflict, RenameRelabel, RenameSkip } from './links/index.js'
 
 import { check as checkDocLink, frozenSourcePredicate, parseFrozenDirs } from './gate-check.js'
 import { check as checkMdMetadata } from './metadata-check.js'
+import { MD_RENAME_DESCRIPTION } from './tool-description.js'
 
 export const name = 'markdown'
 
@@ -60,6 +63,10 @@ function conflictView(c: RenameConflict): { file: string; line: number; url: str
 
 function skipView(s: RenameSkip): { file: string; line: number; url: string; reason: string } {
   return { file: s.file, line: s.line, url: s.url, reason: s.reason }
+}
+
+function relabelView(r: RenameRelabel): { file: string; line: number; from: string; to: string } {
+  return { file: r.file, line: r.line, from: r.from, to: r.to }
 }
 
 /**
@@ -161,8 +168,7 @@ const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
 export function apply(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'md_rename',
-    description:
-      'Move a file or directory to a new path and rewrite every internal Markdown reference (links, images, definitions) so all links keep resolving. Deterministic and all-or-nothing: it plans the full edit set — in-link rewrite plus out-link rebase — before writing anything, then refuses the whole move on any hard conflict (newPath already exists, oldPath missing, or a path outside the repository). If the move already happened — oldPath missing, newPath present, and git can witness the rename (a staged R record, a D record with the shifted file on disk, or a HEAD entry) — the same call repairs the links only (status "repaired", no move performed); without that evidence it refuses with a remedy hint instead of guessing. Prefer this tool over manually editing links for any Markdown move — including one you merely discover (a tracked path gone from disk, its content reappearing elsewhere): pass the (oldPath, newPath) pair and let it rewrite in-links and rebase the moved file\'s own out-links in one deterministic pass. The tool never restores or verifies already-moved content itself. References it cannot rewrite deterministically (already-broken links, external/absolute targets, and rebased destinations with unrepresentable characters) are skipped and reported, never guessed. oldPath and newPath are workspace-root-relative.',
+    description: MD_RENAME_DESCRIPTION,
     parameters: {
       oldPath: {
         type: 'string',
@@ -198,6 +204,7 @@ export function apply(ctx: Context): void {
         oldPath: args.oldPath,
         newPath: args.newPath,
         edited: result.edited,
+        relabels: plan.relabels.map(relabelView),
         skips: plan.skips.map(skipView),
       })
     },

@@ -5,6 +5,10 @@
  * the rejected A3). This copy keeps only the parse/locate primitives the lib
  * needs; fence/prose-line helpers were dropped.
  *
+ * `markdownLabel` is a self-written extension (the fork locates destinations
+ * only) and reuses the fork's own `labelBounds` scanner, so an upstream change
+ * to that scanner must be re-copied here like any other forked primitive.
+ *
  * Upstream sync: when `deepseek-harness/scripts/markdown.ts` changes these
  * primitives, re-copy them here by hand and re-run `pnpm run test`.
  * Imported mdast packages resolve from the host checkout via `link:` deps
@@ -81,20 +85,25 @@ function skipWhitespace(source: string, start: number): number {
   return index
 }
 
-function labelEnd(source: string): number {
-  const first = source.indexOf('[')
-  if (first === -1) return -1
+/** Offsets of a node's `[...]` label inside its source slice: the `[` and the matching `]`. */
+function labelBounds(rawNode: string): { open: number; close: number } | undefined {
+  const open = rawNode.indexOf('[')
+  if (open === -1) return undefined
   let depth = 0
-  for (let index = first; index < source.length; index += 1) {
-    const char = source[index]
+  for (let index = open; index < rawNode.length; index += 1) {
+    const char = rawNode[index]
     if (char === '\\') index += 1
     else if (char === '[') depth += 1
     else if (char === ']') {
       depth -= 1
-      if (depth === 0) return index
+      if (depth === 0) return { open, close: index }
     }
   }
-  return -1
+  return undefined
+}
+
+function labelEnd(source: string): number {
+  return labelBounds(source)?.close ?? -1
 }
 
 function destinationRange(rawNode: string, type: MarkdownDestinationNode['type']): { start: number; end: number } {
@@ -143,6 +152,36 @@ export function markdownDestination(source: string, node: MarkdownDestinationNod
   const range = destinationRange(source.slice(start, end), node.type)
   const absolute = { start: start + range.start, end: start + range.end }
   return { ...absolute, url: source.slice(absolute.start, absolute.end) }
+}
+
+/** One authored Markdown label and its absolute source offsets. */
+export interface MarkdownLabel {
+  /** Byte offset of the first character after the opening `[`. */
+  start: number
+  /** Byte offset of the closing `]` (exclusive end of the label text). */
+  end: number
+  /** Label source text exactly as authored — markup and escapes included. */
+  text: string
+}
+
+/**
+ * Locate one parsed node's label in the original Markdown, the way
+ * `markdownDestination` locates its destination. Textual only: whether a label
+ * may be rewritten is the caller's judgment, taken next to the AST (it needs
+ * the node's children and the reference kind).
+ */
+export function markdownLabel(source: string, node: MarkdownDestinationNode): MarkdownLabel {
+  const start = node.position?.start.offset
+  const end = node.position?.end.offset
+  if (start === undefined || end === undefined) {
+    throw new Error(`markdown: label ${JSON.stringify(node.type)} has no source offsets`)
+  }
+  const bounds = labelBounds(source.slice(start, end))
+  if (bounds === undefined) {
+    throw new Error(`markdown: cannot locate a label in ${JSON.stringify(source.slice(start, end))}`)
+  }
+  const absolute = { start: start + bounds.open + 1, end: start + bounds.close }
+  return { ...absolute, text: source.slice(absolute.start, absolute.end) }
 }
 
 /** Text a reader sees from one Markdown node; raw HTML itself contributes none. */

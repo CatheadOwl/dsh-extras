@@ -62,8 +62,10 @@ describe('planRename / applyRenamePlan (post-hoc repair)', () => {
 
     // No move was performed: the old path stays gone, the new file stays put.
     assert.equal(existsSync(join(root, 'a.md')), false)
-    // In-link rewritten to the new location; out-link rebased from the old baseline.
-    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[a](moved/guide.md)\n')
+    // In-link rewritten to the new location; its mirror label follows the new
+    // NAME (the fixture wrote `a`, the no-extension shape). Out-link rebased
+    // from the old baseline.
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide](moved/guide.md)\n')
     assert.equal(readFileSync(join(root, 'moved', 'guide.md'), 'utf8'), '# A\n\n[home](../README.md)\n')
     assert.deepEqual(checkRepository(root), [])
   })
@@ -286,7 +288,7 @@ describe('planRename / applyRenamePlan (post-hoc repair)', () => {
     applyRenamePlan(plan)
     // The post-move edit survives; the out-link is still rebased around it.
     assert.equal(readFileSync(join(root, 'moved', 'guide.md'), 'utf8'), '# A\n\n[home](../README.md)\n\nEdited after move.\n')
-    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[a](moved/guide.md)\n')
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide](moved/guide.md)\n')
   })
 
   // Case 10: post-hoc + frozen — pass 2p judges freeze on the holder; a
@@ -336,5 +338,59 @@ describe('planRename / applyRenamePlan (post-hoc repair)', () => {
     assert.match(frozenSkip.reason, /frozen/)
     // The active in-link holder was still rewritten.
     assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[old](deep/docs/archived/old.md)\n')
+  })
+
+  // Case 12: mirrored labels ride along in post-hoc mode too — the in-link
+  // label mirrors the gone destination, and the moved file's own out-link
+  // label mirrors its cited href.
+  it('relabels mirrored labels during post-hoc repair', () => {
+    const root = fixture({
+      'README.md': '[a.md](a.md)\n',
+      'a.md': '# A\n\n[docs/shared.md](docs/shared.md)\n',
+      'docs/shared.md': '# S\n',
+    })
+    mkdirSync(join(root, 'moved'))
+    renameSync(join(root, 'a.md'), join(root, 'moved', 'guide.md'))
+
+    const { certain, plan } = planRename(root, 'a.md', 'moved/guide.md')
+    assert.equal(certain, true)
+    assert.equal(plan.linkOnly, true)
+    assert.deepEqual(plan.relabels, [
+      { file: 'moved/guide.md', line: 3, from: 'docs/shared.md', to: '../docs/shared.md' },
+      { file: 'README.md', line: 1, from: 'a.md', to: 'guide.md' },
+    ])
+
+    applyRenamePlan(plan)
+    // Out-link pass (1p) relabels the moved file; in-link pass (2p) the holder —
+    // whose label follows the new NAME (the bare-filename shape it was written in).
+    assert.equal(readFileSync(join(root, 'moved', 'guide.md'), 'utf8'),
+      '# A\n\n[../docs/shared.md](../docs/shared.md)\n')
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[guide.md](moved/guide.md)\n')
+    assert.deepEqual(checkRepository(root), [])
+  })
+
+  // Case 13: post-hoc + frozen — a frozen holder's mirror label is dropped with
+  // its whole rewrite (skip + report), so the plan reports no relabel for it.
+  it('post-hoc repair never relabels a frozen in-link holder', () => {
+    const root = fixture({
+      'archived/holder.md': '[guide.md](../docs/guide.md)\n',
+      'docs/guide.md': '# Guide\n',
+      'README.md': '[docs/guide.md](docs/guide.md)\n',
+    })
+    mkdirSync(join(root, 'notes'))
+    renameSync(join(root, 'docs', 'guide.md'), join(root, 'notes', 'intro.md'))
+
+    const isFrozen = abs => abs.slice(root.length + 1).split(/[\\/]/).slice(0, -1).includes('archived')
+    const { certain, plan } = planRename(root, 'docs/guide.md', 'notes/intro.md', { isFrozen })
+    assert.equal(certain, true)
+    applyRenamePlan(plan)
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), '[notes/intro.md](notes/intro.md)\n')
+    // The holder's label mirrors its href (`guide.md` ← `../docs/guide.md`), so
+    // the frozen skip drops the relabel too: bytes untouched, nothing reported.
+    assert.equal(readFileSync(join(root, 'archived', 'holder.md'), 'utf8'), '[guide.md](../docs/guide.md)\n')
+    assert.deepEqual(plan.relabels, [
+      { file: 'README.md', line: 1, from: 'docs/guide.md', to: 'notes/intro.md' },
+    ])
+    assert.match(plan.skips.find(s => s.file === 'archived/holder.md').reason, /frozen/)
   })
 })

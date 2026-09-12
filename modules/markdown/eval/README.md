@@ -12,10 +12,12 @@ description: md-rename eval——headless behavior harness 覆盖 md_rename 工�
 
 | 层 | 语义 | case |
 |---|---|---|
-| deterministic rebase | 入链改写 + 出链 rebase 均唯一可算 → `status: moved` | `rename-file` / `rename-directory` / `rename-pure-move` / `rename-preserve-fragment` |
+| deterministic rebase | 入链改写 + 出链 rebase 均唯一可算 → `status: moved` | `rename-file` / `rename-directory` / `rename-pure-move` / `rename-preserve-fragment` / `rename-relabel` |
 | skip（非阻塞） | 断链出链 / external·`//`·`/`·scheme / 无 offset → 原样保留 + 报告，仍移动 | `rename-skip-broken-outlink` / `rename-skip-external` |
 | conflict（阻塞整单） | `newPath` 已存在 / `oldPath` 缺失 / 仓库外 → 拒改，工作树零改动 | `rename-conflict-newpath-exists` / `rename-conflict-oldpath-missing` / `rename-conflict-outside-repo` |
 | post-hoc repair（已实现） | rename 已发生且 git 佐证 → link-only，`status: repaired`；无佐证 → 拒绝 + remedy 三出口 | `rename-repaired` / `rename-conflict-no-evidence` |
+
+`rename-relabel` 另钉**镜像标签**面：标签恰是自指目的地的渲染（原样路径 / 去 `.md` / 末段 / 末段去 `.md`）时随新目的地重算并进 `relabels`，其余标签是作者散文、一个字节不动（spec §4）。`rename-repaired` 与 real 层 `intent-rename-posthoc-repair` 的夹具标签 `[a](a.md)` 正属此列，故其终态断言为新名 `guide`。
 
 **意图面（real 层）**：post-hoc 语义除 mock 管线外另有四个 real 意图 case 钉「自然语言 → 工具调用」的路由——显式修复对（任务给出已发生移动 → 必须译成同一 `md_rename` 对，而非移回/重建/手改链接）、发现式（只给旧路径，新位置靠探索推断，断言完整对）、无证据移动（未跟踪目录的移动：与修复 case 措辞相同，由 git 证据面分流为拒绝 + remedy）、缺失 oldPath 的 typo（委派给工具按普通冲突拒绝，不得凭空捏造源文件）。无证据与 typo case 的仓库故意不含指向旧路径的链接——turn-close 门禁与「最终态故意违规」eval case 的交互不在本目录覆盖范围。
 

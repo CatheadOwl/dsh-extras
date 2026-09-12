@@ -16,7 +16,7 @@ description: extras 的 markdown 模块——同一 fiber 的三个模型面：`
 
 | 面 | 类型 | 语义 |
 |---|---|---|
-| `md_rename` 工具 | 写 integrity | 显式 `oldPath → newPath`（工作区根相对）→ `planRename` 冲突则报告拒改 / 否则 `applyRenamePlan`（`git mv` + 写回 edit） |
+| `md_rename` 工具 | 写 integrity | 显式 `oldPath → newPath`（工作区根相对）→ `planRename` 冲突则报告拒改 / 否则 `applyRenamePlan`（`git mv` + 写回 edit：目的地 rebase + 镜像标签重算，后者进 `relabels`） |
 | `doc-link` gate | 轮末/手动检查 | 全量 + 轮末归责过滤（只报本轮可归责文件的坏链）；gates 缺席时软加载不注册 |
 | `md-metadata` gate | 轮末/手动检查（defer） | change-set 消费：本轮被写 md 缺非空 `description` 即失败；不打断 turn，派 subagent fixer 离线补写，下轮重扫到通过。**嵌套 git root 内容豁免**：最近 `.git` 祖先（目录或 `gitdir:` 文件）在 workspace 根之下的 md（vendored submodule / 独立检出）不检查——别家仓库的纪律自理，与 git-scan 面同界。**首页 README 豁免**：所在目录自带根标记（`package.json` 或 `.gitignore`）的 `README.md`/变体不检查——GitHub 原样渲染，frontmatter 是噪音；同根其他 md 照查。**豁免 basename 列表**：格式/角色归外部所有的固定约定文件（默认 `AGENTS.md`/`CLAUDE.md`/`CHANGELOG.md`/`CONTRIBUTING.md`，任意目录）不检查；仓库经 `gates.yml` `options.exempt-basenames` 追加自定义名（精确 basename、追加不替换、malformed fail loud） |
 
@@ -33,6 +33,7 @@ description: extras 的 markdown 模块——同一 fiber 的三个模型面：`
 ## Model experience
 
 - 调用方只给显式 `oldPath → newPath`，无需（也无法）传检测类参数；移动后由工具保证仓库内全部 Markdown 引用仍可解析（入链改写 + 出链 rebase）。
+- 标签只在**它是自指目的地**时同步：写出的就是这条引用的目的地本身（原样路径 / 去掉 `.md` / 末段 / 末段去 `.md`）→ 按作者自己的形态重算新名并进 `relabels`；其余标签是作者散文，一个字节不动（`[the guide](docs/guide.md)` 永不改文字，`[docs/guide.md](docs/guide.md)` 改名后文字跟着走）。
 - 确定性优先：不做内容猜测。git 能见证的 rename（staged R / D+shifted / HEAD 条目）才走链接修复-only 路径，否则执行完整移动 + 改写。
 - 冲突（目标已存在 / 源缺失 / 路径越出仓库 / 无法确定性改写的链接）时整单拒绝并给出 remedy 提示——**不猜、不部分执行**，由 agent 决策后重试。
 

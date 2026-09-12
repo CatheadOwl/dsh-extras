@@ -15,7 +15,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 
 import { anchorCache } from './anchors.js'
 import { gitLinkPaths, gitLsFiles, gitTopLevel, type GitLsFiles } from './git.js'
-import { markdownDestination, parseMarkdown, visitMarkdown, type MarkdownDestinationNode } from './markdown.js'
+import { markdownDestination, markdownLabel, parseMarkdown, visitMarkdown, type MarkdownDestinationNode, type MarkdownLabel } from './markdown.js'
 
 /** Stable reason strings the doc-link gate branches its remedy on — reword here, never in the gate. */
 export const REASON_ANCHOR_MISSING = 'anchor does not exist'
@@ -33,6 +33,15 @@ export interface LinkReference {
   start?: number
   /** Exclusive byte offset of the destination end; absent where `start` is absent. */
   end?: number
+  /**
+   * The reference's visible label, located byte-exactly — present only where
+   * rewriting it is safe: an inline link or image whose label is a single plain
+   * text run. Absent for definitions (the label is the reference KEY that
+   * `[label]` usages resolve through, not display text), for markup labels
+   * (`[\`x.md\`](…)`, emphasis — replacing those would drop formatting), and
+   * for forms with no label range at all.
+   */
+  label?: MarkdownLabel
 }
 
 /** One reference's resolution outcome; exactly one of `ignored` / `reason` / `abs` is set. */
@@ -145,6 +154,18 @@ export function repositoryRoot(root: string): string {
   return gitTopLevel(root)
 }
 
+/**
+ * Whether a node's label is a plain single text run — the only label shape a
+ * rename may replace byte-for-byte. Definitions are keys (replacing one breaks
+ * every `[label]` usage), and markup labels carry formatting the replacement
+ * would silently drop. An image's `alt` is parsed as plain text by definition.
+ */
+function hasPlainLabel(node: MarkdownDestinationNode): boolean {
+  if (node.type === 'definition') return false
+  if (node.type === 'image') return true
+  return node.children.length === 1 && node.children[0].type === 'text'
+}
+
 /** Extract every Markdown link/image/definition in document order. */
 export function extractReferences(source: string): LinkReference[] {
   const out: LinkReference[] = []
@@ -161,12 +182,20 @@ export function extractReferences(source: string): LinkReference[] {
     // markdownDestination can locate; autolinks (<url>) and bare URLs have no
     // destination substring to rewrite, so they carry no offsets but still resolve.
     if (position?.start.offset !== undefined && position.end.offset !== undefined) {
+      const destinationNode = node as MarkdownDestinationNode
       try {
-        const destination = markdownDestination(source, node as MarkdownDestinationNode)
+        const destination = markdownDestination(source, destinationNode)
         reference.start = destination.start
         reference.end = destination.end
       } catch {
         // no byte offsets; url still resolves through resolveReference.
+      }
+      if (hasPlainLabel(destinationNode)) {
+        try {
+          reference.label = markdownLabel(source, destinationNode)
+        } catch {
+          // no label range; the destination rewrite still stands on its own.
+        }
       }
     }
     out.push(reference)
