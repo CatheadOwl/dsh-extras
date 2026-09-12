@@ -1,16 +1,17 @@
 // Real composition test: boots the gates plugin over a mock agent loop and
 // exercises the `agent/turn-stopping` driver end-to-end — the defer "旁路"
 // (fixer dispatch off-turn + dirty-window persistence), the blocking
-// consecutive-block budget (steer-then-degrade), the stop-dimension switch,
-// and the W10 turn-end attribution filter (one driver test per clause:
-// source ∈ W isolation / opaque → true / target ∈ W).
+// consecutive-block budget (steer-then-degrade), the stop-dimension switch
+// (including the window it must not close), and the W10 turn-end attribution
+// filter (one driver test per clause: source ∈ W isolation / opaque → true /
+// target ∈ W).
 //
 // Unlike the rest of the suite, this test DOES import the dsh host's
 // `@deepseek-ai/*` packages (through the plugin's local junctions) and a Cordis
 // process, because the driver under test only runs at `agent/turn-stopping`.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -260,6 +261,130 @@ test('a blocking gate with its stop dimension off never steers the turn', async 
 
     assert.equal(adapter.requests.length, 1, 'turn must close without a forced continuation')
     assert.equal(checks, 0, 'the gate must not run at turn-stop when its stop dimension is off')
+  } finally {
+    await ctx.dispose?.()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('a violation written while its stop dimension is off is re-reported after re-enabling', async () => {
+  // The switch narrows a turn-end run; it never waives a gate. The change the
+  // switched-off gate never saw stays in the dirty window, so re-enabling
+  // re-reports it instead of the turn finding a clean shortcut and forgetting
+  // the violation forever (20260912-gate-toggle-window-drops-failure).
+  const root = mkdtempSync(join(tmpdir(), 'gates-toggle-window-'))
+  const marker = join(root, 'violation.md')
+
+  const adapter = new MockAdapter([
+    // Turn 1: one write (creating the marker), then the closing step.
+    toolCallResponse('w1', 'write', { file_path: 'violation.md' }),
+    textResponse('wrote it'),
+    // Turn 2: close with no further write; the re-enabled gate reports the
+    // retained change and steers once (budget 1), which costs one more step.
+    textResponse('t2'),
+    textResponse('after the steer'),
+  ])
+  const ctx = await harness({ subagents: false, maxConsecutiveBlocks: 1 })
+  ctx.llm.registerAdapter(['mock'], adapter)
+  ctx.tools.register(defineContentToolFixture({
+    name: 'write',
+    description: 'test write: creates the file and records session dirt',
+    parameters: { file_path: { type: 'string' } },
+    async execute(args) {
+      writeFileSync(join(root, args.file_path), '# bad\n')
+      return []
+    },
+  }))
+  ctx.get('gates').register({
+    id: 'marker-block',
+    description: 'the marker file must not exist',
+    rationale: 'why it exists',
+    on: ['stop', 'manual'],
+    level: 'blocking',
+    check: async () => (existsSync(marker)
+      ? [{ file: 'violation.md', reason: 'marker present', remedy: { kind: 'manual', guidance: 'remove it' } }]
+      : []),
+  })
+
+  const agent = await ctx.agentLoop.create(
+    SessionId('toggle-window'),
+    { provider: 'mock', model: 'mock' },
+    { cwd: root },
+  )
+  const steers = []
+  const originalSteer = agent.steer.bind(agent)
+  agent.steer = (message) => { steers.push(message); return originalSteer(message) }
+  try {
+    // Turn 1: the gate's stop dimension is OFF, and the turn writes the marker.
+    ctx.get('gatesController').setDisabled({ stop: ['marker-block'], manual: [], workspace: root })
+    agent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))
+    await waitForIdle(ctx, agent)
+
+    assert.equal(adapter.requests.length, 2, 'the switched-off turn closes without a forced continuation')
+    assert.equal(steers.length, 0, 'a switched-off gate never steers')
+
+    // Turn 2: the dimension is back on and NOTHING is written — the change the
+    // gate never saw must resurface, attributed to its own path.
+    ctx.get('gatesController').setDisabled({ stop: [], manual: [], workspace: root })
+    agent.followup(createUserMessage({ content: [{ type: 'text', text: 'again' }], source: { kind: 'user' } }))
+    await waitForIdle(ctx, agent)
+
+    assert.equal(steers.length, 1, 'the window kept the unvouched change, so re-enabling reports it')
+    const steerText = steers[0].content.map(block => block.text ?? '').join('')
+    assert.ok(steerText.includes('violation.md'), 'the steer names the file written during the off window')
+    assert.equal(adapter.requests.length, 4, 'turn 2 plus its one forced continuation')
+  } finally {
+    await ctx.dispose?.()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('a switch-narrowed clean turn with an empty window still shortcuts the next clean turn', async () => {
+  // The narrowing rule must not cost the incremental shortcut on ordinary
+  // turns: with nothing unvouched in the window there is nothing to keep, so a
+  // narrowed clean pass closes it as usual. The always-on gate's call count is
+  // the shortcut witness; the switched-off gate must stay out of the run.
+  const root = mkdtempSync(join(tmpdir(), 'gates-toggle-shortcut-'))
+  const adapter = new MockAdapter([textResponse('t1'), textResponse('t2')])
+  const ctx = await harness({ subagents: false })
+  ctx.llm.registerAdapter(['mock'], adapter)
+
+  let onChecks = 0
+  let offChecks = 0
+  ctx.get('gates').register({
+    id: 'always-on',
+    description: 'always-on gate',
+    rationale: 'why it exists',
+    on: ['stop', 'manual'],
+    level: 'blocking',
+    check: async () => { onChecks += 1; return [] },
+  })
+  ctx.get('gates').register({
+    id: 'switched-off',
+    description: 'gate with its stop dimension off',
+    rationale: 'why it exists',
+    on: ['stop', 'manual'],
+    level: 'blocking',
+    check: async () => { offChecks += 1; return [] },
+  })
+
+  const agent = await ctx.agentLoop.create(
+    SessionId('toggle-shortcut'),
+    { provider: 'mock', model: 'mock' },
+    { cwd: root },
+  )
+  try {
+    ctx.get('gatesController').setDisabled({ stop: ['switched-off'], manual: [], workspace: root })
+    agent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))
+    await waitForIdle(ctx, agent)
+    assert.equal(onChecks, 1, 'the first turn scans the runnable set')
+
+    // Second clean turn, nothing written: the shortcut still applies.
+    agent.followup(createUserMessage({ content: [{ type: 'text', text: 'again' }], source: { kind: 'user' } }))
+    await waitForIdle(ctx, agent)
+    assert.equal(onChecks, 1, 'a clean turn after a narrowed clean pass still shortcuts')
+    assert.equal(offChecks, 0, 'the switched-off gate never ran at turn-stop')
+    assert.equal(adapter.requests.length, 2, 'no forced continuation in either turn')
   } finally {
     await ctx.dispose?.()
     rmSync(root, { recursive: true, force: true })

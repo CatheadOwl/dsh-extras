@@ -8,9 +8,11 @@ import {
   createGateRegistry,
   formatGateFailureFeedback,
   formatGateSummary,
+  formatSwitchState,
   nextBlockBudget,
   runGate,
   runGates,
+  selectDisabledGates,
   selectGates,
   validateGateId,
 } from '../lib/core.js'
@@ -292,6 +294,21 @@ test('formatGateSummary renders one line per gate', () => {
   assert.match(lines[0], /^PASS a /)
   assert.match(lines[1], /^FAILED b .*2 violation\(s\)/)
   assert.match(lines[2], /^FAILED c .*error: spawn failed/)
+})
+
+test('selectDisabledGates is the complement of excludeDisabledGates', () => {
+  const definitions = [gate({ id: 'a' }), gate({ id: 'b' }), gate({ id: 'c' })]
+  assert.deepEqual(selectDisabledGates(definitions, ['b']).map(d => d.id), ['b'])
+  assert.deepEqual(selectDisabledGates(definitions, ['unknown']), [])
+  assert.deepEqual(selectDisabledGates(definitions, []), [])
+})
+
+test('formatSwitchState names both dimensions, sorted, with none for empty', () => {
+  assert.equal(
+    formatSwitchState({ stop: ['md-metadata', 'doc-link'], manual: ['coggit-misplaced'] }),
+    'switches: stop off — doc-link, md-metadata; manual off — coggit-misplaced',
+  )
+  assert.equal(formatSwitchState({ stop: [], manual: [] }), 'switches: stop off — none; manual off — none')
 })
 
 test('buildFixerPrompt appends the deduplicated failed file list with reasons', () => {

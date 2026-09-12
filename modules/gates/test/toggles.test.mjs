@@ -50,6 +50,25 @@ test('excludeDisabledGates keeps order and drops disabled ids', () => {
   assert.deepEqual(excludeDisabledGates(definitions, []).map(d => d.id), ['a', 'b', 'c'])
 })
 
+test('switchedOffDefinitions names exactly what the switch kept out of one trigger', async () => {
+  // The author's `on` is the upper bound: a gate that never opts into a trigger
+  // cannot narrow it, however its switches are set. Unknown ids match nothing.
+  const ctx = await harness()
+  const service = ctx.get('gates')
+  const controller = ctx.get('gatesController')
+  service.register(gate({ id: 'a' }))
+  service.register(gate({ id: 'b' }))
+  service.register(gate({ id: 'manual-only', on: ['manual'] }))
+  controller.setDisabled({ stop: ['b', 'unknown'], manual: ['manual-only'], workspace: testRoot })
+
+  assert.deepEqual(service.switchedOffDefinitions(testRoot, 'stop').map(d => d.id), ['b'])
+  assert.deepEqual(service.runnableDefinitions(testRoot, 'stop').map(d => d.id), ['a'])
+  assert.deepEqual(service.switchedOffDefinitions(testRoot, 'manual').map(d => d.id), ['manual-only'])
+
+  controller.setDisabled({ stop: [], manual: [], workspace: testRoot })
+  assert.deepEqual(service.switchedOffDefinitions(testRoot, 'stop'), [])
+})
+
 test('the controller lists every gate with its per-trigger enabled state', async () => {
   const ctx = await harness()
   const service = ctx.get('gates')

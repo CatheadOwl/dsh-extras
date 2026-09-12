@@ -30,6 +30,10 @@ Settings → Plugins → Gates（Web）渲染当前工作区的**扁平 gate 列
 - 关**手动**维：`gates_run` / `/gates` 的 run-all 同样过滤；显式单跑一个被关手动维的 gate（`gates_run {gate}` / `/gates <id>`）**fail loud**——报"已在设置中禁用手动运行"，不静默放行（开关即契约，无静默覆盖）；
 - `on` 是作者声明上界：gate 未声明某 trigger 就不显示该维开关，用户只能收窄、不能扩宽。
 
+**开关是收窄，不是豁免**：被关的 gate 不进那一维的执行路径，但它的缺席不会被记成通过。轮末的 clean pass——即"清空脏窗口 + 记录可复用 passed 结果"——只在**本轮执行集未被开关收窄**，或**脏窗口本来就空**（没有它没看过的变更）时才发生；否则脏窗口原样保留，重开开关后的下一个轮末按保留的精确路径照常归责、报出关闭期间产生的违规。换句话说，关闭期间产生的违规不会被那一轮的"其余 gate 全绿"冲掉，也不会因此永远隐身。关闭期间若窗口为空，增量短路照常生效（开关不会把普通轮次变成持续全扫）。取舍与备选修法见开发仓 gates 控制面的开关窗口决策记录（按名引用）。
+
+**生效状态在哪可见**：开关的唯一持久面是浏览器 localStorage（`dsh.gates.disabled`），host 侧只有内存镜像，所以镜像每次被写入都在常规日志留一行 `gates: switches: stop off — <ids>; manual off — <ids>`（headless 与终端可见）；`/gates` 与 `gates_run` 的输出同样带这一行（工具结果的 `switches` 字段）。不开 Web 面板也能回答"某个 gate 为什么没出现在这次结果里"，不必再用轮末时间差反推。
+
 host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（标签页打开/刷新）即重推，恢复原状。不开 GUI 的 headless 运行没有开关状态，全部 gate 照常跑。列表按 gate id 全局生效（不按工作区分），id 已不存在的项无害（匹配不到任何 gate）。
 
 ## 执行链（stop 档）
@@ -37,9 +41,10 @@ host 重启后内存清空，但浏览器里开关仍在——GUI 一加载（�
 ```
 轮次要关闭
   → selectGates(注册的全体, 'stop')
+  → 减去用户关掉的维（被排除的 gate 另行记账，供 clean pass 判定）
   → runGates 串行（每个 gate 受各自 timeoutMs 约束；payload.signal 取消时未跑的记 skipped）
   → collectBlockingFailures（只留 blocking 且 failed）
-  → 无失败：重置该 agent 的连续阻断计数，轮次正常关闭
+  → 无失败：重置该 agent 的连续阻断计数；本轮执行集未被开关收窄（或脏窗口为空）时清空脏窗口并记 clean pass
   → 有失败：预算状态机判定
       → 未超限：steer 注入反馈文本，机器再跑一步（模型修复）
       → 已超限：降级放行 + console.warn（不无限续步）
@@ -124,7 +129,7 @@ gate 的 `check` **只读**：只检测与报告，不亲自修。修复在外�
 
 - stop 档在 `agent/turn-stopping` 里维护脏窗口，状态按 `(agent, root)` 保存；每个轮末只扫描上次处理位置之后的新 session events（逐 turn 增量）。
 - 窗口语义是**自上次 clean pass 后累计**，不是「当前 turn 的临时集合」。
-  clean pass 后清空脏窗口、记录可复用的 passed 结果。
+  clean pass 后清空脏窗口、记录可复用的 passed 结果；clean pass 的成立条件包含「本轮执行集未被用户开关收窄，或窗口里没有未担保的变更」（见上文开关节）。
 - blocking 或 defer 失败不清空脏窗口；修复后必须真跑确认。
 - 外部编辑器和其他进程写盘不进入 session events：首轮全扫与 manual 全扫兜底，不把外部写伪装成可见路径。未知工具归不透明、强制全扫（正确性优先）。
 - `paths` 只表示精确可见写，不承诺覆盖删除、移动、shell 批量生成或 subagent 写盘。

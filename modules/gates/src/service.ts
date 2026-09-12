@@ -6,7 +6,7 @@ import z from '@deepseek-ai/schemastery'
 import { statSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import { collectDeferredFailures, createGateRegistry, excludeDisabledGates, runGates, selectGates } from './core.js'
+import { collectDeferredFailures, createGateRegistry, excludeDisabledGates, formatSwitchState, runGates, selectDisabledGates, selectGates } from './core.js'
 import type { GateFailure, RunGatesOptions } from './core.js'
 import { dispatchFixer } from './fixer.js'
 import { loadProjectGates, PROJECT_GATES_FILE } from './repo-gates.js'
@@ -162,6 +162,26 @@ export class GatesService extends Service {
   /** Replace the user-disabled id lists — the browser-owned state, mirrored for enforcement. */
   setDisabledTriggers(state: { stop: readonly string[]; manual: readonly string[] }): void {
     this.disabled = { stop: new Set(state.stop), manual: new Set(state.manual) }
+    // The mirror is the enforcement truth and has no other readable face (the
+    // browser owns persistence; this process holds only the copy). Log it, so a
+    // headless or terminal run can answer "which gate is off in which
+    // dimension" without the panel — the alternative was reverse-engineering
+    // turn timings (20260912-gate-toggle-state-visibility).
+    console.warn(`gates: ${formatSwitchState(this.disabledTriggers())}`)
+  }
+
+  /**
+   * Gates the user switch keeps out of one trigger's run: the author-declared
+   * selection minus `runnableDefinitions`. Empty means the trigger ran exactly
+   * what its authors declared; non-empty means this run's result speaks for a
+   * narrowed set only — the switch narrows a path, it never waives a gate, so
+   * whoever decides whether a run may close the dirty window has to ask.
+   */
+  switchedOffDefinitions(root: string, trigger: GateTrigger): GateDefinition[] {
+    return selectDisabledGates(
+      selectGates(this.definitions(root), trigger),
+      this.disabled[trigger],
+    )
   }
 
   /**

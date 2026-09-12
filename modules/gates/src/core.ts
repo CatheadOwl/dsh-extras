@@ -120,6 +120,20 @@ export function excludeDisabledGates(
   return definitions.filter(definition => !disabled.has(definition.id))
 }
 
+/**
+ * The complement of `excludeDisabledGates`: definitions one trigger's user
+ * switch keeps out of its run. Non-empty means that run view is narrower than
+ * the author declaration, which is the fact a clean pass has to weigh before
+ * it may call the workspace clean.
+ */
+export function selectDisabledGates(
+  definitions: readonly GateDefinition[],
+  disabledIds: Iterable<string>,
+): GateDefinition[] {
+  const disabled = new Set(disabledIds)
+  return definitions.filter(definition => disabled.has(definition.id))
+}
+
 function renderThrown(value: unknown): string {
   return value instanceof Error ? value.message : String(value)
 }
@@ -325,4 +339,21 @@ export function formatGateSummary(results: readonly GateResult[]): string {
       : `${result.violations.length} violation(s)`
     return `${result.status.toUpperCase()} ${result.gateId} (${seconds}s) ${detail}`
   }).join('\n')
+}
+
+/** Render one disabled-id list compactly: `none`, or sorted comma-separated ids. */
+function renderDisabledIds(ids: readonly string[]): string {
+  return ids.length === 0 ? 'none' : [...ids].sort().join(', ')
+}
+
+/**
+ * The enforced switch state as one line: which gate ids the user switched off
+ * per trigger. A summary alone cannot answer "why is gate X missing from this
+ * run, or why did the turn stay silent" — the switch is the only thing that
+ * keeps a declared gate out of its path, and the browser panel used to be its
+ * only readable face. Every switch-state mutator logs the same sentence, so
+ * the panel, `/gates`, `gates_run` and the ordinary log all say one thing.
+ */
+export function formatSwitchState(disabled: { stop: readonly string[]; manual: readonly string[] }): string {
+  return `switches: stop off — ${renderDisabledIds(disabled.stop)}; manual off — ${renderDisabledIds(disabled.manual)}`
 }

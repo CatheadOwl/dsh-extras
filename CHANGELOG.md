@@ -26,6 +26,21 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 - `markdown` (`md_rename`): the tool result now reports `relabels` (`{file,
   line, from, to}`) next to `edited` and `skips`, so the label half of an edit
   is auditable rather than implicit.
+- `gates`: the enforced switch state is now readable outside the Web panel —
+  every mirror write logs `gates: switches: stop off — <ids>; manual off —
+  <ids>`, and `/gates` plus the `gates_run` result carry the same `switches:`
+  line (new result field), so "why is this gate missing from the run" no longer
+  needs the panel or a turn-timing reconstruction.
+
+### Fixed
+
+- `gates`: a violation produced while a gate's **turn-stop** switch was off is
+  no longer lost. The turn-end clean pass closes the dirty window only when the
+  run covered the whole declared stop set — or when the window holds nothing
+  unvouched — so re-enabling the switch reports the violation at the next
+  turn-end, with its precise attribution path intact, instead of the turn
+  finding a clean shortcut and forgetting it. Ordinary clean turns keep the
+  incremental shortcut either way.
 
 ## [0.2.1] — 2026-09-11
 

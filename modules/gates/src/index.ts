@@ -18,6 +18,7 @@ import {
   collectDeferredFailures,
   formatGateFailureFeedback,
   formatGateSummary,
+  formatSwitchState,
   nextBlockBudget,
   runGates,
 } from './core.js'
@@ -95,6 +96,10 @@ function registerGatesTool(ctx: Context): void {
       return toJsonValue({
         passed: allPassed(results),
         summary: formatGateSummary(results),
+        // Which gates the switches kept out of THIS run: without it, an
+        // all-pass summary silently reads as "the workspace cleared every
+        // gate" while a switched-off gate never ran.
+        switches: formatSwitchState(service.disabledTriggers()),
         results,
       })
     },
@@ -126,7 +131,10 @@ export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
         const results = await service.run(agent.session.header.cwd ?? '.', gate === '' ? { signal } : { gate, signal })
         return {
           kind: allPassed(results) ? 'success' : 'error',
-          text: formatGateSummary(results),
+          // The pull face also states the switches: a gate missing from the
+          // list above is otherwise indistinguishable from one that never ran
+          // because the user turned it off (20260912-gate-toggle-state-visibility).
+          text: `${formatGateSummary(results)}\n\n${formatSwitchState(service.disabledTriggers())}`,
         }
       },
     })
@@ -187,8 +195,11 @@ export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
 
     // 3) Gate selection; on precise-only dirt, gates whose relevance matcher
     // matches no dirty path reuse their last passed result. User-disabled
-    // gates never enter this selection (per-trigger: the turn-stop dimension).
+    // gates never enter this selection (per-trigger: the turn-stop dimension) —
+    // and because they don't, their absence is tracked separately below: the
+    // switch narrows what runs, it never waives what is owed.
     const definitions = service.runnableDefinitions(root, 'stop')
+    const switchedOff = service.switchedOffDefinitions(root, 'stop')
     const toRun: GateDefinition[] = []
     const results: GateResult[] = []
     for (const definition of definitions) {
@@ -221,11 +232,21 @@ export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
     if (failures.length === 0) {
       state.blocks = 0
       if (deferred.length === 0) {
-        state.dirt = emptyDirt()
-        state.hasPassed = true
-        state.passedResults = new Map(
-          results.filter(result => result.status === 'passed').map(result => [result.gateId, result]),
-        )
+        // Closing the window means "every declared stop gate has seen this
+        // content and passed". When a switch kept gates out of the run, that
+        // claim is only true for the narrowed set: unvouched changes stay in
+        // the window, so re-enabling the switch re-reports them at the next
+        // turn-end with their precise paths intact — instead of the turn
+        // finding a clean shortcut and forgetting the violation forever
+        // (20260912-gate-toggle-window-drops-failure).
+        const windowHoldsUnvouchedChanges = state.dirt.paths.size > 0 || state.dirt.opaque
+        if (switchedOff.length === 0 || !windowHoldsUnvouchedChanges) {
+          state.dirt = emptyDirt()
+          state.hasPassed = true
+          state.passedResults = new Map(
+            results.filter(result => result.status === 'passed').map(result => [result.gateId, result]),
+          )
+        }
       }
       return
     }
