@@ -1,0 +1,53 @@
+diff --git a/packages/client/tsdown.client.ts b/packages/client/tsdown.client.ts
+index 7104855a97..67b94ac2a8 100644
+--- a/packages/client/tsdown.client.ts
++++ b/packages/client/tsdown.client.ts
+@@ -114,12 +114,46 @@ export function clientBundle(
+     const face = buildFace(env?.DSH_BUILD_FACE)
+     const clientEntry = face === undefined ? 'src/client/index.ts' : 'lib/types/client/index.js'
+     const client = clientConfig(id, clientEntry)
++    // Local patch (upstream issue 20260830-1927): also emit a Node-importable
++    // twin of the browser bundle so out-of-tree component specs can import the
++    // client half under vitest+jsdom. In-tree builds never set the env and are
++    // unchanged.
++    const testClient = process.env.DSH_CLIENT_TEST_BUNDLE === '1' ? clientTestConfig(id, clientEntry) : undefined
+     const node = [lib, ...(options.companions ?? [])]
+     if (face === 'host') return options.hostPhase === true ? node : [SKIP_WORKSPACE_BUILD]
+     if (face === 'client') {
+-      return options.hostPhase === true ? [client] : [...node, client]
++      const browser = options.hostPhase === true ? [client] : [...node, client]
++      return testClient === undefined ? browser : [...browser, testClient]
+     }
+-    return [...node, client]
++    return testClient === undefined ? [...node, client] : [...node, client, testClient]
++  }
++}
++
++/**
++ * Node-importable twin of the browser client bundle (local patch for
++ * out-of-tree component testing, upstream issue 20260830-1927): same entry,
++ * externals, purity gate, and CSS virtual loaders as {@link clientConfig},
++ * but ESM on the node platform without the `window.__ModuleLoader__`
++ * closure wrapper, emitted as `lib/client.test.js` next to the browser
++ * `lib/client.js`. Requested module-table rows stay bare imports; a spec
++ * supplies them (react) or mocks them (`vi.mock`) before importing the
++ * artifact. The style-injection modules guard on `typeof document`, so the
++ * import also succeeds outside jsdom.
++ */
++function clientTestConfig(id: string, entry: string): UserConfig {
++  const browser = clientConfig(id, entry)
++  return {
++    ...browser,
++    name: `${id}/client-test`,
++    format: 'esm',
++    platform: 'node',
++    outputOptions: {
++      ...browser.outputOptions,
++      entryFileNames: 'client.test.js',
++      banner: undefined,
++      footer: undefined,
++      intro: undefined,
++    },
+   }
+ }
+ 
