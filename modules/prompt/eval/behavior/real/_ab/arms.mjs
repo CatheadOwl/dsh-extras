@@ -1,12 +1,14 @@
 /**
- * Arm definitions and trace metrics for the relates A/B experiment
+ * Row-config baseline and trace metrics for the relates A/B experiment
  * (workunits/prompt-middleware/probe/20260905-relates-behavior-ab.md).
  *
- * The arms differ ONLY in the prompt row's config: the control arm disables
- * the breadcrumb provider via `disabledProviders` and RESTATES the other
- * config keys (cordis patch config override is whole-replace — see
- * @catheadowl/dsh-eval docs/rowconfig.md; the restated values mirror the
- * extras bundle's own `cordis.patch.yml` prompt row).
+ * Arms live in the experiment definition (run-relates-ab.mjs): the case-level
+ * baseline below restates the extras bundle's prompt-row config (cordis patch
+ * config override is whole-replace — see @catheadowl/dsh-eval
+ * docs/rowconfig.md; the values mirror the extras bundle's own
+ * `cordis.patch.yml` prompt row), and the control arm overrides ONLY
+ * `disabledProviders` — the framework's experiment surface deep-merges the
+ * override onto the baseline, so the differing key alone is enough.
  */
 
 /** The provider the control arm disables. */
@@ -15,29 +17,13 @@ export const TREATED_PROVIDER = 'breadcrumb-description-enricher'
 /** Loader row id of prompt-middleware in the extras bundle patch. */
 export const PROMPT_ROW_ID = 'prompt'
 
-/** The extras bundle's prompt-row config (restated under whole-replace). */
-const PROMPT_ROW_CONFIG = {
+/** The extras bundle's prompt-row config (case-level baseline, restated
+ * under whole-replace). */
+export const PROMPT_ROW_CONFIG = {
   providerTimeoutMs: 2000,
   totalTimeoutMs: 5000,
   renderBudgetChars: 4000,
 }
-
-/** The two arms. Treatment = injection on; control = provider disabled. */
-export const ARMS = [
-  {
-    id: 'treatment',
-    rowConfig: undefined,
-  },
-  {
-    id: 'control',
-    rowConfig: {
-      [PROMPT_ROW_ID]: {
-        ...PROMPT_ROW_CONFIG,
-        disabledProviders: [TREATED_PROVIDER],
-      },
-    },
-  },
-]
 
 /** Tool names counted as "search" for the H1 metric. */
 const SEARCH_TOOLS = new Set(['grep', 'glob'])
@@ -77,7 +63,6 @@ export function extractMetrics(trace, spec) {
     turns: calls.length === 0 ? 0 : Math.max(...calls.map(call => call.turn)),
     success: finalText.includes(spec.marker),
     injectionSeen,
-    guardOk: null, // filled by the driver — arm-dependent
   }
 }
 
