@@ -15,6 +15,10 @@ export default {
   id: 'prompt-middleware-injection-smoke',
   mode: 'mock',
   task: 'read docs/guide.md and tell me what it is about',
+  // The assertions live in the inspect hook below, reading raw session events
+  // (a projection-independent channel) — that is what this declaration
+  // vouches for, and why `expect` may stay empty.
+  evidence: 'inspect',
   async prepare(workspace) {
     mkdirSync(join(workspace, 'docs'), { recursive: true })
     // The breadcrumb is keyed by the mentioned file's directory and carries
