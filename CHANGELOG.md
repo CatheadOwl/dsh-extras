@@ -34,6 +34,13 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Fixed
 
+- `prompt`: non-delivery trace events now surface at `logger.warn` instead of
+  `logger.debug`. A provider that renders nothing (`failed`, `timed-out`) was
+  invisible in the wild — debug logs are off by default, so a broken declarer
+  looked like "nothing happens at all" rather than a diagnosable line.
+  Designed degradation (`skipped`, `cancelled`, `truncated`) stays at debug,
+  and `ok` stays silent; the split is documented in the module's trace
+  contract.
 - `gates`: a violation produced while a gate's **turn-stop** switch was off is
   no longer lost. The turn-end clean pass closes the dirty window only when the
   run covered the whole declared stop set — or when the window holds nothing

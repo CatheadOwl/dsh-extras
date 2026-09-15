@@ -25,6 +25,7 @@ import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import TokenMeter from '@deepseek-ai/dsh-token-meter'
 
 import * as promptMiddleware from '../lib/index.js'
+import { registerRelatesProvider } from '../lib/register.js'
 import * as anyRoutes from '../../routes/lib/index.js'
 
 /** Scripted text chunks: one model reply ends with a `stop` finish. */
@@ -117,7 +118,7 @@ test('once-mode breadcrumb injects once, dedupes across turns, and re-arms after
   writeFileSync(join(root, 'docs', 'README.md'), '---\ndescription: Docs route\n---\n# Docs\n', 'utf8')
   writeFileSync(join(root, 'docs', 'guide.md'), '---\ndescription: Guide file\n---\n# Guide\n', 'utf8')
 
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('once-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -131,7 +132,7 @@ test('once-mode breadcrumb injects once, dedupes across turns, and re-arms after
       content: [{ type: 'text', text: 'read docs/guide.md and tell me what it is about' }],
       source: { kind: 'user' },
     })
-    const injections = () => agent.session.events.filter(event =>
+    const injections = () => agent.session.snapshotEvents().filter(event =>
       event.type === 'user/message'
       && event.data.source?.kind === 'plugin'
       && event.data.source?.plugin === 'prompt-middleware'
@@ -157,14 +158,14 @@ test('once-mode breadcrumb injects once, dedupes across turns, and re-arms after
     // Compact: surface-replace the injected event, mirroring a compaction
     // summary shadowing the surface range the breadcrumb once occupied. The
     // session surface contract demands the replacement cite the shadowed node
-    // (start/end = its seq) AND list every shadowed seq in `sourceEventSeqs`,
-    // so both reference `injected.seq`.
+    // (startSeq/endSeq = its seq) AND list every shadowed seq in
+    // `sourceEventSeqs`, so both reference `injected.seq`.
     const injected = injections()[0]
     agent.session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'compacted summary' }],
       source: { kind: 'plugin', plugin: 'test-compaction' },
     }), {
-      surfaceOp: { op: 'replace', start: injected.seq, end: injected.seq },
+      surfaceOp: { op: 'replace', startSeq: injected.seq, endSeq: injected.seq },
       sourceEventSeqs: [injected.seq],
     })
 
@@ -195,7 +196,7 @@ test('root README never stands in: undescribed ancestors mean no breadcrumb at a
   mkdirSync(join(root, 'docs', 'knowledges'), { recursive: true })
   writeFileSync(join(root, 'docs', 'knowledges', 'guide.md'), '---\ndescription: Knowledge guide\n---\n# Guide\n', 'utf8')
 
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('root-readme-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -209,7 +210,7 @@ test('root README never stands in: undescribed ancestors mean no breadcrumb at a
       content: [{ type: 'text', text: 'read docs/knowledges/guide.md and list docs/knowledges/ contents' }],
       source: { kind: 'user' },
     })
-    const injections = () => agent.session.events.filter(event =>
+    const injections = () => agent.session.snapshotEvents().filter(event =>
       event.type === 'user/message'
       && event.data.source?.kind === 'plugin'
       && event.data.source?.plugin === 'prompt-middleware'
@@ -224,7 +225,7 @@ test('root README never stands in: undescribed ancestors mean no breadcrumb at a
     assert.equal(injections().length, 0, 'no breadcrumb at all when no ancestor carries a description')
 
     // 项目根 readme 的描述绝不进任何目标的面包屑（上一断言已隐含，显式保留锚点）。
-    assert.ok(!agent.session.events.some(event =>
+    assert.ok(!agent.session.snapshotEvents().some(event =>
       event.type === 'user/message'
       && JSON.stringify(event.data?.content ?? '').includes('Open http://localhost:5173 in a desktop browser')))
 
@@ -259,7 +260,7 @@ test('sibling file mentions share one directory-keyed breadcrumb group (E2E)', a
   writeFileSync(join(meeting, 'case-1-doc-sync.md'), '# Case 1 · doc-sync\n\n> 定位: 仓库级声明式 gate。\n', 'utf8')
   writeFileSync(join(meeting, 'case-2-coggit-misplaced.md'), '# Case 2 · coggit-misplaced\n\n> 定位: 认知错位。\n', 'utf8')
 
-  const agent = ctx.agentLoop.create(
+  const agent = await ctx.agentLoop.create(
     SessionId('sibling-run'),
     { provider: 'mock', model: 'mock' },
     { cwd: root },
@@ -274,7 +275,7 @@ test('sibling file mentions share one directory-keyed breadcrumb group (E2E)', a
       }],
       source: { kind: 'user' },
     })
-    const injections = () => agent.session.events.filter(event =>
+    const injections = () => agent.session.snapshotEvents().filter(event =>
       event.type === 'user/message'
       && event.data.source?.kind === 'plugin'
       && event.data.source?.plugin === 'prompt-middleware'
@@ -295,6 +296,84 @@ test('sibling file mentions share one directory-keyed breadcrumb group (E2E)', a
 
     assert.equal(adapter.requests.length, 1, 'one model call for the single turn')
   } finally {
+    rmSync(persistenceRoot, { recursive: true, force: true })
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('non-delivery trace events warn; designed degradation stays at debug', async () => {
+  const adapter = new MockAdapter([textResponse('done'), textResponse('done')])
+  const persistenceRoot = mkdtempSync(join(tmpdir(), 'pm-trace-log-persist-'))
+  const ctx = await harness(persistenceRoot)
+  ctx.llm.registerAdapter(['mock'], adapter)
+
+  // Capture the plugin's trace channel before the first turn runs. The
+  // replacements record without printing; originals are restored in finally.
+  const logger = ctx.logger
+  const originalWarn = logger.warn
+  const originalDebug = logger.debug
+  const warns = []
+  const debugs = []
+  logger.warn = (...args) => { warns.push(args.join(' ')) }
+  logger.debug = (...args) => { debugs.push(args.join(' ')) }
+
+  registerRelatesProvider(ctx, {
+    name: 'boom-declarer',
+    kind: 'boom',
+    resolve: async () => { throw new Error('kaboom') },
+  })
+  registerRelatesProvider(ctx, {
+    name: 'steady-declarer',
+    kind: 'steady',
+    resolve: async () => ({ value: 'steady value' }),
+  })
+
+  const root = mkdtempSync(join(tmpdir(), 'pm-trace-log-'))
+  writeFileSync(join(root, 'docs.md'), '---\ndescription: Docs\n---\n# Docs\n', 'utf8')
+
+  const agent = await ctx.agentLoop.create(
+    SessionId('trace-log-run'),
+    { provider: 'mock', model: 'mock' },
+    { cwd: root },
+  )
+  try {
+    // any_nav's breadcrumb registers off-turn; wait for all three providers.
+    await waitFor(() => ctx.get('promptMiddleware').list().length >= 3)
+    const ask = () => createUserMessage({
+      content: [{ type: 'text', text: 'read docs.md and summarize' }],
+      source: { kind: 'user' },
+    })
+
+    // Turn 1: boom fails (non-delivery), steady injects (ok — silent).
+    const turn1 = waitForIdle(ctx, agent)
+    agent.followup(ask())
+    await turn1
+    // Turn 2: boom fails again (nothing entered the ledger), steady is
+    // skipped by the once pre-filter (designed degradation).
+    const turn2 = waitForIdle(ctx, agent)
+    agent.followup(ask())
+    await turn2
+
+    assert.ok(
+      warns.some(line => line.includes('prompt-middleware: boom-declarer failed: kaboom')),
+      `a failed provider must surface at warn, got ${JSON.stringify(warns)}`,
+    )
+    assert.ok(
+      debugs.some(line => line.includes('prompt-middleware: steady-declarer skipped: all paths already injected this session')),
+      `the once skip must stay at debug, got ${JSON.stringify(debugs)}`,
+    )
+    assert.ok(
+      !warns.some(line => line.includes('steady-declarer')),
+      `designed degradation must not warn, got ${JSON.stringify(warns)}`,
+    )
+    assert.ok(
+      !debugs.some(line => line.includes('boom-declarer failed')),
+      `a failed provider must not also log at debug, got ${JSON.stringify(debugs)}`,
+    )
+    assert.equal(adapter.requests.length, 2, 'one model call per turn')
+  } finally {
+    logger.warn = originalWarn
+    logger.debug = originalDebug
     rmSync(persistenceRoot, { recursive: true, force: true })
     rmSync(root, { recursive: true, force: true })
   }

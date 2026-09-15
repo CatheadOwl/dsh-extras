@@ -98,8 +98,9 @@ provider 可选声明 `sources?: Array<'prompt' | 'touch'>`（imperative 与声�
 ### trace 口径
 
 - trace 事件可选 `source?: 'prompt' | 'touch'`：本批输入含至少一个 touch 伪路径记 `'touch'`（混合批记 `'touch'`），否则 `'prompt'`；纯观测，不参与执行判定。
+- **日志通道分层**：非 ok 事件按「是否不可送达」分层——`failed` / `timed-out`（provider 没有产出任何内容）走 `logger.warn`，野外默认日志级别即可见；`skipped`（once 预过滤 / 开关 / 总超时）、`cancelled`（轮次拆除）、`truncated`（渲染预算截断）属设计内降级，保持 `logger.debug`。`ok` 不落日志。「没送达」与「送达但被设计降级」因此在默认日志面可分辨。
 - 空消费批（provider 无可订阅输入）不执行、不记 trace 行。
-- `touchSubjects` 运行期抛错的隔离：消费点收编为该 provider 的 `failed` trace（source `'touch'`）；摘账点跳过该声明者、不影响同批其他声明者。
+- `touchSubjects` 运行期抛错的隔离：消费点收编为该 provider 的 `failed` trace（source `'touch'`，warn 通道）；摘账点跳过该声明者、不影响同批其他声明者。
 
 ## 定序
 

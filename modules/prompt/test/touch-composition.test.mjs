@@ -108,7 +108,7 @@ function waitForIdle(ctx, agent) {
 }
 
 function injectionsOf(agent) {
-  return agent.session.events.filter(event =>
+  return agent.session.snapshotEvents().filter(event =>
     event.type === 'user/message'
     && event.data.source?.kind === 'plugin'
     && event.data.source?.plugin === 'prompt-middleware'
@@ -138,7 +138,7 @@ test('v0 equivalence: a default provider is untouched by sensor traffic in the s
     },
   })
 
-  const agent = ctx.agentLoop.create(SessionId('v0-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
+  const agent = await ctx.agentLoop.create(SessionId('v0-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
   try {
     const ask = () => createUserMessage({
       content: [{ type: 'text', text: 'look at docs/guide.md please' }],
@@ -189,7 +189,7 @@ test('touch consumption: a later read re-offers the subject, steady-state resolv
     },
   })
 
-  const agent = ctx.agentLoop.create(SessionId('touch-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
+  const agent = await ctx.agentLoop.create(SessionId('touch-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
   try {
     // Two reads of the same file, then a closing text step: the second read's
     // re-offer only reaches resolve again if the first undefined pass left the
@@ -239,7 +239,7 @@ test('state flip: an edit re-offers the subject and a changed value re-injects',
     },
   })
 
-  const agent = ctx.agentLoop.create(SessionId('flip-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
+  const agent = await ctx.agentLoop.create(SessionId('flip-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
   try {
     adapter.script.push(toolCallResponse('c1', 'edit', { file_path: guideAbs }), textResponse('done'))
     const turn1 = waitForIdle(ctx, agent)
@@ -279,7 +279,7 @@ test('unpaired touch: zero resolves, zero injections', async () => {
     },
   })
 
-  const agent = ctx.agentLoop.create(SessionId('unpaired-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
+  const agent = await ctx.agentLoop.create(SessionId('unpaired-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
   try {
     adapter.script.push(toolCallResponse('c1', 'read', { file_path: outside }), textResponse('done'))
     const turn1 = waitForIdle(ctx, agent)
@@ -316,7 +316,7 @@ test('toggle × touch: switched-off provider neither injects nor ledgers; re-ena
     },
   })
 
-  const agent = ctx.agentLoop.create(SessionId('toggle-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
+  const agent = await ctx.agentLoop.create(SessionId('toggle-run'), { provider: 'mock', model: 'mock' }, { cwd: root })
   const service = ctx.get('promptMiddleware')
   try {
     const ask = () => createUserMessage({
@@ -385,8 +385,8 @@ test('cwd-dependent projection: the same relative touch lands on per-session sub
     },
   })
 
-  const agentA = ctx.agentLoop.create(SessionId('cwd-a-run'), { provider: 'mock', model: 'mock' }, { cwd: rootA })
-  const agentB = ctx.agentLoop.create(SessionId('cwd-b-run'), { provider: 'mock', model: 'mock' }, { cwd: rootB })
+  const agentA = await ctx.agentLoop.create(SessionId('cwd-a-run'), { provider: 'mock', model: 'mock' }, { cwd: rootA })
+  const agentB = await ctx.agentLoop.create(SessionId('cwd-b-run'), { provider: 'mock', model: 'mock' }, { cwd: rootB })
   try {
     for (const [agent, root] of [[agentA, rootA], [agentB, rootB]]) {
       adapter.script.push(toolCallResponse('c1', 'read', { file_path: join(root, 'docs', 'guide.md') }), textResponse('done'))

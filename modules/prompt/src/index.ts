@@ -131,8 +131,24 @@ function promptText(messages: readonly { source: { kind: string }; content: read
   return blocks.join('\n')
 }
 
+/**
+ * Non-delivery statuses warn; designed degradation stays debug. A provider
+ * that renders nothing (`failed` / `timed-out`) is invisible from the host
+ * side otherwise — debug logs are off in the wild, which is exactly how a
+ * broken declarer surfaced as "nothing happens at all" instead of a
+ * diagnosable line (the cognition-link P1 entry symptom). `skipped` (once
+ * ledger), `cancelled` (turn teardown), and `truncated` (render budget) are
+ * expected, frequent, and non-losing: they stay at debug.
+ */
+const TRACE_WARN_STATUSES = new Set(['failed', 'timed-out'])
+
 function traceEvent(ctx: Context, event: { provider: string; status: string; reason?: string }): void {
   if (event.status === 'ok') return
   const reason = event.reason === undefined ? '' : `: ${event.reason}`
-  ctx.logger.debug(`prompt-middleware: ${event.provider} ${event.status}${reason}`)
+  const line = `prompt-middleware: ${event.provider} ${event.status}${reason}`
+  if (TRACE_WARN_STATUSES.has(event.status)) {
+    ctx.logger.warn(line)
+    return
+  }
+  ctx.logger.debug(line)
 }
