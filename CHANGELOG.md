@@ -12,6 +12,12 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Changed
 
+- `routes`: the breadcrumb annotation is value-only — the injected line is just
+  the description chain, with no `meta` suffix. `source` restated what the
+  `[breadcrumb-description]` kind label already identifies, and the contributing
+  READMEs are trivially reconstructible from the directory tree, so under the
+  prompt middleware's steady-state-silence discipline the provider no longer
+  writes meta.
 - `markdown` (`md_rename`): a link label that writes its own destination out —
   the path itself, or its last segment, with or without the `.md` extension —
   now follows the target when the file is renamed or moved, so an index can no

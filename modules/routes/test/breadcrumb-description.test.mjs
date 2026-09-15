@@ -60,11 +60,9 @@ test('breadcrumb resolver emits ancestor README descriptions only, never the fil
     result.value,
     'Docs route > Nested route',
   )
-  assert.equal(
-    result.meta.markdownPaths,
-    'docs/README.md, docs/nested/README.md',
-  )
-  assert.equal(result.meta.source, 'any_nav')
+  // value-only 立场钉死：产出方由 kind 标签标识、贡献 README 可从目录树重建，
+  // provider 一律不写 meta（稳态沉默，见 docs/routes.md 注记形态节）。
+  assert.equal(result.meta, undefined)
 })
 
 test('scan-root README never stands in for a target without its own description', async (t) => {

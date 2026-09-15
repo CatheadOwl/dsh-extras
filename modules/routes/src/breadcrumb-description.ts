@@ -48,11 +48,6 @@ export interface DescriptionCache {
   get(markdownPath: string): Promise<string | null>
 }
 
-interface BreadcrumbCrumb {
-  markdownPath: string
-  description: string
-}
-
 const PROVIDER_NAME = 'breadcrumb-description-enricher'
 const PROVIDER_DESCRIPTION = 'Annotates mentioned paths with the description chain built from their ancestor directories\' READMEs (any_nav breadcrumb).'
 const PROVIDER_KIND = 'breadcrumb-description'
@@ -114,13 +109,17 @@ export function registerBreadcrumbDescriptionProvider(
 }
 
 /**
- * Pure per-path resolver: returns `{ value, meta }` for one breadcrumb
- * contribution, or `undefined` when the path is filtered out (outside the scan
- * root, an excluded segment, gitignored, non-existent, or no crumbs). The
- * framework materializes the `kind`/`label` shell, the `once` ledger, and —
- * through the declared `subjectOf` — the directory key the chain renders
- * under. Only ancestor README descriptions are collected: the mentioned file
- * itself is read, not described, so files never contribute their own crumb.
+ * Pure per-path resolver: returns the rendered description chain for one
+ * breadcrumb contribution, or `undefined` when the path is filtered out
+ * (outside the scan root, an excluded segment, gitignored, non-existent, or no
+ * crumbs). The framework materializes the `kind`/`label` shell, the `once`
+ * ledger, and — through the declared `subjectOf` — the directory key the chain
+ * renders under. Only ancestor README descriptions are collected: the
+ * mentioned file itself is read, not described, so files never contribute
+ * their own crumb. Value-only by steady-state silence: what a meta annotation
+ * could add here is either already carried by the `kind` label (the producer)
+ * or trivially reconstructible from the directory tree (which ancestor READMEs
+ * contributed), so the provider writes no meta.
  */
 export async function resolveBreadcrumbPath(
   ctx: BreadcrumbResolveContext,
@@ -158,13 +157,7 @@ export async function resolveBreadcrumbPath(
   })
   if (crumbs.length === 0) return undefined
 
-  return {
-    value: renderBreadcrumbCrumbs(crumbs),
-    meta: {
-      source: 'any_nav',
-      markdownPaths: crumbs.map((crumb) => crumb.markdownPath).join(', '),
-    },
-  }
+  return { value: renderBreadcrumbCrumbs(crumbs) }
 }
 
 async function collectBreadcrumbCrumbs(input: {
@@ -175,12 +168,12 @@ async function collectBreadcrumbCrumbs(input: {
   gitignoreRules: readonly GitignoreRule[]
   descriptions: DescriptionCache
   options: BreadcrumbDescriptionOptions
-}): Promise<BreadcrumbCrumb[]> {
+}): Promise<string[]> {
   const targetDir = input.targetKind === 'directory'
     ? input.absoluteTarget
     : path.dirname(input.absoluteTarget)
   const directories = ancestorDirectories(input.scanRoot, targetDir)
-  const crumbs: BreadcrumbCrumb[] = []
+  const crumbs: string[] = []
 
   for (const directory of directories) {
     // scan root 自身的 README 不进入面包屑链：它描述的是 workspace/项目本身
@@ -191,10 +184,7 @@ async function collectBreadcrumbCrumbs(input: {
     if (input.options.respectGitignore && isGitignored(readmePath, false, input.gitignoreRules)) continue
     const description = await input.descriptions.get(readmePath)
     if (!description) continue
-    crumbs.push({
-      markdownPath: routePath(input.workspaceRoot, readmePath),
-      description,
-    })
+    crumbs.push(description)
   }
 
   // 文件目标不收集文件自身描述（frontmatter 或首行正文）：被提到的文件本身
@@ -256,10 +246,8 @@ function ancestorDirectories(scanRoot: string, targetDir: string): string[] {
   return directories
 }
 
-function renderBreadcrumbCrumbs(crumbs: readonly BreadcrumbCrumb[]): string {
-  return crumbs
-    .map((crumb) => crumb.description)
-    .join(' > ')
+function renderBreadcrumbCrumbs(crumbs: readonly string[]): string {
+  return crumbs.join(' > ')
 }
 
 function normalizePromptPath(value: string): string {
