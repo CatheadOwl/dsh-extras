@@ -8,7 +8,7 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
-## [Unreleased]
+## [0.3.0] — 2026-09-19
 
 ### Changed
 
@@ -18,6 +18,11 @@ follow [Semantic Versioning](https://semver.org/); entries follow
   READMEs are trivially reconstructible from the directory tree, so under the
   prompt middleware's steady-state-silence discipline the provider no longer
   writes meta.
+- `markdown` (metadata fixer): generated `description` frontmatter is now
+  written in English regardless of the document body language — the summary
+  feeds a language-agnostic router and must stay uniform with the code/symbol
+  vocabulary it names. House-rule change only: the gate does not enforce
+  language, so hand-written descriptions are untouched.
 - `markdown` (`md_rename`): a link label that writes its own destination out —
   the path itself, or its last segment, with or without the `.md` extension —
   now follows the target when the file is renamed or moved, so an index can no
@@ -40,6 +45,13 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Fixed
 
+- `gates` (settings tab): workspace resolution follows the host
+  0.1.6-alpha.2 session-ownership refactor — the client-side global "current
+  session" no longer exists, so the tab addresses the most recently active
+  workspace (latest session activity, falling back to workspace creation
+  time); the server-cwd fallback is unchanged. On refactored hosts the
+  dropped selected-session tier had already been silently degrading to the
+  same fallback.
 - `prompt`: non-delivery trace events now surface at `logger.warn` instead of
   `logger.debug`. A provider that renders nothing (`failed`, `timed-out`) was
   invisible in the wild — debug logs are off by default, so a broken declarer
