@@ -119,7 +119,9 @@ const MD_METADATA_FIXER_PROMPT = [
   'For each file: read it, then add (or fill) a `description` field — one',
   'sentence acting as the file\'s business card, written by these house',
   'rules:',
-  '- Match the language of the document body.',
+  '- Write the description in English, regardless of the document body',
+  '  language — a uniform-language description index stays searchable and',
+  '  aligns with the code/symbol layer the summary must name.',
   '- Keep it skeletal and stable: one short sentence, never more than two',
   '  rendered lines.',
   '- Use precise domain/code vocabulary (entity names, symbols, concepts)',
@@ -140,6 +142,9 @@ const MD_METADATA_GATE: Omit<GateDefinition, 'check'> = {
     + 'to find or categorize later. The gate rechecks only files written since the last clean pass, so it stays '
     + 'cheap and targeted at new docs. A vague or filename-restating description is nearly as bad as a missing '
     + 'one, so the fixer writes each one following the house rules embedded in its prompt instead of improvising. '
+    + 'The house rules fix the description language to English for index uniformity — the summary names '
+    + 'code/symbol vocabulary and serves a language-agnostic router, so one consistent language beats '
+    + 'matching the body\'s. '
     + 'A good description is a semantic judgment rather than a mechanical extraction, so repair is delegated to a '
     + 'subagent: it inherits the session context, reads each file, and writes the description outside the main '
     + 'turn. The repair is one additive frontmatter field and the fixer changes nothing else, so it is low-risk. '
