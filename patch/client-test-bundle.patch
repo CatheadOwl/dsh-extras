@@ -1,11 +1,11 @@
 diff --git a/packages/client/tsdown.client.ts b/packages/client/tsdown.client.ts
-index 7104855a97..67b94ac2a8 100644
+index 3820fba8b0..e33358c0f0 100644
 --- a/packages/client/tsdown.client.ts
 +++ b/packages/client/tsdown.client.ts
-@@ -114,12 +114,46 @@ export function clientBundle(
+@@ -117,12 +117,52 @@ export function clientBundle(
      const face = buildFace(env?.DSH_BUILD_FACE)
      const clientEntry = face === undefined ? 'src/client/index.ts' : 'lib/types/client/index.js'
-     const client = clientConfig(id, clientEntry)
+     const client = clientConfig(id, clientEntry, options.clientBanner)
 +    // Local patch (upstream issue 20260830-1927): also emit a Node-importable
 +    // twin of the browser bundle so out-of-tree component specs can import the
 +    // client half under vitest+jsdom. In-tree builds never set the env and are
@@ -36,17 +36,23 @@ index 7104855a97..67b94ac2a8 100644
 + */
 +function clientTestConfig(id: string, entry: string): UserConfig {
 +  const browser = clientConfig(id, entry)
++  // The twin inherits clientConfig's output options minus the browser closure
++  // wrapper (banner/footer/intro hold it). Key omission rather than explicit
++  // undefined — exactOptionalPropertyTypes rejects the latter; outputOptions
++  // is declared object-or-function but clientConfig always returns the object.
++  const declared = browser.outputOptions
++  const nodeOutput =
++    declared !== undefined && typeof declared !== 'function'
++      ? (({ banner: _banner, footer: _footer, intro: _intro, ...rest }) => rest)(declared)
++      : {}
 +  return {
 +    ...browser,
 +    name: `${id}/client-test`,
 +    format: 'esm',
 +    platform: 'node',
 +    outputOptions: {
-+      ...browser.outputOptions,
++      ...nodeOutput,
 +      entryFileNames: 'client.test.js',
-+      banner: undefined,
-+      footer: undefined,
-+      intro: undefined,
 +    },
    }
  }
