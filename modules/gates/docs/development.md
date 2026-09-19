@@ -23,7 +23,7 @@ node --test --test-isolation=none <package.json test 列出的文件>
 node scripts/register-reference.mjs --write
 ```
 
-组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（有用例 import 其 `lib/gate-check.js` 构建产物）；不在 `pnpm verify` 内，新克隆 / 非本机不可跑：
+组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（有用例 import 其 `lib/gate-check.js` 构建产物）。已挂在 `test:gates` 末尾，经包根 `scripts/run-composition.mjs`（不随包发布，名称引用）条件运行，三态：探测 `@deepseek-ai/dsh-agent-loop` 可解析且宿主已 build → 真实运行；本 checkout 无接线（新克隆 / 独立镜像形态）→ 输出一行 SKIPPED 后跳过；接线在场但不可运行 → **失败不跳过**。单独直跑（不经 runner）：
 
 ```powershell
 node --test --test-isolation=none test/composition.test.mjs
