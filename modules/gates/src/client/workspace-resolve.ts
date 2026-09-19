@@ -1,11 +1,13 @@
 /**
  * Workspace-target resolution for the gates settings tab.
  *
- * The tab lists the gates of one workspace at a time, mirroring the CogGit
- * init tab's policy (UiWorkspaceService.startSession): the workspace owning
- * the currently selected session first, then the most recently active
- * workspace, then undefined — the browser wire omits the workspace and the
- * server resolves its own cwd.
+ * The tab lists the gates of one workspace at a time: the most recently
+ * active workspace (latest session `updatedAt`, falling back to the
+ * workspace's `createdAt`), else undefined — the browser wire omits the
+ * workspace and the server resolves its own cwd. Hosts ≥ 0.1.6-alpha.2
+ * removed the client-side global "current session" (explicit Session
+ * Provider ownership; a global settings tab sits under no provider), so
+ * the former selected-session-first tier no longer exists to mirror.
  */
 
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
@@ -15,18 +17,13 @@ import type { WorkspaceSnapshot, WorkspaceView } from '@deepseek-ai/dsh-api-work
  * Resolve the workspace path the gates tab should address.
  * @param workspaces - the global Workspace snapshot (useWorkspaces).
  * @param sessions - the global Session list snapshot (useSessions).
- * @returns the owning workspace path of the selected session, else the most
- * recently active workspace path, else undefined (server-cwd fallback).
+ * @returns the most recently active workspace path, else undefined
+ * (server-cwd fallback).
  */
 export function resolveWorkspacePath(
   workspaces: WorkspaceSnapshot,
   sessions: SessionListState,
 ): string | undefined {
-  const current = sessions.current
-  const owned = current === undefined
-    ? undefined
-    : workspaces.items.find(item => item.sessionIds.includes(current))
-  if (owned !== undefined) return owned.path
   if (workspaces.phase !== 'ready' || sessions.phase !== 'ready') return undefined
   return mostRecentlyActive(workspaces.items, sessions.byId)?.path
 }
