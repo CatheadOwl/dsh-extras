@@ -46,7 +46,8 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 ### Fixed
 
 - `gates` (settings tab): workspace resolution follows the host
-  0.1.6-alpha.2 session-ownership refactor — the client-side global "current
+  0.1.6-alpha.2 session-ownership refactor (explicit Session ownership; the
+  client-side global "current
   session" no longer exists, so the tab addresses the most recently active
   workspace (latest session activity, falling back to workspace creation
   time); the server-cwd fallback is unchanged. On refactored hosts the
@@ -162,6 +163,7 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 Deprecated shortly after publish; superseded by [0.1.1]. Use 0.1.1 or later.
 
+[0.3.0]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.3.0
 [0.2.1]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.2.1
 [0.2.0]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.2.0
 [0.1.2]: https://github.com/CatheadOwl/dsh-extras/releases/tag/v0.1.2
