@@ -8,6 +8,27 @@ All notable changes to `@catheadowl/dsh-extras` are documented here. Versions
 follow [Semantic Versioning](https://semver.org/); entries follow
 [Keep a Changelog](https://keepachangelog.com/) conventions.
 
+## [Unreleased]
+
+### Changed
+
+- `routes` (`any_nav`): the tool description now documents the output-surface
+  contracts a fresh reader could not derive — the response envelope (`root` /
+  `anchor`, depth measured from `anchor`, the requested `routePath` echoed when
+  passed), description provenance (frontmatter `description:`, else a
+  `description:` line in the head, else the first substantive prose line), the
+  flat ` | ` split rule (everything after the first separator is the
+  description, which may itself contain ` | `), the Markdown-empty folder
+  omission rule (`[truncated: 0]` never appears), and filter visibility
+  (traversal filters apply without an echo; the `maxFiles` cutoff is the only
+  mid-scan clip and always reports a `diagnostics` warning). The `format`
+  parameter's tree-node field list now states when `markdown` / `description`
+  appear and that `omittedMarkdownCount` is the same recursive `.md` total as
+  flat's `[truncated: N]`. Wording only — no output schema or behavior change.
+  Each added clause resolves one adjudicated comprehension finding (see the
+  module's `eval/comprehension` adjudication record); the description exceeds
+  the TD-4 soft word cap with those clauses as the accepted cost.
+
 ## [0.3.0] — 2026-09-19
 
 ### Changed

@@ -42,6 +42,7 @@ function projectResult(result) {
     depth: result.depth,
     format: result.format,
     routeCount: result.routeCount,
+    diagnostics: result.diagnostics,
     ...(result.routes ? { routes: result.routes } : { tree: result.tree }),
   }
 }

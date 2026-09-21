@@ -15,8 +15,9 @@ description: modules/routes 的行为细则——any_nav 工具与 breadcrumb-de
 - **禁用的文件名**：`excludeFiles`（默认 `AGENTS.md`、`CLAUDE.md`，大小写不敏感）——宿主已自动加载的 agent 指令文件不进路由视图，也不计入截断目录的 `[truncated: N]`，breadcrumb 也不采其描述；可被插件配置或调用参数覆盖。
 - **dot 条目**：`excludeDotEntries`（默认开）跳过名字以 `.` 开头的条目（如 `.github`、`.agents`）。
 - **`.gitignore`**：`respectGitignore`（默认开）沿途读取并继承 `.gitignore` 规则，命中的路径不进入路由表。
-- **`maxFiles`**（默认 2000）：每次调用读取 Markdown 文件数的上限，超出即停止收集。
-- **只收 `.md`**：其他扩展名的文件不进入路由表。
+- **`maxFiles`**（默认 2000）：每次调用读取 Markdown 文件数的上限，超出即停止收集并在 `diagnostics` 报 `file-limit-reached` 警告。
+- **只收 `.md`**：其他扩展名的文件不进入路由表；递归意义上不含任何 `.md` 的文件夹整个不进路由表（`[truncated: 0]` 不存在）。
+- **过滤不回显**：上述排除项生效时不回显在输出里——视图中缺失的路径要么被策略排除、要么不含 Markdown；`maxFiles` 截断是唯一的中途截停，且必报诊断。
 
 ## depth 截断语义
 
@@ -29,6 +30,8 @@ description: modules/routes 的行为细则——any_nav 工具与 breadcrumb-de
 
 - **文件夹**由其下一级 `folder/README.md` 代表——路由行显示文件夹路径 + 该 README 的描述；**普通 Markdown 文件**显示完整相对 `.md` 路径 + 其描述。
 - `format: flat`（默认）：每条一行；`format: tree`：嵌套节点，语义相同——文件节点带完整 `.md` `path` 与 `kind: file`；截断文件夹带 `truncated: true`、`omittedMarkdownCount`（递归 `.md` 总数）与 `markdown`（其 README 路径）；已展开文件夹只有 `path` 与 `children`。
+- **响应顶层**：`root` 是 workspace 绝对根，`anchor` 是本次路由根的绝对路径（`depth` 从 `anchor` 起算）。
+- **description 来源**：frontmatter `description:` → 文档头部显式 `description:` 行 → 首个实质正文行（回退）；都不命中则无描述。flat 行 `path | description` 以行内**第一个** ` | ` 切分，其后内容（含更多 ` | `）均属描述。
 - `routeCount` 计的是路由条目数（Markdown 文件 + 截断文件夹），不是原始 `.md` 数。
 
 ## diagnostics 含义

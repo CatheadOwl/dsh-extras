@@ -11,17 +11,18 @@ The eval measures **semantic comprehension only** — "can a fresh model read th
 | `root` | Absolute workspace root (shown here as the stable `<workspace-root>` placeholder). |
 | `anchor` | Absolute path of the route root this view is anchored at; **depth is measured from here**. hop-1 = `<workspace-root>`; hop-2 = `<workspace-root>/explorer`; hop-3 = `<workspace-root>/explorer/sandbox-containment`. |
 | `depth` / `format` | Echo of the call parameters (defaults 0 / flat). |
-| `routePath` | Echoed **only when the call passed one** (absent in hop-1). |
+| `routePath` | Echoed **only when the call passed one** (absent in hop-1); echoed in normalized slash form (`explorer`, never `./explorer` or `explorer/`). |
 | `routeCount` | Number of route entries produced = file lines + `[truncated]` lines (NOT a raw .md file count). |
+| `diagnostics` | Always present; empty when nothing to report. The maxFiles budget is the only mid-scan cutoff and adds a `file-limit-reached` warning when it clips the scan. |
 | `routes[]` | Flat lines. Each is either a Markdown file (`relative/path.md`, with a description suffix when the file has one) or a depth-truncated folder `[truncated: N] folder-path`. |
 | `tree` (only when `format: "tree"`) | Nested nodes instead of flat lines; same truncation/description semantics as flat. |
 | `path` (tree node) | Workspace-root-relative route path. For files it is the full `.md` path (`explorer/README.md`); for folders the folder path. |
-| `markdown` (tree node) | On a truncated folder, its `README.md` path (the "folder represented by README"); absent on file nodes. |
+| `markdown` (tree node) | On a truncated folder, its `README.md` path (the "folder represented by README"); absent on file nodes and on truncated folders without a README. |
 | `kind` (tree node) | `"file"` or `"folder"`; absent on structural-only nodes. |
 | `truncated` / `omittedMarkdownCount` (tree node) | Truncated folder only; `omittedMarkdownCount` is exactly the `N` shown as `[truncated: N]` in flat. |
 | structural-only node (tree) | A node with only `path` + `children` (no `kind`/`markdown`/`description`) — hierarchy scaffolding, not a navigable entry; flat skips it. |
-| `[truncated: N] folder-path` | A folder at the depth boundary, not descended into. N = recursive .md count under it. |
-| description suffix (`\| description`) | Present only when the file has a description, or a truncated folder borrows its README's description. |
+| `[truncated: N] folder-path` | A folder at the depth boundary, not descended into. N = recursive .md count under it. A folder with no .md content under it is omitted entirely — `[truncated: 0]` never appears. |
+| description suffix (`\| description`) | Present only when the file has a description, or a truncated folder borrows its README's description. The separator is the FIRST ` \| ` on the line: the route path is everything before it, the description (which may itself contain ` \| `) everything after. A description comes from the document itself — frontmatter `description:`, else a `description:` line in its head, else its first substantive prose line. |
 
 ## Per-hop expected next action
 
@@ -47,6 +48,9 @@ A reviewer "red flag" is only a real finding if it is NOT one of the deliberate 
 9. **`depth: 1` from the root shows folders two levels deep** (e.g. `explorer/compact`) with no `[truncated] explorer` line — a known easy misread of "descend N levels"; the depth-0 wording and hop-2/hop-3 disambiguate it. Accepted wording risk, not a defect.
 10. **Tree file `path` is the full `.md` path (same as the flat file line)** — deliberate: tree is flat's nested twin, so a file's `path` is its `.md` path; `markdown` exists only on truncated folders (their README).
 11. **Tree structural-only nodes (`path` + `children`, no `kind`)** are hierarchy scaffolding, not entries — flat skips them; they are not a bug.
+12. **Truncation count has two spellings across formats** — flat embeds it in the line prefix `[truncated: N]`, tree names it `omittedMarkdownCount` (with `truncated: true`). Deliberate: a flat line is one string, so N must live in the prefix; a tree node is an object, so it gets named fields. Both spellings state the same "recursive .md total"; renaming the published tree field now would break consumers for zero comprehension gain.
+13. **The recorded hop sequence is a fixture choice, not a prescribed path** — the tool accepts any folder route as `routePath` directly (hop-1 already names `explorer/sandbox-containment`, so jumping straight there is legal); the fixture's extra confirmation hop and tree re-render demonstrate behavior, not "shortest route" guidance the tool owes. Non-minimal trajectories are not a defect.
+14. **Flat cannot distinguish a truncated folder without a README from one whose README has no description** — both render as the bare `[truncated: N] folder-path`. Deliberate: a flat line is one string with no fields; tree's `markdown` is the named-field disambiguator, and the navigation consequence is identical either way (descend, or read the derivable `folder/README.md` if it exists).
 
 ## How to grade a run
 

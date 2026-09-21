@@ -93,7 +93,7 @@ export function apply(ctx: Context, config: Config): void {
       format: {
         type: 'string',
         enum: ['flat', 'tree'],
-        description: 'Output shape. `flat` (default) returns one route line per entry. `tree` returns nested nodes with the same semantics: a file node has its full `.md` path in `path` and `kind: file`; a truncated folder has `path`, `kind: folder`, `truncated: true`, `omittedMarkdownCount` (the recursive .md total), and `markdown` (its README path); an expanded folder has only `path` and `children`.',
+        description: 'Output shape. `flat` (default) returns one route line per entry. `tree` returns nested nodes with the same semantics: a file node has its full `.md` path in `path` and `kind: file`; a truncated folder has `path`, `kind: folder`, `truncated: true`, `omittedMarkdownCount` (the same recursive .md total as flat\u2019s `[truncated: N]`), `markdown` (its README path, when it has one), and `description` (that README\u2019s, when the README has one); an expanded folder has only `path` and `children`.',
       },
       excludeDirs: {
         type: 'string',

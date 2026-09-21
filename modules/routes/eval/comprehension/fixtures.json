@@ -1,7 +1,7 @@
 {
   "tool": {
     "name": "any_nav",
-    "description": "Build a routing view from Markdown descriptions under a directory: folders are represented by their README.md (its description, when present). Use before exploring an unfamiliar Markdown knowledge base to pick a folder route. Route lines are always workspace-root-relative full paths (e.g. `guides/containment/containment.md`), never relative to the selected route root, and are sorted case-insensitively by route path. Every line is either a Markdown file route (with ` | description` when the file has one) or a depth-truncated folder rendered as `[truncated: N] folder-path` (with ` | description` when the folder's README has one), where N is the folder's recursive .md count (the total that would expand on descent). `routeCount` counts route entries (files plus truncated folders), not raw .md files or structural tree nodes. Returns route paths and descriptions, never file content.",
+    "description": "Build a routing view from Markdown descriptions under a directory: folders are represented by their README.md (its description, when present). Use before exploring an unfamiliar Markdown knowledge base to pick a folder route. Route lines are always workspace-root-relative full paths (e.g. `guides/containment/containment.md`), never relative to the selected route root, and are sorted case-insensitively by route path. Every line is either a Markdown file route (with ` | description` when the file has one) or a depth-truncated folder rendered as `[truncated: N] folder-path` (with ` | description` when the folder’s README has one), where N is the folder’s recursive .md count (the total that would expand on descent); a folder with no Markdown content under it is omitted entirely, so `[truncated: 0]` never appears. In a `path | description` line, everything after the FIRST ` | ` is the description (it may itself contain ` | `); route paths never contain the separator. `routeCount` counts route entries (files plus truncated folders), not raw .md files or structural tree nodes. In the response, `root` is the absolute workspace root and `anchor` the absolute route root of this view; `depth` is measured from `anchor`, and the requested `routePath` is echoed when one was passed. A description comes from the document itself: frontmatter `description:`, else a `description:` line in its head, else its first substantive prose line. Traversal filters (excluded directory/file names, dot entries, gitignored paths) apply without an echo — a path absent from the view was excluded by policy or holds no Markdown; the only mid-scan cutoff, the maxFiles budget, always reports a warning in `diagnostics`. Returns route paths and descriptions, never file content.",
     "parameters": {
       "routePath": {
         "type": "string",
@@ -9,16 +9,23 @@
       },
       "depth": {
         "type": "integer",
-        "description": "Maximum directory depth to expand below the route root (routePath if given, otherwise the workspace root). Depth is measured from that route root, not the workspace root. A folder sitting exactly at the depth boundary is not descended into and is shown as `[truncated: N] folder-path` instead of expanding. Defaults to 0: lists only the route root's own Markdown files plus each direct sub-folder as its `[truncated: N]` representative."
+        "description": "Maximum directory depth to expand below the route root (routePath if given, otherwise the workspace root). Depth is measured from that route root, not the workspace root. A folder sitting exactly at the depth boundary is not descended into and is shown as `[truncated: N] folder-path` instead of expanding. Defaults to 0: lists only the route root’s own Markdown files plus each direct sub-folder as its `[truncated: N]` representative."
       },
       "format": {
         "type": "string",
-        "enum": ["flat", "tree"],
-        "description": "Output shape. `flat` (default) returns one route line per entry. `tree` returns nested nodes with the same semantics: a file node has its full `.md` path in `path` and `kind: file`; a truncated folder has `path`, `kind: folder`, `truncated: true`, `omittedMarkdownCount` (the recursive .md total), and `markdown` (its README path); an expanded folder has only `path` and `children`."
+        "enum": [
+          "flat",
+          "tree"
+        ],
+        "description": "Output shape. `flat` (default) returns one route line per entry. `tree` returns nested nodes with the same semantics: a file node has its full `.md` path in `path` and `kind: file`; a truncated folder has `path`, `kind: folder`, `truncated: true`, `omittedMarkdownCount` (the same recursive .md total as flat’s `[truncated: N]`), `markdown` (its README path, when it has one), and `description` (that README’s, when the README has one); an expanded folder has only `path` and `children`."
       },
       "excludeDirs": {
         "type": "string",
-        "description": "Directory names skipped during traversal. Defaults to the plugin config."
+        "description": "Comma-separated directory names skipped during traversal. Defaults to the plugin config."
+      },
+      "excludeFiles": {
+        "type": "string",
+        "description": "Comma-separated Markdown file names (case-insensitive) excluded from routes, e.g. \"AGENTS.md,CLAUDE.md\". Defaults to the plugin config."
       },
       "excludeDotEntries": {
         "type": "boolean",
@@ -36,21 +43,70 @@
   },
   "fixture": {
     "files": [
-      { "path": "README.md", "description": "Root" },
-      { "path": "explorer/README.md", "description": "Explorer route" },
-      { "path": "explorer/sandbox-containment/README.md", "description": "Sandbox containment" },
-      { "path": "explorer/sandbox-containment/containment.md" },
-      { "path": "explorer/compact/evidence.md" },
-      { "path": "explorer/compact/summary.md" },
-      { "path": "explorer/_TEMPLATE/evidence/README.md", "description": "Evidence template" },
-      { "path": "explorer/_TEMPLATE/evidence/evidence.md" },
-      { "path": "explorer/_TEMPLATE/guide/guide.md" }
+      {
+        "path": "README.md",
+        "description": "Root"
+      },
+      {
+        "path": "explorer/README.md",
+        "description": "Explorer route"
+      },
+      {
+        "path": "explorer/sandbox-containment/README.md",
+        "description": "Sandbox containment"
+      },
+      {
+        "path": "explorer/sandbox-containment/containment.md"
+      },
+      {
+        "path": "explorer/compact/evidence.md"
+      },
+      {
+        "path": "explorer/compact/summary.md"
+      },
+      {
+        "path": "explorer/_TEMPLATE/evidence/README.md",
+        "description": "Evidence template"
+      },
+      {
+        "path": "explorer/_TEMPLATE/evidence/evidence.md"
+      },
+      {
+        "path": "explorer/_TEMPLATE/guide/guide.md"
+      }
     ]
   },
   "hops": [
-    { "id": "hop-1 (root)", "params": { "depth": 1, "format": "flat" } },
-    { "id": "hop-2 (routePath: explorer)", "params": { "routePath": "explorer", "depth": 1, "format": "flat" } },
-    { "id": "hop-3 (routePath: explorer/sandbox-containment)", "params": { "routePath": "explorer/sandbox-containment", "depth": 1, "format": "flat" } },
-    { "id": "hop-4 (routePath: explorer, format: tree)", "params": { "routePath": "explorer", "depth": 1, "format": "tree" } }
+    {
+      "id": "hop-1 (root)",
+      "params": {
+        "depth": 1,
+        "format": "flat"
+      }
+    },
+    {
+      "id": "hop-2 (routePath: explorer)",
+      "params": {
+        "routePath": "explorer",
+        "depth": 1,
+        "format": "flat"
+      }
+    },
+    {
+      "id": "hop-3 (routePath: explorer/sandbox-containment)",
+      "params": {
+        "routePath": "explorer/sandbox-containment",
+        "depth": 1,
+        "format": "flat"
+      }
+    },
+    {
+      "id": "hop-4 (routePath: explorer, format: tree)",
+      "params": {
+        "routePath": "explorer",
+        "depth": 1,
+        "format": "tree"
+      }
+    }
   ]
 }

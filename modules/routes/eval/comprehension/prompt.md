@@ -1,4 +1,4 @@
-You are a fresh, independent reviewer with NO prior knowledge of how this tool was designed. Below is a routing-view tool that a coding agent can call (its description and parameters), and the exact output it returned across three successive navigation hops. The agent's goal is to reach the note `explorer/sandbox-containment/containment.md`. Figure out, purely from what is shown, what every part of the output means and how the agent is supposed to use it to navigate.
+You are a fresh, independent reviewer with NO prior knowledge of how this tool was designed. Below is a routing-view tool that a coding agent can call (its description and parameters), and the exact output it returned across a recorded navigation sequence: three flat-format hops walking toward the target note, then a fourth call that re-renders the second hop's scope in tree format. The agent's goal is to reach the note `explorer/sandbox-containment/containment.md`. Figure out, purely from what is shown, what every part of the output means and how the agent is supposed to use it to navigate.
 
 {{EVAL_OBSERVATIONS}}
 

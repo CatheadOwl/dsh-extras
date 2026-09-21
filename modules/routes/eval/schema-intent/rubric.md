@@ -17,4 +17,4 @@ Each scenario has exactly one correct next action from { read, grep, any_nav }. 
 ## Accepted intent (do NOT count these as defects)
 
 1. **The schema never hints the terminal `read` step.** Deliberate: the terminal action is intent-dependent, and a "next do X" hint would be a next-hint (see the upstream structured next-hint design note). The schema's answer is the "never file content" boundary — it states what the tool does NOT return, not which tool to call next.
-2. **The schema does not say where descriptions come from.** Deliberate: the tool is a router; the model only needs "description may be present or absent" (`when present`), not the extraction algorithm.
+2. **The schema states description provenance in one clause** (frontmatter `description:`, else a `description:` line in the head, else the first substantive prose line) plus other output-surface contracts (response `anchor`, the flat ` | ` split rule, filter visibility). Deliberate: these resolve documented comprehension misreadings of the returned artifact; for tool choice itself, description presence/absence remains all that matters, and no extraction algorithm details are exposed.
