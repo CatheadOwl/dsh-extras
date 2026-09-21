@@ -1,6 +1,6 @@
 # Eval rubric — answer key
 
-This is the **grading standard** for the judge runs. The judge (`prompt.md`) never sees this file; it sees only the tool description + hop outputs. You, the human, compare each judge's three parts against this key.
+This is the **grading standard** for the reviewer runs. The reviewer (`prompt.md`-driven fresh model) never sees this file; it sees only the tool description + hop outputs. You, the human, compare each reviewer's three parts against this key.
 
 The eval measures **semantic comprehension only** — "can a fresh model read the routing view and know which `routePath` to take next". Field *presence/shape* is already locked deterministically by `test/navigation.test.mjs`; do not re-grade it here.
 
@@ -34,7 +34,7 @@ The eval measures **semantic comprehension only** — "can a fresh model read th
 
 ## Known intentional design — do NOT count these as errors
 
-A judge "red flag" is only a real finding if it is NOT one of the deliberate choices below. If a judge flags only these, the output is understood correctly.
+A reviewer "red flag" is only a real finding if it is NOT one of the deliberate choices below. If a reviewer flags only these, the output is understood correctly.
 
 1. **`[truncated: N]` counts recursive .md, not "lines shown" or "direct children"** — deliberate: N stays stable regardless of which scan root observes the folder. (hop-1 shows `explorer/_TEMPLATE` as `[truncated: 3]`; hop-2 shows it split as `[truncated: 2] …/evidence` + `[truncated: 1] …/guide`; 2 + 1 = 3.)
 2. **`depth` is relative to the route root, not the workspace root** — the same folder truncates when observed from above and expands when it is the route root (e.g. `compact` truncated in hop-1, expanded in hop-2). Deliberate; `anchor` names the reference point.
@@ -50,7 +50,7 @@ A judge "red flag" is only a real finding if it is NOT one of the deliberate cho
 
 ## How to grade a run
 
-1. Read the judge's Part 1 and check the per-field key above. A field is "understood" if the judge's meaning matches, even in different wording.
-2. Read Part 2 and check the per-hop table. The judge must correctly distinguish `[truncated: N]` (cut off — do not descend) from expanded files, and must realize `depth` is relative to the route root.
+1. Read the reviewer's Part 1 and check the per-field key above. A field is "understood" if the reviewer's meaning matches, even in different wording.
+2. Read Part 2 and check the per-hop table. The reviewer must correctly distinguish `[truncated: N]` (cut off — do not descend) from expanded files, and must realize `depth` is relative to the route root.
 3. Read Part 3. A red flag is a **real finding only** if it is not in the known-intentional list above. Real findings are actionable design gaps.
 4. Across N runs, aggregate: fields/actions all runs agree on = converged; disagreements or real (non-listed) red flags = investigate.
