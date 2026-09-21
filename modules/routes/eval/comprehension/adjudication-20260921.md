@@ -75,4 +75,6 @@ description: 2026-09-21 comprehension judge 8 条新发现的逐条裁决——6
 - **comprehension 终轮**：status=judged；两 run Part 1 字段**全部 understood**（含本轮裁决目标 `anchor`、`diagnostics`、`[truncated: 0]` 规则、description 来源与首分隔符切分——分隔符规则被 reviewer 正确复述）；全部 hop 动作符合键；judge 结论语 "no missing/comprehension-broken field in either run"，"every flag maps to an intentional/documented item"。
 - 终轮剩余 flag 的处置：R8 入 known-intentional 第 14 条（judge 建议的 rubric 增补）；R9 记录接受残留（judge 自评 non-actionable）。
 - 中间轮次（复跑 1/2）的 R1–R3 修复后已在后续轮次验证消失。
+- **未验证项（响亮记账）**：R8/#14 的 judge 归并闭环未经第四次复跑验证——本轮以裁决关闭（rubric 只进 judge 输入，终轮后 reviewer 可见面未再变，复跑只能验证 judge 的映射）；留待该模块下次 review 使用时顺带确认：reviewer 再 flag flat 无 README 歧义时，judge 归并到 known-intentional 14 而非再列为新 red flag。
+- **阈值下观察（无动作）**：终轮 judge 在 Verdicts 分歧注记提到一个 run 的 hop-3 未明说「用 read 取目标内容」（route-only 边界仍被承认），自评为 minor、未列为 flag——观察在档，不动产品面。
 - 模块测试 50/50 全绿（含 5 条新 description-contract 钉子）；`check-types:routes`、`build:routes` 通过。
