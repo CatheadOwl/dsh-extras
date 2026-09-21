@@ -6,7 +6,7 @@ description: 2026-09-21 comprehension judge 8 条新发现的逐条裁决——6
 
 证据基线：当次 `.runs/any-routes-comprehension/`（judge.json / review-report.md，gitignore 的当次产物）。judge 的 suspected source 标注是初值不是结论，本文是裁决。逐条三选一：(a) 改输出面/工具描述（产品修复）；(b) 归入 intentional design（进 rubric known-intentional 清单）；(c) fixture 伪影（修 fixture/prompt）。
 
-**裁决分布**：#1–#5 = (a)，全部落在工具描述文档面（无输出 schema / 行为变更）；#6 = (b)；F1/F2 = (c)。工具描述现为 262 词，超出 TD-4 软上限（~150 词）——五个新子句各自消解一条本文件裁决的误读，是 TD-4 允许的超限口径。
+**裁决分布**：#1–#5 = (a)，全部落在工具描述文档面（无输出 schema / 行为变更）；#6 = (b)；F1/F2 = (c)。工具描述现为 272 词，超出 TD-4 软上限（~150 词）——五个新子句各自消解一条本文件裁决的误读，是 TD-4 允许的超限口径。
 
 ## #1 `anchor` 是未文档化的响应字段 — (a)
 
