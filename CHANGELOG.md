@@ -43,6 +43,18 @@ follow [Semantic Versioning](https://semver.org/); entries follow
   Each added clause resolves one adjudicated comprehension finding (see the
   module's `eval/comprehension` adjudication record); the description exceeds
   the TD-4 soft word cap with those clauses as the accepted cost.
+- **The gates / enrichment configuration UI moves from the Settings
+  "Built-in plugins" section to the Plugins page** (follows the upstream
+  2026-09-16 move of the plugins-configuration home): on the
+  `@catheadowl/dsh-extras` card each of the two rows now carries a Configure
+  control opening its own page — the same switch form and write path, plus a
+  one-liner summary; the Settings section no longer lists extras tabs.
+  Registration slot `settings.plugins.tab` → `plugins.row.config` (keys
+  `@catheadowl/dsh-extras#gates` / `#enrichment`); no npm-facing API changes
+  (exports, service keys, remote namespaces, storage keys unchanged).
+  Requires a host whose web frontend ships the Plugins-page config slots
+  (upstream ≥ 2026-09-16, e.g. `0.1.6-alpha.2`); on older hosts the
+  configuration UI is simply absent — the server halves are unaffected.
 
 ## [0.3.0] — 2026-09-19
 
