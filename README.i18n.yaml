@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority; after
 # editing either side, bring the other along and re-record with:
 #   node scripts/verify-readme-i18n.mjs --write
-README.md: 9770b1159ae1759c647a279c27e0996446cdaecbb5cb4ff505dff0764e5247fe
-README.zh.md: c9952b97e3569549cdcd9328e71d65da1037a568837fdcd5f83145566a455783
+README.md: 0f7a37c09efd65656126403fdab8761db0e750221d1b82eae11dd6d0633d7a98
+README.zh.md: c10fe0a6cf418aacd1c65fba5390f281ab3cc21f2b7124f40f117bc7a199de1f
