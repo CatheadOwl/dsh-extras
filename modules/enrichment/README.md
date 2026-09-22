@@ -8,7 +8,7 @@ description: extras 的 enrichment 模块——user prompt enrichment 小框架�
 
 **与宿主的关系**：挂在 dsh 的 `agent/pre-step` 拦截点上做一个 provider 注册表（`ctx.enrichment`），本模块只实现承载层，不内置 cognition 或面包屑等业务逻辑——那些由其他插件/模块作为 provider 注册。为什么是框架而不是各插件直挂 pre-step：一个注册面 + 统一 runner（once 去重 / 预算 / 超时 / 降级 / 可见性纪律），代替每个注入者重复造注入管线、互相不知情地抢占上下文。与宿主的整体关系见包根 [docs/host.md](../../docs/host.md)；本模块的完整论证见 [docs/why-enrichment.md](docs/why-enrichment.md)。
 
-安装本包见[包根 README](../../README.md)（`dsh plugin add`，prompt 是其中一行）。链路一句话：pre-step 解析 user prompt 中的路径提及 → provider 产出 **relates**（对被提及路径追加的关联上下文条目，`value` / `href`）→ 聚合去重预算后随会话注入。
+安装本包见[包根 README](../../README.md)（`dsh plugin add`，enrichment 是其中一行）。链路一句话：pre-step 解析 user prompt 中的路径提及 → provider 产出 **relates**（对被提及路径追加的关联上下文条目，`value` / `href`）→ 聚合去重预算后随会话注入。
 
 ## 提供面
 
@@ -19,8 +19,8 @@ description: extras 的 enrichment 模块——user prompt enrichment 小框架�
 | `registerRelatesProvider(ctx, provider)` | 声明式 provider 的硬 import 注册入口（同上子路径）；`resolve` + `kind` 由框架物化为 provider 并复用整套 runner。注册示例与 API reference 见 [docs/register.md](docs/register.md) |
 | `agent/pre-step` driver | 收集本 step 的 subject（prompt 路径解析 + 上一步 pending touch 的 `touchSubjects` 投影），按 provider 的 `sources` 订阅过滤喂入，运行 provider，向当前 step 的 admitted 请求批追加 relates 上下文 |
 | `tools/result` sensor | 框架统一持有的 touch 信号监听：闭集 `{read, edit}`、错误/中止/无 agent 剔除、嵌套上浮到根执行、按 session cwd 归一到项目相对键空间；touch 时对产出 subjects 摘 once 账（失效面向所有声明者），原始 touch 记入 per-session pending、turn 边界丢弃残余 |
-| Typert Remote `enrichment` | `list` / `setDisabled`：Settings → Plugins → Enrichment 配置面（provider 开关）；`introspect`：只读自省快照（`sources` / `effectiveEnabled` / `disabledBy`，见 [docs/contract.md](docs/contract.md)「自省快照」）。Typert Remote 是宿主的 Web RPC 面 |
-| client 半 | `settings.plugins.tab` slot（id `enrichment`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
+| Typert Remote `enrichment` | `list` / `setDisabled`：插件页 enrichment 行（Configure）配置面（provider 开关）；`introspect`：只读自省快照（`sources` / `effectiveEnabled` / `disabledBy`，见 [docs/contract.md](docs/contract.md)「自省快照」）。Typert Remote 是宿主的 Web RPC 面 |
+| client 半 | `plugins.row.config` slot（键 `@catheadowl/dsh-extras#enrichment`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
 
 ## Quickstart（`registerRelatesProvider`）
 
@@ -58,7 +58,7 @@ provider 只返回结构化 contribution，不拼最终 prompt，不改写用户
 
 声明式面（`registerRelates`）让消费者只写单 path 的 `resolve` + 一个稳定 `kind`，框架物化为 imperative provider 并复用同一 runner（once ledger / 聚合 / 预算 / 超时 / 降级 / 渲染）。默认 `once`，`mode: 'always'` 显式 opt-in；显式 `'once'` 与空 `kind` 在注册期 fail loud。注册示例与 API reference 见 [docs/register.md](docs/register.md)。
 
-provider 开关：Settings → Plugins → Enrichment 按 provider name 全局开关，是纯执行过滤（被关 provider 不进 pre-step 执行路径），不触碰 once 账本；细节见 [docs/contract.md](docs/contract.md)。
+provider 开关：插件页 enrichment 行（Configure）按 provider name 全局开关，是纯执行过滤（被关 provider 不进 pre-step 执行路径），不触碰 once 账本；细节见 [docs/contract.md](docs/contract.md)。
 
 完整注入契约（once 记账、声明式 `subjectOf` 重键、定序、开关过滤点）见 [docs/contract.md](docs/contract.md)。
 

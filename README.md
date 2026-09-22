@@ -67,7 +67,7 @@ Beyond the composition rows, the package exports stable subpaths for plugin deve
 - `@catheadowl/dsh-extras/enrichment/register` — the enrichment consumer face (`registerEnrichmentProvider` / `registerRelatesProvider` + the provider types).
 
 Secondary consumer faces per module (e.g. markdown's repo-level `gates.yml` fallback) are documented in each module's README.
-The Web Settings tabs (gates / enrichment) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
+The Web configuration pages (the gates / enrichment rows' Configure pages on the Plugins page) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
 
 The module dependency topology and the exports reconciliation table live in [docs/dependencies.md](docs/dependencies.md).
 
@@ -87,7 +87,7 @@ Development details — host checkout placement, toolchain borrow, peer junction
 
 - Requires the dsh CLI (this package is a plugin carrier, not a standalone app); all runtime peers are provided by the host closure.
 - The root README is bilingual (English primary + Chinese); module pages and deep docs are Chinese-first.
-- Settings tabs currently exist only for the gates / enrichment rows (loaded via the bundled client sub-package, `modules/client`, not published separately).
+- Web configuration pages currently exist only for the gates / enrichment rows (row-level Configure on the Plugins page, loaded via the bundled client sub-package, `modules/client`, not published separately).
 - The gates consecutive-block cap (`maxConsecutiveBlocks`, default 3) **degrades to pass** when exhausted — it is a safety valve, not a correctness guarantee; the markdown / routes rows expose no plugin config keys.
 
 ## License

@@ -1,5 +1,5 @@
-// Toggle tests: the Settings → Plugins → Enrichment surface — the
-// browser-owned disabled-name list mirrored into host memory, the runner's
+// Toggle tests: the enrichment row config page surface (Plugins page) —
+// the browser-owned disabled-name list mirrored into host memory, the runner's
 // per-provider filtering (before `once` dedupe), and the service's mirror +
 // listViews. These tests stay on the pure runner/service boundary: no driver,
 // no agent loop.

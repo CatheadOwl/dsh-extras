@@ -1,10 +1,10 @@
 ---
-description: prompt 的可运行参考实现目录——冻结标本（不随活代码演进），首件为配对型 touch provider（自编辑对账 + 推迟不吞掉的正确写法）；文档面在 docs/cookbook.md，本目录只放能被消费者直接复制的代码
+description: enrichment 的可运行参考实现目录——冻结标本（不随活代码演进），首件为配对型 touch provider（自编辑对账 + 推迟不吞掉的正确写法）；文档面在 docs/cookbook.md，本目录只放能被消费者直接复制的代码
 ---
 
 # examples/
 
-prompt 的**可运行参考实现**：完整、可复制的 provider 声明标本，作为 [docs/cookbook.md](../docs/cookbook.md)「完整模式：配对型 provider」与「原子设计：自编辑是推迟，不是吞掉」的配套代码。散文文档在 [`docs/`](../docs/README.md)，本目录只放代码。
+enrichment 的**可运行参考实现**：完整、可复制的 provider 声明标本，作为 [docs/cookbook.md](../docs/cookbook.md)「完整模式：配对型 provider」与「原子设计：自编辑是推迟，不是吞掉」的配套代码。散文文档在 [`docs/`](../docs/README.md)，本目录只放代码。
 
 ## 冻结声明
 

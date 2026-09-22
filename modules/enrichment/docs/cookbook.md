@@ -97,9 +97,9 @@ if (path.origin === 'touch' && path.touchTool === 'edit') return undefined
 | 路径是什么形态 | 项目相对、`/` 分隔（touch 按会话 cwd 归一；项目外路径保留绝对形，配不上的自然忽略） |
 | `touchSubjects` 的第二参 | `{ cwd, sessionId? }`：cwd 在摘账点 = sensor 归一该 touch 的 session cwd，在消费投影点 = 当前 pre-step 的 cwd。subject 空间按项目（per-cwd 配置）变化的声明方在这里查表选投影目标——同一路径在两个 cwd 下可以落到不同 subject |
 
-## 设置面如何呈现你的 provider
+## 配置页如何呈现你的 provider
 
-Settings → Plugins → Enrichment 里你的行是**声明驱动**的，你不需要（也不能）自定义布局：
+插件页 enrichment 行的配置页（Configure 打开）里你的 provider 行是**声明驱动**的，你不需要（也不能）自定义布局：
 
 | UI 内容 | 来自哪 | 你能控制吗 |
 |---|---|---|

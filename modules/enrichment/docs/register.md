@@ -1,10 +1,10 @@
 ---
-description: prompt 插件消费面入口——@catheadowl/dsh-extras/enrichment/register 的最小注册示例（imperative + declarative 双入口）与自动生成的公共 API reference
+description: enrichment 插件消费面入口——@catheadowl/dsh-extras/enrichment/register 的最小注册示例（imperative + declarative 双入口）与自动生成的公共 API reference
 ---
 
-# prompt register face
+# enrichment register face
 
-`@catheadowl/dsh-extras/enrichment/register` 是依赖 enrichment 模块的插件开发者可 import 的稳定消费面。enrichment 行缺席时消费者插件仍可加载（软降级）；在场时注册进入同一个 `ctx.enrichment` 注册表，并复用整套 runner（once 账本 / 聚合 / 预算 / 超时 / 降级 / 渲染）与 Settings 配置页开关。
+`@catheadowl/dsh-extras/enrichment/register` 是依赖 enrichment 模块的插件开发者可 import 的稳定消费面。enrichment 行缺席时消费者插件仍可加载（软降级）；在场时注册进入同一个 `ctx.enrichment` 注册表，并复用整套 runner（once 账本 / 聚合 / 预算 / 超时 / 降级 / 渲染）与插件页行级配置页开关。
 
 ## Quickstart（declarative，推荐）
 
@@ -58,7 +58,7 @@ registerEnrichmentProvider(ctx, {
 | EnrichmentProvider | interface | src/types.ts | No JSDoc summary. |
 | EnrichmentProviderEntry | interface | src/types.ts | One registered provider plus its declarative `kind`; imperative providers carry none. |
 | EnrichmentProviderMode | type | src/types.ts | Per-session contribution policy for a provider. |
-| EnrichmentProviderView | interface | src/types.ts | One row of the Settings → Plugins → Enrichment tab's provider list. |
+| EnrichmentProviderView | interface | src/types.ts | One row of the enrichment row config page's provider list. |
 | EnrichmentRunOptions | interface | src/types.ts | No JSDoc summary. |
 | EnrichmentRunResult | interface | src/types.ts | No JSDoc summary. |
 | EnrichmentTraceEvent | interface | src/types.ts | No JSDoc summary. |
@@ -101,8 +101,8 @@ registerRelatesProvider(ctx, {
 | 面 | 入口 | 消费者 |
 |---|---|---|
 | package register face | `@catheadowl/dsh-extras/enrichment/register` | 插件开发者 |
-| service seam | `ctx.enrichment` | 插件与 prompt 内部 driver |
+| service seam | `ctx.enrichment` | 插件与 enrichment 内部 driver |
 | agent/pre-step driver | 宿主拦截点 | 注入通道（内容模型可见、信封不署名，不改写用户消息） |
-| Web client face | `@catheadowl/dsh-extras/client` | Settings → Plugins → Enrichment |
+| Web client face | `@catheadowl/dsh-extras/client` | 插件页 enrichment 行（Configure） |
 
 root entry `@catheadowl/dsh-extras` 只服务 dsh loader，不承诺实现层导出。内部模块、service 类与 runner 实现都不是公共消费面。

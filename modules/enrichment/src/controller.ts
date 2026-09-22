@@ -1,9 +1,10 @@
 /**
- * Enrichment Typert Remote surface backing the Settings → Plugins →
- * Enrichment tab: the flat provider list with per-provider enabled
- * state, and the switch write path. Providers are global (all plugin-level
- * registrations), so unlike the gates tab there is no workspace scoping; the
- * `workspace` field is accepted for wire parity and ignored.
+ * Enrichment Typert Remote surface backing the enrichment row's
+ * configuration page on the Plugins page: the flat provider list with
+ * per-provider enabled state, and the switch write path. Providers are
+ * global (all plugin-level registrations), so unlike the gates page there
+ * is no workspace scoping; the `workspace` field is accepted for wire
+ * parity and ignored.
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'

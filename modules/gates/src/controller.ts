@@ -1,6 +1,7 @@
 /**
- * Gates Typert Remote surface backing the Settings → Plugins → Gates tab: the
- * flat gate list with per-trigger enabled state, and the switch write path.
+ * Gates Typert Remote surface backing the gates row's configuration page on
+ * the Plugins page: the flat gate list with per-trigger enabled state, and
+ * the switch write path.
  * Reads ride the service's workspace-scoped definitions; writes mirror the
  * browser-owned per-trigger disabled lists into host memory (the browser owns
  * persistence, the host only enforces).
@@ -11,7 +12,7 @@ import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typer
 import type { GatesService } from './service.js'
 import type { GateLevel, GateTrigger } from './types.js'
 
-/** One row of the settings tab's flat gate list. */
+/** One row of the gates row config page's flat gate list. */
 export interface GatesGateView {
   id: string
   description: string

@@ -1,5 +1,5 @@
 export type EnrichmentLocaleKey =
-  | 'tab'
+  | 'summary'
   | 'title'
   | 'description'
   | 'loading'
@@ -22,7 +22,7 @@ export type EnrichmentLocaleKey =
   | 'disabledByConfig'
 
 export const en: Record<EnrichmentLocaleKey, string> = {
-  tab: 'Enrichment',
+  summary: 'Per-provider switches for context injection.',
   title: 'Prompt enrichment providers',
   description: 'Turning a provider off stops its injection from the next turn. Turning it back on does not repeat content already shown in this conversation; it resumes after compact or in a new conversation.',
   loading: 'Loading providers…',
@@ -46,7 +46,7 @@ export const en: Record<EnrichmentLocaleKey, string> = {
 }
 
 export const zh: Record<EnrichmentLocaleKey, string> = {
-  tab: 'Enrichment',
+  summary: '按 provider 开关上下文注入。',
   title: '提示词增强 provider',
   description: '关闭后从下一轮对话起不再注入其内容。重新打开后，本会话已展示过的内容不会重复出现；compact 或新会话后恢复。',
   loading: '正在加载 provider…',

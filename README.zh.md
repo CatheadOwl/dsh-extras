@@ -67,7 +67,7 @@ dsh plugin add @catheadowl/dsh-extras
 - `@catheadowl/dsh-extras/enrichment/register`——enrichment消费面（`registerEnrichmentProvider` / `registerRelatesProvider` + provider 类型）。
 
 各模块自己的次级消费面（如 markdown 的仓库级 `gates.yml` 回退）见对应模块文档。
-Web Settings Tab（gates / enrichment）随本包内嵌合成装载，不需要单独安装。
+Web 配置页（插件页 gates / enrichment 行的 Configure 页）随本包内嵌合成装载，不需要单独安装。
 
 模块间依赖拓扑与对外消费面（exports 对账）见 [docs/dependencies.md](docs/dependencies.md)。
 
@@ -87,7 +87,7 @@ pnpm run verify:publish-readiness  # 发布卫生校验（docs locality、host c
 
 - 需要 dsh CLI（本包是插件载体，不是独立应用）；运行时 peer 全部由宿主闭包提供。
 - 根 README 双语（英文主 + 中文），模块页与深度 docs 以中文为主。
-- Settings Tab 目前仅 gates / enrichment 两行有（随内置 client 子包 `modules/client` 合成装载，不单独发布）。
+- Web 配置页目前仅 gates / enrichment 两行有（插件页行级 Configure，随内置 client 子包 `modules/client` 合成装载，不单独发布）。
 - gates 连续阻断上限（`maxConsecutiveBlocks`，默认 3）耗尽后**降级放行**——是安全阀不是正确性保证；markdown / routes 行无插件配置键。
 
 ## License

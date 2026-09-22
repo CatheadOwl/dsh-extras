@@ -1,4 +1,5 @@
-// Toggle tests: the Settings → Plugins → Gates surface — the browser-owned
+// Toggle tests: the gates row config page surface (Plugins page) — the
+// browser-owned
 // per-trigger disabled lists mirrored into host memory via the `gates` remote,
 // the service's per-dimension filtering (turn-stop / manual run-all / explicit
 // single-gate runs), and the Typert controller's list/setDisabled.

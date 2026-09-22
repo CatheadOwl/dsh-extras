@@ -34,8 +34,8 @@ export interface GatesTabInjected {
 }
 
 export type GatesTabProps =
-  PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'settings.gates'>
+  PropsRuntime<'plugins.row.config'>
+  & PropsLocale<'plugins.gates'>
   & InjectFace<GatesTabInjected>
 
 type ViewState =
@@ -44,13 +44,21 @@ type ViewState =
   | { status: 'ready'; gates: readonly GatesGateView[] }
 
 /**
- * The Settings → Plugins → Gates tab: a flat list of every gate in the
- * current workspace with two switches per gate — turn-stop (fixed, mandatory)
- * and manual (agent-chosen). The switch lists are persisted in the browser's
+ * The gates row's configuration page on the Plugins page (opened by the row's
+ * Configure control): a flat list of every gate in the current workspace with
+ * two switches per gate — turn-stop (fixed, mandatory) and manual
+ * (agent-chosen). The switch lists are persisted in the browser's
  * localStorage and mirrored into host memory on load and on every switch, so
  * turn-stop and /gates honor them immediately.
  */
-export function GatesTab({ t, useSessions, useWorkspaces, list, setDisabled }: GatesTabProps) {
+export function GatesTab(props: GatesTabProps) {
+  if (props.view === 'summary') {
+    return <>{props.t('summary')}</>
+  }
+  return <GatesTabForm {...props} />
+}
+
+function GatesTabForm({ t, useSessions, useWorkspaces, list, setDisabled }: GatesTabProps) {
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [reload, setReload] = useState(0)
   const [pending, setPending] = useState<string | undefined>(undefined)

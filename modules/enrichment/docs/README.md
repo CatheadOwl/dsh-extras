@@ -2,7 +2,7 @@
 description: enrichment 模块文档导航入口——注入契约、注册消费面与 parse/tree 两个内嵌库契约文档的索引
 ---
 
-# prompt · docs
+# enrichment · docs
 
 - [why-enrichment](why-enrichment.md) —— 为什么需要 enrichment 模块：宿主 pre-step 的机制事实与注册面/共存纪律价值
 - [contract](contract.md) —— 注入契约权威文本（执行模型、once 去重、`registerRelates` 与 `subjectOf`、定序、provider 开关）

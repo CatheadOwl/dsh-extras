@@ -46,7 +46,7 @@ dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 | `gates_run` 工具 | 模型主动跑全部或单个 gate（手动维：默认只跑手动开关开着的 gate），返回聚合结果，并转发工具执行 `signal` |
 | `/gates` 命令 | 人类直调，不经模型轮次 |
 | `gates` 用户开关 | 浏览器 localStorage（key `dsh.gates.disabled`，JSON 双列表 `{stop, manual}`）持久化；host 侧只有内存镜像（页面加载与每次拨开关时由 UI 推给 host），按 gate 声明的 `on` 分维生效——关掉轮末维则该 gate 不进轮末、关掉手动维则不进 run-all 且显式单跑 fail loud。**开关是收窄不是豁免**：被关的 gate 不进执行路径，但它的缺席不算通过——脏窗口只在「本轮未被开关收窄（或窗口为空）」时关闭，关闭期间产生的违规在重开后照常报出。保留的开关状态有可读面：镜像每次写入留一行 `gates: switches: …` 日志，`/gates` 与 `gates_run` 输出同带该行。全局偏好（按 gate id × trigger 生效，不按工作区分）；不开 GUI 的 headless 运行没有开关状态、全部 gate 照常跑；多标签页同时打开时后写者胜（无跨标签页实时同步） |
-| Settings → Plugins → Gates（Web） | 扁平 gate 列表 + 每 gate 双开关（轮末/手动，按 `on` 声明显示；Typert remote `gates/list` / `gates/setDisabled`）；经 extras 的嵌套 client 锚点包装载（见 `modules/client/README.md`），修改后需重建（`pnpm run build:client`）并重启 host |
+| 插件页 gates 行（Configure，Web） | 扁平 gate 列表 + 每 gate 双开关（轮末/手动，按 `on` 声明显示；Typert remote `gates/list` / `gates/setDisabled`）；经 extras 的嵌套 client 锚点包装载（见 `modules/client/README.md`），修改后需重建（`pnpm run build:client`）并重启 host |
 | `gates-config-guide` skill | 配置指南 skill（创建/理解/编写 `gates.yml`）；**双侧可见**——模型目录/`skill` 工具可按需加载（改 `gates.yml` 的常是模型），用户保留 `/gates-config-guide` 手势 |
 | `agent/turn-stopping` 驱动 | `on:'stop'` 的 blocking gate 失败即 `steer` 续步；连续阻断上限（默认 3）耗尽后降级放行 |
 

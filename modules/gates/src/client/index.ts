@@ -1,9 +1,9 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-// Type-only: pulls the settings contract SlotMap merge without re-declaring it.
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
+// Type-only: pulls the plugins-page config slot contract (SlotMap merge)
+// without re-declaring it.
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 // Type-only: pulls the `ctx.slots` Context augmentation (the registry service
 // is provided by the renderer plugin).
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -19,11 +19,11 @@ import { loadDisabledTriggers, saveDisabledTriggers } from './storage.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    'settings.gates': GatesLocaleKey
+    'plugins.gates': GatesLocaleKey
   }
 }
 
-const NS = 'settings.gates'
+const NS = 'plugins.gates'
 
 export const inject = ['slots', 'locale', 'connection']
 
@@ -59,12 +59,10 @@ export function apply(ctx: ClientContext): void {
     },
   })
 
-  ctx.effect(() => ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
-    name: 'settings.plugins.tab',
-    id: 'gates',
-    order: 4,
-    label: () => ctx.locale.bind(NS)('tab'),
+  ctx.effect(() => ctx.slots.inject('plugins.row.config', () => ctx.slots.register({
+    name: 'plugins.row.config',
+    key: '@catheadowl/dsh-extras#gates',
     locale: NS,
     inject: injected,
-  }, GatesTab)), 'gates: settings tab')
+  }, GatesTab)), 'gates: row config page')
 }

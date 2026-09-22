@@ -254,7 +254,7 @@ test('a blocking gate with its stop dimension off never steers the turn', async 
   )
   try {
     // Turn the stop dimension off before the turn runs (the same remote the
-    // settings tab uses), then let the turn close.
+    // config page uses), then let the turn close.
     ctx.get('gatesController').setDisabled({ stop: ['stop-off-block'], manual: [], workspace: root })
     agent.followup(createUserMessage({ content: [{ type: 'text', text: 'go' }], source: { kind: 'user' } }))
     await waitForIdle(ctx, agent)

@@ -20,15 +20,15 @@ dsh 是微内核 harness：插件在 Cordis fiber 树上运行，能力以**服�
 |---|---|
 | gates | `ctx.tools`（`gates_run`）、`agent/turn-stopping` 检查点（轮末阻塞驱动）、命令/技能注册面 |
 | markdown | `ctx.tools`（`md_rename`）、`agent/turn-stopping`（doc-link gate 的 defer 档旁路） |
-| prompt | `agent/pre-step` 拦截点（driver 挂载点）、Typert Remote / Web 配置面 |
-| routes | `ctx.tools`（`any_nav`）+ prompt 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
-| client（锚点包） | Web 插槽（`settings.plugins.tab`）——聚合 §2 两个基座的 Settings Tab |
+| enrichment | `agent/pre-step` 拦截点（driver 挂载点）、Typert Remote / Web 配置面 |
+| routes | `ctx.tools`（`any_nav`）+ enrichment 基座（见 §2）；扫描根取自 `agent.session.header.cwd` |
+| client（锚点包） | Web 插槽（`plugins.row.config`，行级配置页）——聚合 §2 两个基座的配置页 |
 
 这些边**朝向宿主**，随 dsh base bundle 提供，不在本包的依赖记账范围。
 
-## 2. 自声明服务基座：其他插件的功能「承载」在 gates / prompt 身上
+## 2. 自声明服务基座：其他插件的功能「承载」在 gates / enrichment 身上
 
-gates 与 prompt 是本包的两个**基座行**（自声明 Definition + 自实现 Provider，折叠在同一行内）：它们各自认领一个服务键并提供一份**执行骨架**，其他插件的功能作为注册项**承载**在这两个骨架上运行——这不是「谁依赖谁」的模块关系，而是「别人的功能在这里落脚」的承载关系（箭头方向 = 功能流向基座）：
+gates 与 enrichment 是本包的两个**基座行**（自声明 Definition + 自实现 Provider，折叠在同一行内）：它们各自认领一个服务键并提供一份**执行骨架**，其他插件的功能作为注册项**承载**在这两个骨架上运行——这不是「谁依赖谁」的模块关系，而是「别人的功能在这里落脚」的承载关系（箭头方向 = 功能流向基座）：
 
 ```text
 ctx.gates（gates 行认领）              ctx.enrichment（enrichment 行认领）
@@ -51,13 +51,13 @@ ctx.gates（gates 行认领）              ctx.enrichment（enrichment 行认�
 配套约束：
 
 - **注册必须 return disposer**——基座注册表是纯 Map，disposer 是唯一回滚通道。
-- **基座行关闭时承载方软降级**：不装 gates 时消费方插件照常工作（少一个 gate）；不装 prompt 行时 routes 的 breadcrumb 注入静默不生效（`any_nav` 不受影响）。
-- 基座自己也消费宿主接缝（§1），且**不内置业务逻辑**：gates/prompt 只实现承载层，cognition、面包屑等业务都在承载方。
+- **基座行关闭时承载方软降级**：不装 gates 时消费方插件照常工作（少一个 gate）；不装 enrichment 行时 routes 的 breadcrumb 注入静默不生效（`any_nav` 不受影响）。
+- 基座自己也消费宿主接缝（§1），且**不内置业务逻辑**：gates/enrichment 只实现承载层，cognition、面包屑等业务都在承载方。
 - gates 另有一条**配置面承载**：仓库级 `gates.yml` 的 `module:` 形态可把本包 markdown 行的 `gate-check` 作为外部模块物化为 gate——项目功能承载在 gates 执行骨架上，但既非插件注册也非 npm 依赖。
 
 ## 3. 行间关系（包内）
 
-除 §2 的承载关系（routes→prompt）外，行间**零源码依赖、零共享状态**：关掉任何一行，其余行行为不变。这是「单包多行」的发布形态基础——每行独立 fiber、按行 id 单关、模块上下架走包版本更新。
+除 §2 的承载关系（routes→enrichment）外，行间**零源码依赖、零共享状态**：关掉任何一行，其余行行为不变。这是「单包多行」的发布形态基础——每行独立 fiber、按行 id 单关、模块上下架走包版本更新。
 
 ## 4. 模块内嵌纯库
 

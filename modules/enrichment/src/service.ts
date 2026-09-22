@@ -36,8 +36,9 @@ export class EnrichmentService extends Service {
 
   /**
    * Provider names the user switched off, mirrored from the browser's
-   * localStorage by the Settings → Plugins → Enrichment tab. In-memory
-   * by design: the browser owns persistence, the host only enforces the filter.
+   * localStorage by the enrichment row's configuration page on the Plugins
+   * page. In-memory by design: the browser owns persistence, the host only
+   * enforces the filter.
    */
   private disabled = new Set<string>()
 
@@ -78,7 +79,7 @@ export class EnrichmentService extends Service {
   }
 
   /**
-   * The settings tab's flat provider list — a projection of `introspect()`
+   * The config page's flat provider list — a projection of `introspect()`
    * plus the user-switch truth. `enabled` reflects only the user switch (the
    * browser mirror) so the toggle stays the user's own state; the config
    * layer surfaces through `effectiveEnabled` / `disabledBy` instead of a
@@ -105,7 +106,7 @@ export class EnrichmentService extends Service {
   /**
    * Read-only introspection snapshot: every registered provider's descriptor,
    * signal sources, and the effective disable state across both entries —
-   * the single query surface headless consumers and the settings tab project
+   * the single query surface headless consumers and the config page project
    * from. Never a write payload: state changes go through `setDisabled`
    * (user entry) or plugin config (deployer entry).
    */

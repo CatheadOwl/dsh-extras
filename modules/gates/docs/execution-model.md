@@ -24,7 +24,7 @@ description: gates 插件的运行时执行模型：stop/manual 触发时机、b
 
 ## 用户开关（配置面）
 
-Settings → Plugins → Gates（Web）渲染当前工作区的**扁平 gate 列表**，每个 gate 按其声明的 `on` 显示**两个独立开关**——**轮末**（`stop` 维：固定、强制，轮次关闭时自动跑）与 **手动**（`manual` 维：agent 自行选择，`gates_run`/`/gates` 时跑）。开关双列表由 **浏览器 localStorage** 持久化（key `dsh.gates.disabled`，JSON `{stop, manual}` 双 id 列表），host 侧只有内存镜像：页面加载（每次打开/刷新该标签页）与每次拨动开关时，UI 把整个双列表推给 `gates/setDisabled`，host 据此按维度执行过滤。被关掉的那一维**不进入对应执行路径**：
+插件页 gates 行的配置页（Web，Configure 打开）渲染当前工作区的**扁平 gate 列表**，每个 gate 按其声明的 `on` 显示**两个独立开关**——**轮末**（`stop` 维：固定、强制，轮次关闭时自动跑）与 **手动**（`manual` 维：agent 自行选择，`gates_run`/`/gates` 时跑）。开关双列表由 **浏览器 localStorage** 持久化（key `dsh.gates.disabled`，JSON `{stop, manual}` 双 id 列表），host 侧只有内存镜像：页面加载（每次打开/刷新该配置页）与每次拨动开关时，UI 把整个双列表推给 `gates/setDisabled`，host 据此按维度执行过滤。被关掉的那一维**不进入对应执行路径**：
 
 - 关**轮末**维：`service.runnableDefinitions(root, 'stop')` 直接过滤，轮末不再跑它；
 - 关**手动**维：`gates_run` / `/gates` 的 run-all 同样过滤；显式单跑一个被关手动维的 gate（`gates_run {gate}` / `/gates <id>`）**fail loud**——报"已在设置中禁用手动运行"，不静默放行（开关即契约，无静默覆盖）；

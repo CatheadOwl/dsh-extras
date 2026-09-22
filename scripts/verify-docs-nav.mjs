@@ -11,7 +11,7 @@ import { verifyDocsNavigation } from './lib/docs-navigation.mjs'
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Modules owning a docs/ tree with its own README entry. */
-const DOC_MODULES = ['gates', 'markdown', 'prompt']
+const DOC_MODULES = ['gates', 'markdown', 'enrichment']
 
 const REMEDY = {
   kind: 'manual',

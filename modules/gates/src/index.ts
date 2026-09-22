@@ -111,10 +111,10 @@ export async function apply(ctx: Context, config: GatesConfig): Promise<void> {
   await ctx.plugin(GatesService, config)
   const service = gatesService(ctx)
 
-  // Settings → Plugins → Gates surface: the Typert remote for the flat gate
-  // list + switches. The browser owns the switch list (localStorage) and the
-  // tab mirrors it into host memory through `gates/setDisabled` on load and on
-  // every switch — host enforcement reads the mirror.
+  // Gates row config page (Plugins page) surface: the Typert remote for the
+  // flat gate list + switches. The browser owns the switch list (localStorage)
+  // and the page mirrors it into host memory through `gates/setDisabled` on
+  // load and on every switch — host enforcement reads the mirror.
   await ctx.plugin(GatesController, service)
 
   registerGatesTool(ctx)

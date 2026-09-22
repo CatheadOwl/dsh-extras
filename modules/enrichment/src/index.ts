@@ -30,9 +30,9 @@ export async function apply(ctx: Context, config: EnrichmentPluginConfig = {}): 
   await ctx.plugin(EnrichmentService, config)
   const service = enrichmentService(ctx)
 
-  // Settings → Plugins → Enrichment surface: the Typert remote for the
-  // flat provider list + switches. The browser owns the switch list
-  // (localStorage) and the tab mirrors it into host memory through
+  // Enrichment row config page (Plugins page) surface: the Typert remote
+  // for the flat provider list + switches. The browser owns the switch list
+  // (localStorage) and the page mirrors it into host memory through
   // `enrichment/setDisabled` on load and on every switch.
   await ctx.plugin(EnrichmentController, service)
 

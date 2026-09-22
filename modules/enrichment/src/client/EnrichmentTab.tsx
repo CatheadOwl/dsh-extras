@@ -32,8 +32,8 @@ export interface EnrichmentTabInjected {
 }
 
 export type EnrichmentTabProps =
-  PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'settings.enrichment'>
+  PropsRuntime<'plugins.row.config'>
+  & PropsLocale<'plugins.enrichment'>
   & InjectFace<EnrichmentTabInjected>
 
 type ViewState =
@@ -42,15 +42,23 @@ type ViewState =
   | { status: 'ready'; providers: readonly EnrichmentProviderView[] }
 
 /**
- * The Settings → Plugins → Enrichment tab: a flat list of every
- * registered provider with one switch per provider. The switch list is
- * persisted in the browser's localStorage and mirrored into host memory on
- * load and on every switch, so pre-step injection honors it immediately.
+ * The enrichment row's configuration page on the Plugins page (opened by the
+ * row's Configure control): a flat list of every registered provider with one
+ * switch per provider. The switch list is persisted in the browser's
+ * localStorage and mirrored into host memory on load and on every switch, so
+ * pre-step injection honors it immediately.
  * The meta line answers the user's questions (when does it inject, when does
  * it repeat); registration-facing knobs (source/priority/timeout/kind) live
  * in the row tooltip.
  */
-export function EnrichmentTab({ t, list, setDisabled }: EnrichmentTabProps) {
+export function EnrichmentTab(props: EnrichmentTabProps) {
+  if (props.view === 'summary') {
+    return <>{props.t('summary')}</>
+  }
+  return <EnrichmentTabForm {...props} />
+}
+
+function EnrichmentTabForm({ t, list, setDisabled }: EnrichmentTabProps) {
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [reload, setReload] = useState(0)
   const [pending, setPending] = useState<string | undefined>(undefined)

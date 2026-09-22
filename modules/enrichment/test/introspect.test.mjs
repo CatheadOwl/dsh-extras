@@ -2,7 +2,7 @@
 // (`service.introspect()`) — descriptor projection, signal-source
 // materialization, and the provenance split across the two disable entries
 // (browser mirror + config). The snapshot is the single query surface the
-// settings tab and headless consumers project from; it never writes.
+// config page and headless consumers project from; it never writes.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 

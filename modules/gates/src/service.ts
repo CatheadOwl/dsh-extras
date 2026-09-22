@@ -128,8 +128,8 @@ export class GatesService extends Service {
 
   /**
    * User-disabled gate ids per trigger, mirrored from the browser's
-   * localStorage by the Settings → Plugins → Gates tab (the tab pushes the
-   * persisted lists on load and on every switch). In-memory by design: the
+   * localStorage by the gates row's configuration page on the Plugins page
+   * (the page pushes the persisted lists on load and on every switch). In-memory by design: the
    * browser owns persistence, the host only enforces. A gate's two dimensions
    * are independent — turn-stop (fixed, mandatory) and manual (agent-chosen) —
    * because a user may want a gate only at turn-stop, only on demand, or not
@@ -215,7 +215,7 @@ export class GatesService extends Service {
       if (this.disabled.manual.has(definition.id)) {
         throw new Error(
           `gate ${JSON.stringify(options.gate)} is disabled for manual runs in the gates settings; `
-          + 'enable its manual switch in Settings → Plugins → Gates before running it',
+          + 'enable its manual switch on the Plugins page (gates row) before running it',
         )
       }
       return runGates([definition], root, { signal: options.signal, changes: options.changes })

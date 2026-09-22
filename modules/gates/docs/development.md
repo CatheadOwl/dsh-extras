@@ -43,7 +43,7 @@ junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份�
 
 - `register-face-boundary`：package/root/register 导出与禁止 import 模式；
 - `register-docs-fresh`：[register.md](register.md) 的 generated API region（入口在 `modules/gates/scripts/`）；
-- `docs-nav`：全部 docs-owning 模块（gates / markdown / prompt）的导航与 README 入口（包级遍历入口在 `scripts/verify-docs-nav.mjs`）；
+- `docs-nav`：全部 docs-owning 模块（gates / markdown / enrichment）的导航与 README 入口（包级遍历入口在 `scripts/verify-docs-nav.mjs`）；
 - `publish-readiness`：独立发布卫生（peer-only 宿主依赖、registry 版本范围、docs 与 scripts 不越出包根）。
 
 在 **extras 包根**打开 dsh 会话后，用 `/gates` 或 `gates_run` 执行。脚本源码在包根 `scripts/` 与 `modules/gates/scripts/`；它们是项目自举资产，不进入发布包运行时。

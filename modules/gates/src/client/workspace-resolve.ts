@@ -1,12 +1,12 @@
 /**
- * Workspace-target resolution for the gates settings tab.
+ * Workspace-target resolution for the gates row's configuration page.
  *
- * The tab lists the gates of one workspace at a time: the most recently
+ * The page lists the gates of one workspace at a time: the most recently
  * active workspace (latest session `updatedAt`, falling back to the
  * workspace's `createdAt`), else undefined — the browser wire omits the
  * workspace and the server resolves its own cwd. Hosts ≥ 0.1.6-alpha.2
  * removed the client-side global "current session" (explicit Session
- * Provider ownership; a global settings tab sits under no provider), so
+ * Provider ownership; a global config page sits under no provider), so
  * the former selected-session-first tier no longer exists to mirror.
  */
 

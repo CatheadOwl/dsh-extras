@@ -72,9 +72,10 @@ export interface TouchSubjectContext {
 export interface EnrichmentProvider {
   name: string
   /**
-   * Human-readable one-liner shown in the Settings → Plugins → Enrichment
-   * tab. Authored by the provider itself (not localized); omitted
-   * providers render name + meta only, exactly as before the field existed.
+   * Human-readable one-liner shown in the enrichment row's configuration
+   * page on the Plugins page. Authored by the provider itself (not
+   * localized); omitted providers render name + meta only, exactly as
+   * before the field existed.
    */
   description?: string
   priority?: number
@@ -261,7 +262,7 @@ export interface EnrichmentRunResult {
   trace: EnrichmentTraceEvent[]
 }
 
-/** One row of the Settings → Plugins → Enrichment tab's provider list. */
+/** One row of the enrichment row config page's provider list. */
 export interface EnrichmentProviderView {
   name: string
   /** Provider-authored one-liner; absent when the provider declared none. */

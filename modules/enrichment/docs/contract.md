@@ -44,7 +44,7 @@ description: enrichment 模块注入契约——provider 执行模型与定序�
 | item 命名 | 沿用 `RelatesItem.kind`，一个声明对应一个 `kind`；不引入 `type` 第二套词汇 |
 | label | 框架用 `kind` 作占位 label（底层 `label` 必填、渲染层不消费 label，不向模型泄露多余人类标签） |
 | priority / timeoutMs | 可选，透传底层 provider；`priority` 语义见「定序」 |
-| description | 可选非空字符串，provider 作者自述一行话，透传物化 provider 并进 Settings 视图；缺省视图不带该字段（渲染退回 name + meta）。注册期校验：给了但非非空字符串即 fail loud |
+| description | 可选非空字符串，provider 作者自述一行话，透传物化 provider 并进配置页视图；缺省视图不带该字段（渲染退回 name + meta）。注册期校验：给了但非非空字符串即 fail loud |
 | 注册期校验 | `name` / `priority` / `timeoutMs` / `description` 走既有校验；`kind` 非空、`mode` 仅 `'always'`、`subjectOf` 为函数，均 fail loud |
 | 失败粒度 | 与 imperative 一致：单次 `resolve` 抛错 → 整个 provider `failed` trace，不阻断其他 provider；v0 不做 per-path 异常隔离 |
 
@@ -116,7 +116,7 @@ provider 可选声明 `sources?: Array<'prompt' | 'touch'>`（imperative 与声�
 
 ## provider 开关
 
-Settings → Plugins → **Enrichment** tab（slot id `enrichment`），按 provider name **全局**开关：
+插件页 **enrichment** 行的配置页（Configure 打开，slot `plugins.row.config` 键 `@catheadowl/dsh-extras#enrichment`），按 provider name **全局**开关：
 
 - **开关即契约**：被关 provider 永不进入 pre-step 注入路径，无静默覆盖。
 - **单一过滤点**：`EnrichmentRunner.run()` 遍历 `listEntries()` 处——先查 `options.disabled`，命中即 trace `skipped`（reason `disabled by user`）并跳过，过滤发生在 once 过滤之前、不调用 provider。这是唯一的过滤点。
