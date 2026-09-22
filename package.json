@@ -1,6 +1,6 @@
 {
   "name": "@catheadowl/dsh-extras",
-  "description": "Curated extras for dsh: one npm package, several independent plugin modules — gates (turn-close quality gates), markdown (md_rename tool + doc-link gate), prompt (declarative prompt injection), routes (any_nav knowledge routing). `dsh plugin add @catheadowl/dsh-extras` installs them all; per-row `disabled` turns one off.",
+  "description": "Curated extras for dsh: one npm package, several independent plugin modules — gates (turn-close quality gates), markdown (md_rename tool + doc-link gate), enrichment (declarative context enrichment), routes (any_nav knowledge routing). `dsh plugin add @catheadowl/dsh-extras` installs them all; per-row `disabled` turns one off.",
   "version": "0.3.0",
   "license": "MIT",
   "repository": {
@@ -18,9 +18,9 @@
       "types": "./modules/markdown/lib/index.d.ts",
       "default": "./modules/markdown/lib/index.js"
     },
-    "./prompt": {
-      "types": "./modules/prompt/lib/index.d.ts",
-      "default": "./modules/prompt/lib/index.js"
+    "./enrichment": {
+      "types": "./modules/enrichment/lib/index.d.ts",
+      "default": "./modules/enrichment/lib/index.js"
     },
     "./routes": {
       "types": "./modules/routes/lib/index.d.ts",
@@ -30,9 +30,9 @@
       "types": "./modules/gates/lib/register.d.ts",
       "default": "./modules/gates/lib/register.js"
     },
-    "./prompt/register": {
-      "types": "./modules/prompt/lib/register.d.ts",
-      "default": "./modules/prompt/lib/register.js"
+    "./enrichment/register": {
+      "types": "./modules/enrichment/lib/register.d.ts",
+      "default": "./modules/enrichment/lib/register.js"
     },
     "./markdown/gate-check": {
       "types": "./modules/markdown/lib/gate-check.d.ts",
@@ -61,7 +61,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:gates && pnpm run build:markdown && pnpm run build:prompt && pnpm run build:routes && pnpm run build:client",
+    "build": "pnpm run build:gates && pnpm run build:markdown && pnpm run build:enrichment && pnpm run build:routes && pnpm run build:client",
     "build:gates": "tsc -p modules/gates/tsconfig.json",
     "check-types:gates": "tsc --noEmit -p modules/gates/tsconfig.json",
     "test:gates": "cd modules/gates && node --test --test-isolation=none test/core.test.mjs test/dirty.test.mjs test/host-api.test.mjs test/fixer.test.mjs test/repo-gates.test.mjs test/skills.test.mjs test/register.test.mjs test/face.test.mjs test/publish.test.mjs test/tool-surface.test.mjs test/toggles.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs && node ../../scripts/run-composition.mjs test/composition.test.mjs",
@@ -69,16 +69,16 @@
     "build:markdown": "tsc -p modules/markdown/tsconfig.json",
     "check-types:markdown": "tsc --noEmit -p modules/markdown/tsconfig.json",
     "test:markdown": "cd modules/markdown && node --test --test-isolation=none test/markdown.test.mjs test/anchors.test.mjs test/resolve.test.mjs test/rebase.test.mjs test/rename.test.mjs test/rename-posthoc.test.mjs test/normalize.test.mjs test/git-cache.test.mjs test/spawn-count.test.mjs test/plugin.test.mjs test/doc-link-gate.test.mjs test/metadata-check.test.mjs",
-    "build:prompt": "tsc -p modules/prompt/tsconfig.json",
-    "check-types:prompt": "tsc --noEmit -p modules/prompt/tsconfig.json",
-    "test:prompt": "cd modules/prompt && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/sensor.test.mjs test/touch-lane.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/face.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/introspect.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs && node ../../scripts/run-composition.mjs test/composition.test.mjs test/touch-composition.test.mjs",
+    "build:enrichment": "tsc -p modules/enrichment/tsconfig.json",
+    "check-types:enrichment": "tsc --noEmit -p modules/enrichment/tsconfig.json",
+    "test:enrichment": "cd modules/enrichment && node --test --test-isolation=none test/fuzzy.test.mjs test/parse.test.mjs test/resolve.test.mjs test/enumerate.test.mjs test/core.test.mjs test/sensor.test.mjs test/touch-lane.test.mjs test/path-resolver.test.mjs test/register.test.mjs test/face.test.mjs test/declarative.test.mjs test/toggles.test.mjs test/introspect.test.mjs test/wire.test.mjs test/client-storage.test.mjs test/examples.test.mjs && node ../../scripts/run-composition.mjs test/composition.test.mjs test/touch-composition.test.mjs",
     "build:routes": "tsc -p modules/routes/tsconfig.json",
     "check-types:routes": "tsc --noEmit -p modules/routes/tsconfig.json",
     "test:routes": "cd modules/routes && node --test --test-isolation=none test/breadcrumb-description.test.mjs test/description-contract.test.mjs test/description.test.mjs test/navigation.test.mjs test/routes.test.mjs",
     "eval:gates": "dsh-eval run modules/gates/eval",
     "eval:markdown:mock": "dsh-eval run --mode mock modules/markdown/eval/behavior/mock",
     "eval:markdown:real": "dsh-eval run modules/markdown/eval/behavior/real",
-    "eval:prompt:mock": "dsh-eval run --mode mock modules/prompt/eval/behavior/mock",
+    "eval:enrichment:mock": "dsh-eval run --mode mock modules/enrichment/eval/behavior/mock",
     "eval:routes:comprehension": "dsh-review modules/routes/eval/comprehension",
     "eval:routes:schema-intent": "dsh-review modules/routes/eval/schema-intent",
     "eval:routes:dry": "dsh-review --dry-run modules/routes/eval/comprehension && dsh-review --dry-run modules/routes/eval/schema-intent",

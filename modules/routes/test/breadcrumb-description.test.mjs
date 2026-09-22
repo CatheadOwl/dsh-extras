@@ -156,7 +156,7 @@ test('registers through the declarative registerRelates face', () => {
   const registered = []
   const ctx = {
     inject: (_keys, cb) => {
-      cb({ promptMiddleware: { registerRelates: (provider) => registered.push(provider) } })
+      cb({ enrichment: { registerRelates: (provider) => registered.push(provider) } })
     },
   }
 

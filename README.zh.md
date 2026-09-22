@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-**做 harness 就是做 docs。**`@catheadowl/dsh-extras` 是一次 opinionated 的尝试：让 [dsh](https://github.com/deepseek-ai/deepseek-harness) agent 所依赖的知识做到文档健康与可导航。它把两个常用的 dsh hook 包装成可组合的基础框架——`agent/turn-stopping`（轮末）上的 gates 与 `agent/pre-step` 上的 prompt 中间件，各给一个注册面（`registerGate` / `registerPromptMiddlewareProvider`），而不是每个插件各自裸挂 hook——并随包交付该立场的落地：Markdown 链接治理、按路径注入上下文、知识库路由视图。
+**做 harness 就是做 docs。**`@catheadowl/dsh-extras` 是一次 opinionated 的尝试：让 [dsh](https://github.com/deepseek-ai/deepseek-harness) agent 所依赖的知识做到文档健康与可导航。它把两个常用的 dsh hook 包装成可组合的基础框架——`agent/turn-stopping`（轮末）上的 gates 与 `agent/pre-step` 上的 enrichment，各给一个注册面（`registerGate` / `registerEnrichmentProvider`），而不是每个插件各自裸挂 hook——并随包交付该立场的落地：Markdown 链接治理、按路径注入上下文、知识库路由视图。
 
 `dsh plugin add` 一次全装，每个模块是组合里可独立开关的一行（按行 id 标识），不需要的行关掉即可，互不影响。本包与 dsh 宿主的关系、为什么要包装宿主 hook，见 [docs/host.md](docs/host.md)。
 
@@ -21,14 +21,14 @@ dsh plugin add @catheadowl/dsh-extras
 | 模块 | 行 id | 提供什么 | 文档 |
 |---|---|---|---|
 | gates | `gates` | 质量门禁框架（`ctx.gates`）：turn 收尾自动运行的可组合 gate 与 `registerGate` 消费面 | [modules/gates/README.md](modules/gates/README.md) |
-| prompt | `prompt` | prompt 中间件框架（`ctx.promptMiddleware`）：`agent/pre-step` 上的 provider 注册表，把用户提示词中的路径提及变成受预算约束的 relates 上下文；`registerPromptMiddlewareProvider` / `registerRelatesProvider` 消费面 | [modules/prompt/README.md](modules/prompt/README.md) |
+| enrichment | `enrichment` | enrichment框架（`ctx.enrichment`）：`agent/pre-step` 上的 provider 注册表，把用户提示词中的路径提及变成受预算约束的 relates 上下文；`registerEnrichmentProvider` / `registerRelatesProvider` 消费面 | [modules/enrichment/README.md](modules/enrichment/README.md) |
 
 工具与消费行：
 
 | 模块 | 行 id | 提供什么 | 文档 |
 |---|---|---|---|
 | markdown | `markdown` | `md_rename` 工具（搬移并改写 Markdown 内链）+ `doc-link` gate + 内置链接事务库 | [modules/markdown/README.md](modules/markdown/README.md) |
-| routes | `routes` | `any_nav` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider（一个 prompt 中间件 provider） | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_nav` 工具（Markdown 知识库路由视图）+ breadcrumb relates provider（一个 enrichment provider） | [modules/routes/README.md](modules/routes/README.md) |
 
 每个模块是宿主插件组合里可独立开关的一行：不共享状态，关掉任何一行，其余模块行为不变。
 
@@ -46,11 +46,11 @@ dsh plugin add @catheadowl/dsh-extras
 | 行 | 配置键 |
 |---|---|
 | gates | `maxConsecutiveBlocks`（连续阻断上限，默认 3，耗尽后降级放行） |
-| prompt | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`（见下例） |
+| enrichment | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars`（见下例） |
 | markdown / routes | 无插件配置键 |
 
 ```yaml
-- id: prompt
+- id: enrichment
   config:
     providerTimeoutMs: 2000
     totalTimeoutMs: 5000
@@ -64,10 +64,10 @@ dsh plugin add @catheadowl/dsh-extras
 除组合行外，本包导出插件开发者消费的稳定子路径：
 
 - `@catheadowl/dsh-extras/gates/register`——gates 插件消费面（`registerGate` + `GateDefinition` / `GateViolation` 类型）。
-- `@catheadowl/dsh-extras/prompt/register`——prompt 中间件消费面（`registerPromptMiddlewareProvider` / `registerRelatesProvider` + provider 类型）。
+- `@catheadowl/dsh-extras/enrichment/register`——enrichment消费面（`registerEnrichmentProvider` / `registerRelatesProvider` + provider 类型）。
 
 各模块自己的次级消费面（如 markdown 的仓库级 `gates.yml` 回退）见对应模块文档。
-Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单独安装。
+Web Settings Tab（gates / enrichment）随本包内嵌合成装载，不需要单独安装。
 
 模块间依赖拓扑与对外消费面（exports 对账）见 [docs/dependencies.md](docs/dependencies.md)。
 
@@ -76,7 +76,7 @@ Web Settings Tab（gates / prompt）随本包内嵌合成装载，不需要单�
 ```powershell
 # 从仓库根目录
 pnpm run build                  # 四模块 lib + client bundle
-pnpm run test:gates             # 各模块单测（test:markdown / test:prompt / test:routes）
+pnpm run test:gates             # 各模块单测（test:markdown / test:enrichment / test:routes）
 pnpm run verify:package-face    # exports / facade 校验
 pnpm run verify:publish-readiness  # 发布卫生校验（docs locality、host closure 等）
 ```
@@ -87,7 +87,7 @@ pnpm run verify:publish-readiness  # 发布卫生校验（docs locality、host c
 
 - 需要 dsh CLI（本包是插件载体，不是独立应用）；运行时 peer 全部由宿主闭包提供。
 - 根 README 双语（英文主 + 中文），模块页与深度 docs 以中文为主。
-- Settings Tab 目前仅 gates / prompt 两行有（随内置 client 子包 `modules/client` 合成装载，不单独发布）。
+- Settings Tab 目前仅 gates / enrichment 两行有（随内置 client 子包 `modules/client` 合成装载，不单独发布）。
 - gates 连续阻断上限（`maxConsecutiveBlocks`，默认 3）耗尽后**降级放行**——是安全阀不是正确性保证；markdown / routes 行无插件配置键。
 
 ## License

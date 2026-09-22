@@ -67,7 +67,7 @@ finding 引用 rule id。规则只写期望形态；理由归认知层/决策史
 评审者注意：以下为刻意设计，不是缺陷——
 
 - imperative 入口保留全限定 register 名（内部自洽，改名收益低）；
-- Context 增强（如 `ctx.promptMiddleware`）刻意不公开导出（软依赖设计）；
+- Context 增强（如 `ctx.enrichment`）刻意不公开导出（软依赖设计）；
 - 单 path resolve 抛错丢同 provider 兄弟 path（继承 imperative 语义，文档已述）；
 - `eval/` 目录刻意不随包发布（`files` 不含）；引用它的文档必须纯文本化；
 - subagent/client 行保持相对路径 specifier（specifier 化未验证）；

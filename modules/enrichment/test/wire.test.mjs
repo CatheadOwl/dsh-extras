@@ -1,0 +1,93 @@
+// Wire tests: the `enrichment` remote surface driven through the REAL
+// Typert Gateway, not the controller directly. The gateway's SRC discovery
+// parses each Remote method's compiled signature (unique identifier parameters
+// only, no defaults/destructuring/rest) and validates every invocation — the
+// exact path the browser hits. These tests exist because direct controller
+// calls cannot catch a signature the gateway rejects.
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+
+import { Context } from '@deepseek-ai/cordis'
+import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
+import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+
+import * as enrichment from '../lib/index.js'
+
+function provider(overrides = {}) {
+  return { name: 'demo-provider', run: async () => [], ...overrides }
+}
+
+async function wireHarness() {
+  const ctx = new Context()
+  await ctx.plugin(TypertRegistry)
+  await ctx.plugin(TypertGatewayService)
+  await ctx.plugin(enrichment, {})
+  return ctx
+}
+
+test('enrichment/list resolves through the gateway with an omitted request', async () => {
+  const ctx = await wireHarness()
+  ctx.get('enrichment').register(provider({ name: 't-provider', mode: 'always' }))
+
+  const gateway = ctx.get('typertGateway')
+  const list = await gateway.invoke({ namespace: 'enrichment', method: 'list', args: {} })
+  assert.equal(list.length, 1)
+  assert.equal(list[0].name, 't-provider')
+  assert.equal(list[0].enabled, true)
+  assert.equal(list[0].mode, 'always')
+  assert.equal(list[0].source, 'imperative')
+})
+
+test('enrichment/introspect resolves through the gateway with sources and provenance', async () => {
+  const ctx = await wireHarness()
+  const service = ctx.get('enrichment')
+  service.register(provider({ name: 't-provider', mode: 'always' }))
+  service.setDisabled(['t-provider'])
+
+  const gateway = ctx.get('typertGateway')
+  const rows = await gateway.invoke({ namespace: 'enrichment', method: 'introspect', args: {} })
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].name, 't-provider')
+  assert.deepEqual(rows[0].sources, ['prompt'])
+  assert.equal(rows[0].effectiveEnabled, false)
+  assert.equal(rows[0].disabledBy, 'user')
+})
+
+test('enrichment/setDisabled mirrors the list and answers the refreshed view', async () => {
+  const ctx = await wireHarness()
+  const service = ctx.get('enrichment')
+  service.register(provider({ name: 'a' }))
+  service.register(provider({ name: 'b' }))
+
+  const gateway = ctx.get('typertGateway')
+  const after = await gateway.invoke({
+    namespace: 'enrichment',
+    method: 'setDisabled',
+    args: { request: { ids: ['a'] } },
+  })
+  assert.deepEqual(service.disabledIds(), ['a'])
+  assert.equal(after.length, 2)
+  assert.equal(after.find(view => view.name === 'a').enabled, false)
+  assert.equal(after.find(view => view.name === 'b').enabled, true)
+})
+
+test('enrichment/setDisabled rejects a malformed payload as bad-request', async () => {
+  const ctx = await wireHarness()
+  const gateway = ctx.get('typertGateway')
+  await assert.rejects(
+    () => gateway.invoke({ namespace: 'enrichment', method: 'setDisabled', args: { request: 'nope' } }),
+    (error) => error.code === 'gateway/bad-request',
+  )
+  await assert.rejects(
+    () => gateway.invoke({ namespace: 'enrichment', method: 'setDisabled', args: {} }),
+    (error) => error.code === 'gateway/bad-request',
+  )
+  await assert.rejects(
+    () => gateway.invoke({ namespace: 'enrichment', method: 'setDisabled', args: { request: { ids: [42] } } }),
+    (error) => error.code === 'gateway/bad-request',
+  )
+  await assert.rejects(
+    () => gateway.invoke({ namespace: 'enrichment', method: 'setDisabled', args: { request: { ids: 'nope' } } }),
+    (error) => error.code === 'gateway/bad-request',
+  )
+})

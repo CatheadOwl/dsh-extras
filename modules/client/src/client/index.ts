@@ -9,11 +9,11 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 
 import * as gatesClient from '../../../gates/src/client/index.js'
-import * as promptClient from '../../../prompt/src/client/index.js'
+import * as enrichmentClient from '../../../enrichment/src/client/index.js'
 
 export const inject = gatesClient.inject
 
 export function apply(ctx: ClientContext): void {
   gatesClient.apply(ctx)
-  promptClient.apply(ctx)
+  enrichmentClient.apply(ctx)
 }

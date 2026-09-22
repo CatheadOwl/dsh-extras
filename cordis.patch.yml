@@ -9,8 +9,8 @@
         maxConsecutiveBlocks: 3
     - id: markdown
       name: '@catheadowl/dsh-extras/markdown'
-    - id: prompt
-      name: '@catheadowl/dsh-extras/prompt'
+    - id: enrichment
+      name: '@catheadowl/dsh-extras/enrichment'
       config:
         providerTimeoutMs: 2000
         totalTimeoutMs: 5000

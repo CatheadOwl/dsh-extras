@@ -1,0 +1,163 @@
+import type { Context } from '@deepseek-ai/cordis'
+import { Service } from '@deepseek-ai/cordis'
+import z from '@deepseek-ai/schemastery'
+
+import { EnrichmentRunner } from './core.js'
+import type { RecordedTouch } from './sensor.js'
+import type {
+  DeclarativeRelatesProvider,
+  EnrichmentConfig,
+  EnrichmentIntrospection,
+  EnrichmentProvider,
+  EnrichmentProviderView,
+  EnrichmentRunOptions,
+  EnrichmentRunResult,
+} from './types.js'
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    enrichment: EnrichmentService
+  }
+}
+
+export interface Config extends EnrichmentConfig {}
+
+export const ConfigSchema: z<Config> = z.object({
+  providerTimeoutMs: z.number().default(2_000),
+  totalTimeoutMs: z.number().default(5_000),
+  renderBudgetChars: z.number().default(4_000),
+  disabledProviders: z.array(z.string()),
+})
+
+export class EnrichmentService extends Service {
+  static Config = ConfigSchema
+
+  private readonly runner: EnrichmentRunner
+
+  /**
+   * Provider names the user switched off, mirrored from the browser's
+   * localStorage by the Settings → Plugins → Enrichment tab. In-memory
+   * by design: the browser owns persistence, the host only enforces the filter.
+   */
+  private disabled = new Set<string>()
+
+  /**
+   * Provider names disabled via plugin config (`disabledProviders`) — the
+   * deployment-owned entry, reachable headless via profile patch. Kept a
+   * separate set from `disabled`: `setDisabled()` replaces the browser mirror
+   * wholesale and must not be able to clobber the deployer's list.
+   */
+  private readonly configDisabled = new Set<string>()
+
+  constructor(ctx: Context, config: Config = {}) {
+    super(ctx, 'enrichment')
+    this.runner = new EnrichmentRunner(config)
+    for (const name of config.disabledProviders ?? []) this.configDisabled.add(name)
+  }
+
+  register(provider: EnrichmentProvider): () => void {
+    return this.runner.register(provider)
+  }
+
+  registerRelates(provider: DeclarativeRelatesProvider): () => void {
+    return this.runner.registerRelates(provider)
+  }
+
+  list(): EnrichmentProvider[] {
+    return this.runner.list()
+  }
+
+  /** Provider names the user switched off (empty until the browser pushes its stored list). */
+  disabledIds(): string[] {
+    return [...this.disabled]
+  }
+
+  /** Replace the user-disabled name list — the browser-owned state, mirrored for enforcement. */
+  setDisabled(names: readonly string[]): void {
+    this.disabled = new Set(names)
+  }
+
+  /**
+   * The settings tab's flat provider list — a projection of `introspect()`
+   * plus the user-switch truth. `enabled` reflects only the user switch (the
+   * browser mirror) so the toggle stays the user's own state; the config
+   * layer surfaces through `effectiveEnabled` / `disabledBy` instead of a
+   * second switch semantic.
+   */
+  listViews(): EnrichmentProviderView[] {
+    return this.introspect().map(row => ({
+      name: row.name,
+      ...row.description !== undefined ? { description: row.description } : {},
+      ...row.kind !== undefined ? { kind: row.kind } : {},
+      ...row.priority !== undefined ? { priority: row.priority } : {},
+      ...row.timeoutMs !== undefined ? { timeoutMs: row.timeoutMs } : {},
+      mode: row.mode,
+      // `kind` presence is the declarative registration marker (imperative
+      // providers carry none), so the legacy `source` field projects from it.
+      source: row.kind === undefined ? 'imperative' : 'declarative',
+      enabled: !this.disabled.has(row.name),
+      sources: row.sources,
+      effectiveEnabled: row.effectiveEnabled,
+      disabledBy: row.disabledBy,
+    }))
+  }
+
+  /**
+   * Read-only introspection snapshot: every registered provider's descriptor,
+   * signal sources, and the effective disable state across both entries —
+   * the single query surface headless consumers and the settings tab project
+   * from. Never a write payload: state changes go through `setDisabled`
+   * (user entry) or plugin config (deployer entry).
+   */
+  introspect(): EnrichmentIntrospection[] {
+    return this.runner.listEntries().map(({ provider, kind }) => {
+      const userDisabled = this.disabled.has(provider.name)
+      const configDisabled = this.configDisabled.has(provider.name)
+      return {
+        name: provider.name,
+        ...provider.description !== undefined ? { description: provider.description } : {},
+        ...kind !== undefined ? { kind } : {},
+        ...provider.priority !== undefined ? { priority: provider.priority } : {},
+        ...provider.timeoutMs !== undefined ? { timeoutMs: provider.timeoutMs } : {},
+        mode: provider.mode ?? 'always',
+        sources: [...(provider.sources ?? ['prompt'])],
+        effectiveEnabled: !userDisabled && !configDisabled,
+        disabledBy: userDisabled && configDisabled ? 'both' : userDisabled ? 'user' : configDisabled ? 'config' : null,
+      }
+    })
+  }
+
+  clearSession(sessionId: string): void {
+    this.runner.clearSession(sessionId)
+  }
+
+  /**
+   * Record one settled tool touch against the session owning the root execution (sensor lane).
+   * `context.cwd` rides into every declarer's `touchSubjects` invalidation call.
+   */
+  recordTouch(sessionId: string, touch: RecordedTouch, context: { cwd: string }): void {
+    this.runner.recordTouch(sessionId, touch, context)
+  }
+
+  /** Take and clear the session's pending touches — the pre-step consumption point (sensor lane). */
+  takePendingTouches(sessionId: string): RecordedTouch[] {
+    return this.runner.takePendingTouches(sessionId)
+  }
+
+  /** Drop residual touches at the turn boundary (sensor lane); aborted-turn leftovers never reach a new turn. */
+  discardPendingTouches(sessionId: string): void {
+    this.runner.discardPendingTouches(sessionId)
+  }
+
+  run(options: EnrichmentRunOptions): Promise<EnrichmentRunResult> {
+    // Union each surface's set independently: whichever surface says "off"
+    // wins (config = deployer's will, browser mirror = user's will), and the
+    // config-owned names keep their own channel so the runner can attribute
+    // the skip in trace (`disabled by config` vs `disabled by user`).
+    return this.runner.run({
+      ...options,
+      disabled: new Set([...this.disabled, ...(options.disabled ?? [])]),
+      configDisabled: new Set([...this.configDisabled, ...(options.configDisabled ?? [])]),
+    })
+  }
+}

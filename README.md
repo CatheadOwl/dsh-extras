@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` is an opinionated attempt at docs health and navigation for the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on. It wraps two commonly used dsh hooks into composable base frameworks — gates on `agent/turn-stopping` (turn close) and prompt middleware on `agent/pre-step`, each one registration face (`registerGate` / `registerPromptMiddlewareProvider`) instead of every plugin grabbing the raw hook — and ships what that stance implies: Markdown link hygiene, per-path context injection, and routing views over Markdown knowledge bases.
+**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` is an opinionated attempt at docs health and navigation for the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on. It wraps two commonly used dsh hooks into composable base frameworks — gates on `agent/turn-stopping` (turn close) and enrichment on `agent/pre-step`, each one registration face (`registerGate` / `registerEnrichmentProvider`) instead of every plugin grabbing the raw hook — and ships what that stance implies: Markdown link hygiene, per-path context injection, and routing views over Markdown knowledge bases.
 
 `dsh plugin add` installs everything at once; every module is a separately toggleable composition row (identified by row id) and can be disabled without affecting the others. What this package is relative to the dsh host — and why it wraps host hooks at all — is covered in [docs/host.md](docs/host.md).
 
@@ -21,14 +21,14 @@ Extension frameworks (registration seams for consumer plugins):
 | Module | Row id | What it provides | Docs |
 |---|---|---|---|
 | gates | `gates` | Quality-gate framework (`ctx.gates`): composable gates run automatically at turn close, plus the `registerGate` consumer face | [modules/gates/README.md](modules/gates/README.md) |
-| prompt | `prompt` | Prompt-middleware framework (`ctx.promptMiddleware`): provider registry on `agent/pre-step` that turns path mentions into budgeted relates context; `registerPromptMiddlewareProvider` / `registerRelatesProvider` consumer faces | [modules/prompt/README.md](modules/prompt/README.md) |
+| enrichment | `enrichment` | Enrichment framework (`ctx.enrichment`): provider registry on `agent/pre-step` that turns path mentions into budgeted relates context; `registerEnrichmentProvider` / `registerRelatesProvider` consumer faces | [modules/enrichment/README.md](modules/enrichment/README.md) |
 
 Tools & consumers:
 
 | Module | Row id | What it provides | Docs |
 |---|---|---|---|
 | markdown | `markdown` | `md_rename` tool (move a Markdown file and rewrite every internal link) + the `doc-link` gate + the bundled link-transaction library | [modules/markdown/README.md](modules/markdown/README.md) |
-| routes | `routes` | `any_nav` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider (a prompt-middleware provider) | [modules/routes/README.md](modules/routes/README.md) |
+| routes | `routes` | `any_nav` tool (routing views over Markdown knowledge bases) + the breadcrumb relates provider (an enrichment provider) | [modules/routes/README.md](modules/routes/README.md) |
 
 Each module is an independently toggleable row in the host's plugin composition: no shared state — disable any row and the others behave exactly as before.
 
@@ -46,11 +46,11 @@ Modules with defaults can be overridden. All config keys per row:
 | Row | Config keys |
 |---|---|
 | gates | `maxConsecutiveBlocks` (consecutive-block cap, default 3; exhausted → degrade to pass) |
-| prompt | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars` (example below) |
+| enrichment | `providerTimeoutMs` / `totalTimeoutMs` / `renderBudgetChars` (example below) |
 | markdown / routes | no plugin config keys |
 
 ```yaml
-- id: prompt
+- id: enrichment
   config:
     providerTimeoutMs: 2000
     totalTimeoutMs: 5000
@@ -64,10 +64,10 @@ Adding or removing modules happens through package versions: upgrade this packag
 Beyond the composition rows, the package exports stable subpaths for plugin developers:
 
 - `@catheadowl/dsh-extras/gates/register` — the gates plugin consumer face (`registerGate` + the `GateDefinition` / `GateViolation` types).
-- `@catheadowl/dsh-extras/prompt/register` — the prompt-middleware consumer face (`registerPromptMiddlewareProvider` / `registerRelatesProvider` + the provider types).
+- `@catheadowl/dsh-extras/enrichment/register` — the enrichment consumer face (`registerEnrichmentProvider` / `registerRelatesProvider` + the provider types).
 
 Secondary consumer faces per module (e.g. markdown's repo-level `gates.yml` fallback) are documented in each module's README.
-The Web Settings tabs (gates / prompt) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
+The Web Settings tabs (gates / enrichment) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
 
 The module dependency topology and the exports reconciliation table live in [docs/dependencies.md](docs/dependencies.md).
 
@@ -76,7 +76,7 @@ The module dependency topology and the exports reconciliation table live in [doc
 ```powershell
 # From the repository root
 pnpm run build                  # four module libs + client bundle
-pnpm run test:gates             # per-module unit tests (test:markdown / test:prompt / test:routes)
+pnpm run test:gates             # per-module unit tests (test:markdown / test:enrichment / test:routes)
 pnpm run verify:package-face    # exports / facade checks
 pnpm run verify:publish-readiness  # release hygiene checks (docs locality, host closure, ...)
 ```
@@ -87,7 +87,7 @@ Development details — host checkout placement, toolchain borrow, peer junction
 
 - Requires the dsh CLI (this package is a plugin carrier, not a standalone app); all runtime peers are provided by the host closure.
 - The root README is bilingual (English primary + Chinese); module pages and deep docs are Chinese-first.
-- Settings tabs currently exist only for the gates / prompt rows (loaded via the bundled client sub-package, `modules/client`, not published separately).
+- Settings tabs currently exist only for the gates / enrichment rows (loaded via the bundled client sub-package, `modules/client`, not published separately).
 - The gates consecutive-block cap (`maxConsecutiveBlocks`, default 3) **degrades to pass** when exhausted — it is a safety valve, not a correctness guarantee; the markdown / routes rows expose no plugin config keys.
 
 ## License

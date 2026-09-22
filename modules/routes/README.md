@@ -6,7 +6,7 @@ description: extras 的 routes 模块——any_nav 工具（陌生 Markdown 知�
 
 **价值**：两个互补的模型面——`any_nav` 让 agent 在陌生 Markdown 知识库中快速选定下一步要读的路径（路由视图替代盲目录扫描）；breadcrumb 注入让用户提到某路径时会话自动获得其祖先目录的定向说明，无需翻文档。
 
-**与宿主的关系**：`any_nav` 是 dsh 会话里的一个模型可见工具（扫描根取自会话 cwd，从不接受调用参数）；breadcrumb 是 prompt 模块（`ctx.promptMiddleware`）的声明式 provider——prompt 模块缺席时该注入不生效。
+**与宿主的关系**：`any_nav` 是 dsh 会话里的一个模型可见工具（扫描根取自会话 cwd，从不接受调用参数）；breadcrumb 是 enrichment 模块（`ctx.enrichment`）的声明式 provider——enrichment 模块缺席时该注入不生效。
 
 ## Quickstart
 

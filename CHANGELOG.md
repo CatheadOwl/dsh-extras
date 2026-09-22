@@ -12,6 +12,21 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Changed
 
+- **Breaking (0.x minor): the `prompt` module is renamed `enrichment`** — the
+  engine word only; "middleware" over-claimed (nothing is rewritten, steered,
+  or blocked) and under-described the multi-source design. Consumer-visible
+  surfaces follow: exports `./prompt` → `./enrichment` (+ `./enrichment/register`),
+  service key `ctx.promptMiddleware` → `ctx.enrichment`,
+  `registerPromptMiddlewareProvider` → `registerEnrichmentProvider` (engine
+  face — `registerRelatesProvider` keeps its name: family face), loader row id
+  `prompt` → `enrichment`, Typert Remote namespace `promptMiddleware` →
+  `enrichment`, Settings slot id / locale namespace `settings.enrichment` /
+  localStorage key `dsh.enrichment.disabled`, trace `source.plugin` →
+  `enrichment`. Deliberately frozen: the `relates:` / `related:` envelope,
+  `[kind]` labels, `subject` / `subjectOf` / `touchSubjects` keys, and the
+  `sources: 'prompt' | 'touch'` values are unchanged, so historical session
+  envelopes stay valid. Migration: update inject keys / imports to the new
+  names and bump the dependency.
 - `routes` (`any_nav`): the tool description now documents the output-surface
   contracts a fresh reader could not derive — the response envelope (`root` /
   `anchor`, depth measured from `anchor`, the requested `routePath` echoed when

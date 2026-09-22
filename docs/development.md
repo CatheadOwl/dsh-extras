@@ -9,7 +9,7 @@ description: 开发工作流——构建/测试命令、宿主 checkout 锚点�
 ```powershell
 # From the repository root
 pnpm run build                  # four module libs + client bundle
-pnpm run test:gates             # per-module unit tests (test:markdown / test:prompt / test:routes)
+pnpm run test:gates             # per-module unit tests (test:markdown / test:enrichment / test:routes)
 pnpm run verify:package-face    # exports / facade checks
 pnpm run verify:publish-readiness  # release hygiene checks (docs locality, host closure, ...)
 ```

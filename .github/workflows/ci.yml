@@ -8,7 +8,7 @@
 # Until that lands, build + per-module tests are verified locally against a
 # host checkout, not in CI. The commented steps below are that deferred tail:
 #   - run: pnpm build
-#   - run: pnpm test:gates && pnpm test:markdown && pnpm test:prompt && pnpm test:routes
+#   - run: pnpm test:gates && pnpm test:markdown && pnpm test:enrichment && pnpm test:routes
 #   - run: pnpm verify:package-face
 name: CI
 

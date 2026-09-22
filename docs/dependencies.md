@@ -31,7 +31,7 @@ dsh 是微内核 harness：插件在 Cordis fiber 树上运行，能力以**服�
 gates 与 prompt 是本包的两个**基座行**（自声明 Definition + 自实现 Provider，折叠在同一行内）：它们各自认领一个服务键并提供一份**执行骨架**，其他插件的功能作为注册项**承载**在这两个骨架上运行——这不是「谁依赖谁」的模块关系，而是「别人的功能在这里落脚」的承载关系（箭头方向 = 功能流向基座）：
 
 ```text
-ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认领）
+ctx.gates（gates 行认领）              ctx.enrichment（enrichment 行认领）
   执行骨架：注册表 + 轮末触发            执行骨架：agent/pre-step driver +
   + 预算/超时/反馈/remedy                once 账本 + 聚合/预算/渲染
       ▲ 注册 gate                           ▲ 注册 provider
@@ -44,8 +44,8 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
 
 | 形态 | 做法 | 例子 |
 |---|---|---|
-| 软依赖（典型） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | 消费方插件对 `ctx.gates`、`ctx.promptMiddleware` |
-| 硬 import 注册入口 | 消费方 import 基座的 `register` 子路径（见 §5 对账表），内部仍走软依赖接线 | 类型依赖 `gates/register`；provider 注册入口 `prompt/register` |
+| 软依赖（典型） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | 消费方插件对 `ctx.gates`、`ctx.enrichment` |
+| 硬 import 注册入口 | 消费方 import 基座的 `register` 子路径（见 §5 对账表），内部仍走软依赖接线 | 类型依赖 `gates/register`；provider 注册入口 `enrichment/register` |
 | 声明式注册面 | 只写 `resolve` + `kind`，框架物化为 provider 并复用整套骨架 | routes 的 breadcrumb（`registerRelates`） |
 
 配套约束：
@@ -78,8 +78,8 @@ ctx.gates（gates 行认领）              ctx.promptMiddleware（prompt 行认
 | 消费面 | 类别 | 消费者 | 状态 |
 |---|---|---|---|
 | `gates/register` | 基座注册面（`ctx.gates` 的硬 import 形态） | 其他插件 | ✓ |
-| `prompt/register` | 基座注册面（`ctx.promptMiddleware` 的硬 import 形态；imperative `registerPromptMiddlewareProvider` + 声明式 `registerRelatesProvider` 双入口） | 其他插件（结构类型软依赖亦可） | ✓ |
+| `enrichment/register` | 基座注册面（`ctx.enrichment` 的硬 import 形态；imperative `registerEnrichmentProvider` + 声明式 `registerRelatesProvider` 双入口） | 其他插件（结构类型软依赖亦可） | ✓ |
 | `markdown/gate-check` | 配置面（`gates.yml` `module:` 回退） | 单仓项目配置 | ✓（niche，文档在 [modules/markdown](../modules/markdown/README.md)） |
 | `gates` / `markdown` / `prompt` / `routes` | 组合行 loader 入口（行名 specifier） | cordis.patch.yml | ✓ |
 
-非 exports 的对外协作形态（无需接线）：`ctx.gates` / `ctx.promptMiddleware` service key 软依赖（`ctx.inject` 结构类型，零 import）。
+非 exports 的对外协作形态（无需接线）：`ctx.gates` / `ctx.enrichment` service key 软依赖（`ctx.inject` 结构类型，零 import）。

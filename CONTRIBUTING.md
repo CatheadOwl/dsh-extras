@@ -21,7 +21,7 @@ Thanks for your interest! 中文简介：本包是 dsh 插件模块集合，欢�
 
 ```powershell
 pnpm run build                    # requires a dsh host checkout for the toolchain — see README "Development"
-pnpm run test:gates               # plus test:markdown / test:prompt / test:routes for the modules you touched
+pnpm run test:gates               # plus test:markdown / test:enrichment / test:routes for the modules you touched
 pnpm run verify:package-face
 pnpm run verify:publish-readiness
 pnpm run verify:readme-i18n       # bilingual README pairing — edit both sides, then re-record (see README.i18n.yaml header)
