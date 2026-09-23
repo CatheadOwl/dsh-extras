@@ -10,6 +10,8 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-09-23
+
 ### Changed
 
 - **The gates / enrichment configuration UI moves from the Settings
