@@ -10,6 +10,8 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-09-23
+
 ### Changed
 
 - **Breaking (0.x minor): the `prompt` module is renamed `enrichment`** — the
