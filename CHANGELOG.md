@@ -12,37 +12,6 @@ follow [Semantic Versioning](https://semver.org/); entries follow
 
 ### Changed
 
-- **Breaking (0.x minor): the `prompt` module is renamed `enrichment`** — the
-  engine word only; "middleware" over-claimed (nothing is rewritten, steered,
-  or blocked) and under-described the multi-source design. Consumer-visible
-  surfaces follow: exports `./prompt` → `./enrichment` (+ `./enrichment/register`),
-  service key `ctx.promptMiddleware` → `ctx.enrichment`,
-  `registerPromptMiddlewareProvider` → `registerEnrichmentProvider` (engine
-  face — `registerRelatesProvider` keeps its name: family face), loader row id
-  `prompt` → `enrichment`, Typert Remote namespace `promptMiddleware` →
-  `enrichment`, Settings slot id / locale namespace `settings.enrichment` /
-  localStorage key `dsh.enrichment.disabled`, trace `source.plugin` →
-  `enrichment`. Deliberately frozen: the `relates:` / `related:` envelope,
-  `[kind]` labels, `subject` / `subjectOf` / `touchSubjects` keys, and the
-  `sources: 'prompt' | 'touch'` values are unchanged, so historical session
-  envelopes stay valid. Migration: update inject keys / imports to the new
-  names and bump the dependency.
-- `routes` (`any_nav`): the tool description now documents the output-surface
-  contracts a fresh reader could not derive — the response envelope (`root` /
-  `anchor`, depth measured from `anchor`, the requested `routePath` echoed when
-  passed), description provenance (frontmatter `description:`, else a
-  `description:` line in the head, else the first substantive prose line), the
-  flat ` | ` split rule (everything after the first separator is the
-  description, which may itself contain ` | `), the Markdown-empty folder
-  omission rule (`[truncated: 0]` never appears), and filter visibility
-  (traversal filters apply without an echo; the `maxFiles` cutoff is the only
-  mid-scan clip and always reports a `diagnostics` warning). The `format`
-  parameter's tree-node field list now states when `markdown` / `description`
-  appear and that `omittedMarkdownCount` is the same recursive `.md` total as
-  flat's `[truncated: N]`. Wording only — no output schema or behavior change.
-  Each added clause resolves one adjudicated comprehension finding (see the
-  module's `eval/comprehension` adjudication record); the description exceeds
-  the TD-4 soft word cap with those clauses as the accepted cost.
 - **The gates / enrichment configuration UI moves from the Settings
   "Built-in plugins" section to the Plugins page** (follows the upstream
   2026-09-16 move of the plugins-configuration home): on the
@@ -74,6 +43,42 @@ follow [Semantic Versioning](https://semver.org/); entries follow
   ceremony (see `modules/gates/docs/adding-a-plugin-gate.md` and
   `modules/enrichment/docs/cookbook.md`). Consumers at removal time: none on
   npm (the one external consumer reverted to the mirror form in advance).
+
+## [0.3.1] — 2026-09-23
+
+### Changed
+
+- **Breaking (0.x minor): the `prompt` module is renamed `enrichment`** — the
+  engine word only; "middleware" over-claimed (nothing is rewritten, steered,
+  or blocked) and under-described the multi-source design. Consumer-visible
+  surfaces follow: exports `./prompt` → `./enrichment` (+ `./enrichment/register`),
+  service key `ctx.promptMiddleware` → `ctx.enrichment`,
+  `registerPromptMiddlewareProvider` → `registerEnrichmentProvider` (engine
+  face — `registerRelatesProvider` keeps its name: family face), loader row id
+  `prompt` → `enrichment`, Typert Remote namespace `promptMiddleware` →
+  `enrichment`, Settings slot id / locale namespace `settings.enrichment` /
+  localStorage key `dsh.enrichment.disabled`, trace `source.plugin` →
+  `enrichment`. Deliberately frozen: the `relates:` / `related:` envelope,
+  `[kind]` labels, `subject` / `subjectOf` / `touchSubjects` keys, and the
+  `sources: 'prompt' | 'touch'` values are unchanged, so historical session
+  envelopes stay valid. Migration: update inject keys / imports to the new
+  names and bump the dependency.
+- `routes` (`any_nav`): the tool description now documents the output-surface
+  contracts a fresh reader could not derive — the response envelope (`root` /
+  `anchor`, depth measured from `anchor`, the requested `routePath` echoed when
+  passed), description provenance (frontmatter `description:`, else a
+  `description:` line in the head, else the first substantive prose line), the
+  flat ` | ` split rule (everything after the first separator is the
+  description, which may itself contain ` | `), the Markdown-empty folder
+  omission rule (`[truncated: 0]` never appears), and filter visibility
+  (traversal filters apply without an echo; the `maxFiles` cutoff is the only
+  mid-scan clip and always reports a `diagnostics` warning). The `format`
+  parameter's tree-node field list now states when `markdown` / `description`
+  appear and that `omittedMarkdownCount` is the same recursive `.md` total as
+  flat's `[truncated: N]`. Wording only — no output schema or behavior change.
+  Each added clause resolves one adjudicated comprehension finding (see the
+  module's `eval/comprehension` adjudication record); the description exceeds
+  the TD-4 soft word cap with those clauses as the accepted cost.
 
 ## [0.3.0] — 2026-09-19
 
