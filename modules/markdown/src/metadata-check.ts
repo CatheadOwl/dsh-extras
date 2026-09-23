@@ -55,7 +55,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 
-import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
+import type { GateChangeSet, GateViolation } from '../../gates/lib/types.js'
 
 const MANUAL_REMEDY = {
   kind: 'manual' as const,

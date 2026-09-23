@@ -15,14 +15,6 @@ gates:
       and dirty-state modules from becoming accidental public API.
     level: blocking
     relevant: ['package.json', 'modules/']
-  - id: register-docs-fresh
-    module: modules/gates/scripts/register-reference.mjs
-    description: The register-face API reference matches src/register.ts.
-    rationale: >-
-      The generated API table is the machine-checked inventory of the plugin consumer face.
-      A stale table teaches consumers the wrong import, type, or fixer contract.
-    level: blocking
-    relevant: ['modules/gates/src', 'modules/gates/docs']
   - id: docs-nav
     module: scripts/verify-docs-nav.mjs
     description: Every module document is reachable from that module's documentation entry.

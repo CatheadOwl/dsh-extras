@@ -10,9 +10,9 @@
 //   - the manifest exports face is exactly the entries owned by this table;
 //   - each composition row's loader entry (modules/<name>/src/index.ts) may
 //     only export the dsh loader contract (config `loaderContract`);
-//   - public consumer subentries (e.g. ./gates/register) are frozen by
-//     facade allowlists (config `facadeExports`);
-//   - deep imports bypassing the public register entries are forbidden
+//   - public consumer subentries are optionally frozen by facade
+//     allowlists (config `facadeExports`);
+//   - deep imports bypassing the public entries are forbidden
 //     across all module sources and docs (config `forbiddenImports`).
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'

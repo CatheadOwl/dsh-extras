@@ -14,30 +14,38 @@ description: extras 的 enrichment 模块——user prompt enrichment 小框架�
 
 | 面 | 说明 |
 |---|---|
-| `ctx.enrichment` | `register(provider)` / `registerRelates(provider)` / `list()` / `listViews()` / `introspect()` / `disabledIds()` / `setDisabled(names)` / `run(options)` / `clearSession(sessionId)` |
-| `registerEnrichmentProvider(ctx, provider)` | 消费插件的硬 import 注册入口（`@catheadowl/dsh-extras/enrichment/register`）；内部仍通过 `ctx.inject(['enrichment'], ...)` 软依赖 |
-| `registerRelatesProvider(ctx, provider)` | 声明式 provider 的硬 import 注册入口（同上子路径）；`resolve` + `kind` 由框架物化为 provider 并复用整套 runner。注册示例与 API reference 见 [docs/register.md](docs/register.md) |
+| `ctx.enrichment` | `register(provider)` / `registerRelates(provider)` / `list()` / `listViews()` / `introspect()` / `disabledIds()` / `setDisabled(names)` / `run(options)` / `clearSession(sessionId)`——消费插件经 `ctx.inject(['enrichment'], …)` 软依赖注册（结构类型镜像，零 import；声明式入口 `registerRelates` 由框架物化为 provider 并复用整套 runner） |
 | `agent/pre-step` driver | 收集本 step 的 subject（prompt 路径解析 + 上一步 pending touch 的 `touchSubjects` 投影），按 provider 的 `sources` 订阅过滤喂入，运行 provider，向当前 step 的 admitted 请求批追加 relates 上下文 |
 | `tools/result` sensor | 框架统一持有的 touch 信号监听：闭集 `{read, edit}`、错误/中止/无 agent 剔除、嵌套上浮到根执行、按 session cwd 归一到项目相对键空间；touch 时对产出 subjects 摘 once 账（失效面向所有声明者），原始 touch 记入 per-session pending、turn 边界丢弃残余 |
 | Typert Remote `enrichment` | `list` / `setDisabled`：插件页 enrichment 行（Configure）配置面（provider 开关）；`introspect`：只读自省快照（`sources` / `effectiveEnabled` / `disabledBy`，见 [docs/contract.md](docs/contract.md)「自省快照」）。Typert Remote 是宿主的 Web RPC 面 |
 | client 半 | `plugins.row.config` slot（键 `@catheadowl/dsh-extras#enrichment`）：扁平 provider 列表 + 开关，localStorage 持久化（经 extras 嵌套 client 锚点包 `@catheadowl/dsh-extras-client` 的合成 bundle 装载，见 `modules/client/README.md`） |
 
-## Quickstart（`registerRelatesProvider`）
+## Quickstart（声明式 provider 注册）
+
+消费插件不 import 本包：结构镜像 provider 声明的字段子集，经 `ctx.inject` 条件注入注册（未装 enrichment 行时你的插件照常加载、只是不注册）。
 
 ```ts
-import { registerRelatesProvider } from '@catheadowl/dsh-extras/enrichment/register'
+import type { Context } from '@deepseek-ai/cordis'
 
-registerRelatesProvider(ctx, {
+const notesProvider = {
   name: 'my-plugin-notes',
   kind: 'my-notes',          // 稳定 kind；mode 默认 'once'（session 内每 path 一次）
   async resolve({ path }) {
     const note = path.kind === 'directory' ? await loadNoteFor(path.path) : undefined
     return note ? { value: note } : undefined
   },
-})
+}
+
+export function apply(ctx: Context): void {
+  void ctx.inject(['enrichment'], (enrichmentCtx) => {
+    return (enrichmentCtx as unknown as {
+      enrichment: { registerRelates(provider: typeof notesProvider): unknown }
+    }).enrichment.registerRelates(notesProvider)
+  })
+}
 ```
 
-完整注册示例与 API reference 见 [docs/register.md](docs/register.md)；tool-touch 信号源（`sources` / `touchSubjects`）的用法指南见 [docs/touch.md](docs/cookbook.md)。
+注册配方与 tool-touch 信号源（`sources` / `touchSubjects`）的完整用法见 [docs/cookbook.md](docs/cookbook.md)；字段级契约见 [docs/contract.md](docs/contract.md)。
 
 ## provider 形状
 
@@ -56,7 +64,7 @@ provider 只返回结构化 contribution，不拼最终 prompt，不改写用户
 
 `mode` 默认 `'always'`（每轮都跑都注入）；`'once'` 按 `(sessionId, provider, key)` 在 session 内去重，只记**实际渲染**的 item；surface replace（compact 等）触发 `clearSession` 清账后可重新注入。完整 once 记账规则见 [docs/contract.md](docs/contract.md)。
 
-声明式面（`registerRelates`）让消费者只写单 path 的 `resolve` + 一个稳定 `kind`，框架物化为 imperative provider 并复用同一 runner（once ledger / 聚合 / 预算 / 超时 / 降级 / 渲染）。默认 `once`，`mode: 'always'` 显式 opt-in；显式 `'once'` 与空 `kind` 在注册期 fail loud。注册示例与 API reference 见 [docs/register.md](docs/register.md)。
+声明式面（`registerRelates`）让消费者只写单 path 的 `resolve` + 一个稳定 `kind`，框架物化为 imperative provider 并复用同一 runner（once ledger / 聚合 / 预算 / 超时 / 降级 / 渲染）。默认 `once`，`mode: 'always'` 显式 opt-in；显式 `'once'` 与空 `kind` 在注册期 fail loud。注册示例见上方 Quickstart 与 [docs/cookbook.md](docs/cookbook.md)。
 
 provider 开关：插件页 enrichment 行（Configure）按 provider name 全局开关，是纯执行过滤（被关 provider 不进 pre-step 执行路径），不触碰 once 账本；细节见 [docs/contract.md](docs/contract.md)。
 

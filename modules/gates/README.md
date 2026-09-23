@@ -36,7 +36,7 @@ dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 
 **与 hooks 子系统的边界**：dsh 自带 hooks（`dsh-hooks-claude-code` 等）是配置文件方言的兼容桥（子进程 + 退出码反馈），面向既有 CC/Codex hook 资产；gates 是正常 out-of-tree 插件实现的 native-like 类型化路径（插件注册 + `GateResult` + 自描述单元），不要求宿主内置 gate 包。两者共享同一拦截点与时机词汇表，互不冲突。
 
-触发档位、阻断预算、增量短路等执行模型的完整说明见 [docs/execution-model.md](docs/execution-model.md)；决策推演与证据链的 SSOT 参见 local-ci-gates 设计记录（外部开发笔记）。详细使用说明见 [docs/](docs/README.md)：执行模型 + register face + 两个"添加 gate"配方（仓库级 / 插件级）+ 维护指南。
+触发档位、阻断预算、增量短路等执行模型的完整说明见 [docs/execution-model.md](docs/execution-model.md)；决策推演与证据链的 SSOT 参见 local-ci-gates 设计记录（外部开发笔记）。详细使用说明见 [docs/](docs/README.md)：执行模型 + 两个"添加 gate"配方（仓库级 / 插件级）+ 维护指南。
 
 ## 提供面
 
@@ -54,7 +54,7 @@ dsh plugin add @catheadowl/dsh-extras   # gates 是 extras 包的一行
 
 ## gate 契约
 
-完整的 `GateDefinition` / `GateChangeSet` / `GateViolation` 契约与公共 API reference 见 [docs/register.md](docs/register.md)（register-docs-fresh gate 的 SSOT，随源码自动生成同步）。要点：`id` kebab-case 重名 fail loud；`rationale` 仅失败时注入；`level` 分 `blocking` / `advisory` / `defer`；stop 档的 `check` 收到会话变更集（`GateChangeSet`）用于增量短路。
+完整的 `GateDefinition` / `GateChangeSet` / `GateViolation` 契约见源码 `src/types.ts`（随包的模块产物发布类型声明）与插件配方 [docs/adding-a-plugin-gate.md](docs/adding-a-plugin-gate.md)。要点：`id` kebab-case 重名 fail loud；`rationale` 仅失败时注入；`level` 分 `blocking` / `advisory` / `defer`；stop 档的 `check` 收到会话变更集（`GateChangeSet`）用于增量短路。
 
 仓库级 gate 在项目根 `gates.yml` 声明（按会话工作区根发现）：`module`（in-process import，通用 `check(root, changes?)`）或 `command`（shell，非零退出即失败）；详见 [docs/adding-a-repo-gate.md](docs/adding-a-repo-gate.md)。
 

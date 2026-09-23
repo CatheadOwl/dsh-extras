@@ -16,7 +16,7 @@ gates 只有一个 behavior mock case：把归责过滤的「driver 级 steer」
 
 ## 三个集成点（跑前必须成立）
 
-1. **extras markdown 模块已构建**（唯一构建依赖）：case 的 `gates.yml` `module:` 指向 `modules/markdown/lib/gate-check.js`（`./markdown/gate-check` 子路径导出的通用 `check`，与插件 `registerGate` 同源；`lib/` 是构建产物且 gitignored）。跑前先 build 该插件。
+1. **extras markdown 模块已构建**（唯一构建依赖）：case 的 `gates.yml` `module:` 指向 `modules/markdown/lib/gate-check.js`（`./markdown/gate-check` 子路径导出的通用 `check`，与插件级 `doc-link` gate 同一份实现；`lib/` 是构建产物且 gitignored）。跑前先 build 该插件。
 2. **profile 挂了 `tool-fs`（`write`）**：变更集采集只认 `PRECISE_WRITE_TOOLS = ['write','edit']`（`src/dirty.ts`），读 `arguments.file_path`。其它工具名归为 `opaque → true` 全算，两处断链都被 steer，隔离断言直接失败。
 3. **预算 × 脚本步数对齐**：默认 `maxConsecutiveBlocks: 3` ⇒ 5 次模型调用 ⇒ 5 步脚本（`write` → "a done" → steer×3）。省步需 `maxConsecutiveBlocks: 1` 的 profile，属框架追加，不在本 case 范围。
 

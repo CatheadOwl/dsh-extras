@@ -25,8 +25,13 @@ import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import TokenMeter from '@deepseek-ai/dsh-token-meter'
 
 import * as enrichment from '../lib/index.js'
-import { registerRelatesProvider } from '../lib/register.js'
 import * as anyRoutes from '../../routes/lib/index.js'
+
+/** Register a declarative provider through the service seam (the consumer
+ * ceremony any plugin writes: conditional injection returning the disposer). */
+function declareRelates(ctx, provider) {
+  return ctx.inject(['enrichment'], (enrichmentCtx) => enrichmentCtx.enrichment.registerRelates(provider))
+}
 
 /** Scripted text chunks: one model reply ends with a `stop` finish. */
 function textResponse(text) {
@@ -317,12 +322,12 @@ test('non-delivery trace events warn; designed degradation stays at debug', asyn
   logger.warn = (...args) => { warns.push(args.join(' ')) }
   logger.debug = (...args) => { debugs.push(args.join(' ')) }
 
-  registerRelatesProvider(ctx, {
+  declareRelates(ctx, {
     name: 'boom-declarer',
     kind: 'boom',
     resolve: async () => { throw new Error('kaboom') },
   })
-  registerRelatesProvider(ctx, {
+  declareRelates(ctx, {
     name: 'steady-declarer',
     kind: 'steady',
     resolve: async () => ({ value: 'steady value' }),

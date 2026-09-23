@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` is an opinionated attempt at docs health and navigation for the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on. It wraps two commonly used dsh hooks into composable base frameworks — gates on `agent/turn-stopping` (turn close) and enrichment on `agent/pre-step`, each one registration face (`registerGate` / `registerEnrichmentProvider`) instead of every plugin grabbing the raw hook — and ships what that stance implies: Markdown link hygiene, per-path context injection, and routing views over Markdown knowledge bases.
+**Doing harness work is doing docs work.** `@catheadowl/dsh-extras` is an opinionated attempt at docs health and navigation for the knowledge your [dsh](https://github.com/deepseek-ai/deepseek-harness) agent runs on. It wraps two commonly used dsh hooks into composable base frameworks — gates on `agent/turn-stopping` (turn close) and enrichment on `agent/pre-step`, each one a service-seam registration surface (`ctx.gates` / `ctx.enrichment`, consumed through the host's soft-dependency injection) instead of every plugin grabbing the raw hook — and ships what that stance implies: Markdown link hygiene, per-path context injection, and routing views over Markdown knowledge bases.
 
 `dsh plugin add` installs everything at once; every module is a separately toggleable composition row (identified by row id) and can be disabled without affecting the others. What this package is relative to the dsh host — and why it wraps host hooks at all — is covered in [docs/host.md](docs/host.md).
 
@@ -20,8 +20,8 @@ Extension frameworks (registration seams for consumer plugins):
 
 | Module | Row id | What it provides | Docs |
 |---|---|---|---|
-| gates | `gates` | Quality-gate framework (`ctx.gates`): composable gates run automatically at turn close, plus the `registerGate` consumer face | [modules/gates/README.md](modules/gates/README.md) |
-| enrichment | `enrichment` | Enrichment framework (`ctx.enrichment`): provider registry on `agent/pre-step` that turns path mentions into budgeted relates context; `registerEnrichmentProvider` / `registerRelatesProvider` consumer faces | [modules/enrichment/README.md](modules/enrichment/README.md) |
+| gates | `gates` | Quality-gate framework (`ctx.gates`): composable gates run automatically at turn close; consumer plugins register through the `ctx.gates` service seam | [modules/gates/README.md](modules/gates/README.md) |
+| enrichment | `enrichment` | Enrichment framework (`ctx.enrichment`): provider registry on `agent/pre-step` that turns path mentions into budgeted relates context; consumer plugins register through the `ctx.enrichment` service seam | [modules/enrichment/README.md](modules/enrichment/README.md) |
 
 Tools & consumers:
 
@@ -61,12 +61,11 @@ Adding or removing modules happens through package versions: upgrade this packag
 
 ## API face
 
-Beyond the composition rows, the package exports stable subpaths for plugin developers:
+Beyond the composition rows, the package exports a stable subpath for plugin developers:
 
-- `@catheadowl/dsh-extras/gates/register` — the gates plugin consumer face (`registerGate` + the `GateDefinition` / `GateViolation` types).
-- `@catheadowl/dsh-extras/enrichment/register` — the enrichment consumer face (`registerEnrichmentProvider` / `registerRelatesProvider` + the provider types).
+- `@catheadowl/dsh-extras/markdown/gate-check` — the markdown module's repo-level `gates.yml` fallback entry (the generic `check`).
 
-Secondary consumer faces per module (e.g. markdown's repo-level `gates.yml` fallback) are documented in each module's README.
+Plugins that build on the gates / enrichment frameworks do not import this package: they register through the service seams (`ctx.gates.register(...)` / the `ctx.enrichment` provider registry) via the host's `ctx.inject` soft dependency and keep no package dependency — each framework module's README documents the recipe.
 The Web configuration pages (the gates / enrichment rows' Configure pages on the Plugins page) are loaded from the bundled client sub-package inside this package (`modules/client`) — nothing to install separately.
 
 The module dependency topology and the exports reconciliation table live in [docs/dependencies.md](docs/dependencies.md).

@@ -13,7 +13,7 @@
  * `scripts/doc-link-lib.mjs`, now shipped inside the md-links-gates plugin so every project gets the same
  * data plane without copying a shim. `check(root, changes?, options?)` keeps the generic
  * module-gate surface (`gates.yml` `module:` form and the plugin's
- * `registerGate` definition both load it).
+ * registration both load it).
  *
  * External targets (`//`, `/`, scheme) and fragments onto non-Markdown targets
  * are out of scope and never flagged (md-links semantics). Repo policy via the
@@ -24,7 +24,7 @@
 import { readFileSync } from 'node:fs'
 import { REASON_ANCHOR_MISSING, canonicalPath, checkRepository, documentAnchorPairs, repositoryRoot } from './links/index.js'
 import type { LinkViolation } from './links/index.js'
-import type { GateChangeSet, GateViolation } from '@catheadowl/dsh-extras/gates/register'
+import type { GateChangeSet, GateViolation } from '../../gates/lib/types.js'
 
 const MANUAL_REMEDY = {
   kind: 'manual' as const,

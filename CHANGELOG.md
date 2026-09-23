@@ -50,11 +50,30 @@ follow [Semantic Versioning](https://semver.org/); entries follow
   control opening its own page — the same switch form and write path, plus a
   one-liner summary; the Settings section no longer lists extras tabs.
   Registration slot `settings.plugins.tab` → `plugins.row.config` (keys
-  `@catheadowl/dsh-extras#gates` / `#enrichment`); no npm-facing API changes
-  (exports, service keys, remote namespaces, storage keys unchanged).
+  `@catheadowl/dsh-extras#gates` / `#enrichment`); this move itself changes no
+  npm-facing API (service keys, remote namespaces, storage keys unchanged —
+  the register-face removal below is a separate change riding the same
+  release).
   Requires a host whose web frontend ships the Plugins-page config slots
   (upstream ≥ 2026-09-16, e.g. `0.1.6-alpha.2`); on older hosts the
   configuration UI is simply absent — the server halves are unaffected.
+
+### Removed
+
+- **The `./gates/register` and `./enrichment/register` export subpaths are
+  removed** (with their source files, the generated API references, and the
+  `registerGate` / `registerEnrichmentProvider` / `registerRelatesProvider`
+  helper exports). Consumer plugins register through the service seams
+  instead — `ctx.inject(['gates'], c => c.gates.register(...))` /
+  `ctx.inject(['enrichment'], ...)` with locally mirrored contract types —
+  the same host-canonical soft-dependency ceremony every plugin already uses;
+  no package dependency on `@catheadowl/dsh-extras` is needed. The host
+  ecosystem has no importable-registration-helper form (its own in-tree
+  consumers hand-write the ceremony), which this change realigns with.
+  Migration: replace the hard import with structural mirrors + the inject
+  ceremony (see `modules/gates/docs/adding-a-plugin-gate.md` and
+  `modules/enrichment/docs/cookbook.md`). Consumers at removal time: none on
+  npm (the one external consumer reverted to the mirror form in advance).
 
 ## [0.3.0] — 2026-09-19
 

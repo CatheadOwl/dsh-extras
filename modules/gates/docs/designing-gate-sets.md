@@ -37,18 +37,16 @@ description: 配方：一个逻辑检查拆成多个 gate——按修复确定�
 
 ## 写法（两个注册面）
 
-### 插件面：多次 `registerGate`
+### 插件面：多次条件注入
 
-一个插件调多次 `registerGate`（或多次 `ctx.inject(['gates'], …)`），每个 gate 独立：
+一个插件多次 `ctx.inject(['gates'], …)`（每个 gate 一段，注册仪式见 [adding-a-plugin-gate](adding-a-plugin-gate.md)），每个 gate 独立：
 
 ```ts
-import { registerGate } from '@catheadowl/dsh-extras/gates/register'
-
 // 可确定修 → defer + fixer
-registerGate(ctx, { ...AUTO_FIX_GATE, level: 'defer', fixer: { kind: 'command', command: 'node scripts/normalize.mjs' }, check })
+void ctx.inject(['gates'], c => c.gates.register({ ...AUTO_FIX_GATE, level: 'defer', fixer: { kind: 'command', command: 'node scripts/normalize.mjs' }, check }))
 
 // 语义决策 → blocking（无 fixer）
-registerGate(ctx, { ...SEMANTIC_GATE, level: 'blocking', check })
+void ctx.inject(['gates'], c => c.gates.register({ ...SEMANTIC_GATE, level: 'blocking', check }))
 ```
 
 ### 仓库面：`gates.yml` 多个条目

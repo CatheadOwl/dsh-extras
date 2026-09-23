@@ -25,9 +25,10 @@ description: touch lane 使用指南——tool-touch 信号源的三种消费角
 典型场景：你的插件对某些文件持有配对知识（注释、状态、链接），希望 agent 每次 touch 这些文件时看到最新的一条，但不要唠叨。
 
 ```ts
-import { registerRelatesProvider } from '@catheadowl/dsh-extras/enrichment/register'
+import type { Context } from '@deepseek-ai/cordis'
 
-registerRelatesProvider(ctx, {
+// provider 声明：结构镜像 `DeclarativeRelatesProvider` 你实现的字段子集（零 import）
+const pairingProvider = {
   name: 'my-pairing',
   kind: 'my-pair-note',
   sources: ['prompt', 'touch'],
@@ -52,7 +53,17 @@ registerRelatesProvider(ctx, {
 
     return { value: formatPairNote(state, path.path) }
   },
-})
+}
+
+// 注册：条件注入软依赖（未装 enrichment 行时照常加载、只是不注册），
+// 回调 return 注册表 disposer（唯一回滚通道）。
+export function apply(ctx: Context): void {
+  void ctx.inject(['enrichment'], (enrichmentCtx) => {
+    return (enrichmentCtx as unknown as {
+      enrichment: { registerRelates(provider: typeof pairingProvider): unknown }
+    }).enrichment.registerRelates(pairingProvider)
+  })
+}
 ```
 
 （`rendered` 是 provider 闭包自持的 `Map<path, version>`——框架不感知「状态」，渲染策略整体住你这边。）

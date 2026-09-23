@@ -33,7 +33,7 @@ import * as gates from '../lib/index.js'
 
 // The real doc-link gate data plane, now shipped inside the extras md module
 // plugin (`dsh-plugin-dev/md-links-gates`, formerly `scripts/doc-link-lib.mjs`):
-// the same `check(root, changes)` surface the plugin's registerGate definition
+// the same `check(root, changes)` surface the plugin's registration
 // and the module-gate form load.
 import { check as docLinkCheck } from '../../markdown/lib/gate-check.js'
 

@@ -14,7 +14,7 @@ dsh 宿主在 turn 收尾提供 `agent/turn-stopping` 检查点，事实是：
 
 ## gates 提供什么
 
-gates 把这个检查点包装成可组合的 gate 框架（`ctx.gates` + `registerGate` 消费面）：
+gates 把这个检查点包装成可组合的 gate 框架（`ctx.gates` 服务缝，插件经 `ctx.inject` 软依赖注册）：
 
 1. **注册面**：插件自带检查与仓库级 `gates.yml` 声明进入同一执行面——插件级检查的唯一声明入口；
 2. **公共机制**：统一调度执行、steer 反对协议、连续阻断预算（耗尽降级放行）、项目级配置发现；
@@ -28,4 +28,4 @@ gates 把这个检查点包装成可组合的 gate 框架（`ctx.gates` + `regis
 
 宿主若原生落地同类注册表，本模块按行 id 独立退场；在上游落地前，`gates.yml` 方言保持最小声明式、与宿主 TODO 声明的语义同形，收敛成本最低。
 
-深入：执行链与预算见 [execution-model](execution-model.md)；注册面 API 见 [register](register.md)。
+深入：执行链与预算见 [execution-model](execution-model.md)；插件注册配方见 [adding-a-plugin-gate](adding-a-plugin-gate.md)。

@@ -4,7 +4,7 @@ description: enrichment 模块注入契约——provider 执行模型与定序�
 
 # prompt 注入契约（contract）
 
-本文是 enrichment 模块运行时契约的权威文本：provider 执行模型与定序、`once` 注入去重与记账、声明式 `registerRelates`（含 `subjectOf` 重键）、tool-touch sensor lane（`sources` 订阅、`touchSubjects` 双向投影、账本失效）、render budget 与 provider 开关。注册示例与公共 API reference 见 [register.md](register.md)。
+本文是 enrichment 模块运行时契约的权威文本：provider 执行模型与定序、`once` 注入去重与记账、声明式 `registerRelates`（含 `subjectOf` 重键）、tool-touch sensor lane（`sources` 订阅、`touchSubjects` 双向投影、账本失效）、render budget 与 provider 开关。注册示例见 [cookbook](cookbook.md) 与模块 [README](../README.md) 的 Quickstart。
 
 ## provider 执行模型（imperative）
 

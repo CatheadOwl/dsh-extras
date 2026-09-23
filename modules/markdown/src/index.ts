@@ -8,8 +8,8 @@
  *   (plan/apply: `planRename` / `applyRenamePlan`; conflict → report, never
  *   guess); its model-facing wording lives in `./tool-description` (TD-1 SSOT);
  * - the `doc-link` gate (Markdown link integrity at turn-stop and manual runs),
- *   soft-registered through `registerGate` (gates absent → loads, registers
- *   nothing) with the data plane and attribution policy in `./markdown/gate-check`;
+ *   soft-registered through the `ctx.gates` service seam (`ctx.inject(['gates'], …)`;
+ *   gates absent → loads, registers nothing) with the data plane and attribution policy in `./markdown/gate-check`;
  * - the `md-metadata` gate (session-written Markdown must declare a non-empty
  *   frontmatter `description`; defer + subagent fixer), data plane in
  *   `./metadata-check` — the former repo-level `scripts/md-metadata-lib.mjs`.
@@ -24,8 +24,11 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import z from '@deepseek-ai/schemastery'
-import { registerGate, projectGateOptions } from '@catheadowl/dsh-extras/gates/register'
-import type { GateDefinition, GateViolation } from '@catheadowl/dsh-extras/gates/register'
+// Type-only: pulls the `ctx.gates` Context augmentation from the gates module's
+// built service declaration (in-package sibling artifact, build order: gates first).
+import type {} from '../../gates/lib/service.js'
+import { projectGateOptions } from '../../gates/lib/repo-gates.js'
+import type { GateDefinition, GateViolation } from '../../gates/lib/types.js'
 import { REASON_NO_RENAME_EVIDENCE, applyRenamePlan, planRename, repositoryRoot } from './links/index.js'
 import type { RenameConflict, RenameRelabel, RenameSkip } from './links/index.js'
 
@@ -215,13 +218,20 @@ export function apply(ctx: Context): void {
     },
   }))
 
-  registerGate(ctx, {
-    ...DOC_LINK_GATE,
-    check: async (root, changes, options): Promise<GateViolation[]> => checkDocLink(root, changes, options),
+  // Soft-dependency registration (same ceremony any external plugin writes):
+  // the inject callback returns the registry's disposer so the Cordis fiber
+  // unloads the gate cleanly.
+  void ctx.inject(['gates'], (gatesCtx) => {
+    return gatesCtx.gates.register({
+      ...DOC_LINK_GATE,
+      check: async (root, changes, options): Promise<GateViolation[]> => checkDocLink(root, changes, options),
+    })
   })
 
-  registerGate(ctx, {
-    ...MD_METADATA_GATE,
-    check: async (root, changes, options): Promise<GateViolation[]> => checkMdMetadata(root, changes, options),
+  void ctx.inject(['gates'], (gatesCtx) => {
+    return gatesCtx.gates.register({
+      ...MD_METADATA_GATE,
+      check: async (root, changes, options): Promise<GateViolation[]> => checkMdMetadata(root, changes, options),
+    })
   })
 }

@@ -28,8 +28,8 @@ import { textStep, toolCallStep, userMessageTextExcludes, userMessageTextInclude
 const here = dirname(fileURLToPath(import.meta.url))
 // The doc-link gate surface lives in the md module of @catheadowl/dsh-extras; its
 // `./markdown/gate-check` subpath exports the generic `check` for the module-gate form
-// (the same `check` the plugin's registerGate definition loads, without the
-// plugin-entry `registerGate` runtime deps). `moduleGate` resolves a relative
+// (the same `check` the plugin's registration loads, without the plugin
+// entry's runtime deps). `moduleGate` resolves a relative
 // `module` against the SESSION workspace cwd (this run's temp dir), so the
 // path must be absolute. Forward slashes keep the YAML scalar unescaped.
 const docLinkLib = join(here, '..', '..', '..', 'markdown', 'lib', 'gate-check.js').split(sep).join('/')
@@ -52,7 +52,7 @@ export default {
     writeFileSync(join(workspace, 'task-a.md'), BROKEN_A)
     writeFileSync(join(workspace, 'task-b.md'), BROKEN_B)
     // Repo-declared gate: the same `check(root, changes?)` surface the plugin's
-    // registerGate definition loads, via the module-gate form. The module path
+    // registration loads, via the module-gate form. The module path
     // is absolute (above).
     writeFileSync(join(workspace, 'gates.yml'), [
       'gates:',

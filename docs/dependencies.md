@@ -44,8 +44,7 @@ ctx.gates（gates 行认领）              ctx.enrichment（enrichment 行认�
 
 | 形态 | 做法 | 例子 |
 |---|---|---|
-| 软依赖（典型） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | 消费方插件对 `ctx.gates`、`ctx.enrichment` |
-| 硬 import 注册入口 | 消费方 import 基座的 `register` 子路径（见 §5 对账表），内部仍走软依赖接线 | 类型依赖 `gates/register`；provider 注册入口 `enrichment/register` |
+| 软依赖（典型，宿主正字） | `ctx.inject(['<key>'], cb)` 条件注入 + 本地结构类型镜像；基座缺席则软降级 | 消费方插件对 `ctx.gates`、`ctx.enrichment`（含包内 markdown 行——两处注册同一仪式） |
 | 声明式注册面 | 只写 `resolve` + `kind`，框架物化为 provider 并复用整套骨架 | routes 的 breadcrumb（`registerRelates`） |
 
 配套约束：
@@ -77,9 +76,7 @@ ctx.gates（gates 行认领）              ctx.enrichment（enrichment 行认�
 
 | 消费面 | 类别 | 消费者 | 状态 |
 |---|---|---|---|
-| `gates/register` | 基座注册面（`ctx.gates` 的硬 import 形态） | 其他插件 | ✓ |
-| `enrichment/register` | 基座注册面（`ctx.enrichment` 的硬 import 形态；imperative `registerEnrichmentProvider` + 声明式 `registerRelatesProvider` 双入口） | 其他插件（结构类型软依赖亦可） | ✓ |
 | `markdown/gate-check` | 配置面（`gates.yml` `module:` 回退） | 单仓项目配置 | ✓（niche，文档在 [modules/markdown](../modules/markdown/README.md)） |
 | `gates` / `markdown` / `prompt` / `routes` | 组合行 loader 入口（行名 specifier） | cordis.patch.yml | ✓ |
 
-非 exports 的对外协作形态（无需接线）：`ctx.gates` / `ctx.enrichment` service key 软依赖（`ctx.inject` 结构类型，零 import）。
+非 exports 的对外协作形态（无需接线）：`ctx.gates` / `ctx.enrichment` service key 软依赖（`ctx.inject` + 结构类型镜像，零 import）——插件消费基座的唯一正字；历史上的 `gates/register` / `enrichment/register` 硬 import 子路径已删除（0.3.2，设计记录见开发仓库，名称引用）。

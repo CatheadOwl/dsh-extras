@@ -1,6 +1,6 @@
 // Plugin-surface tests for the md-metadata gate: the check (change-set
 // consumer over frontmatter `description`; cases ported from the archived
-// scripts/md-metadata-lib.test.mjs) and the registerGate wiring with a
+// scripts/md-metadata-lib.test.mjs) and the registration wiring with a
 // soft-inject stub ctx.
 import assert from 'node:assert/strict'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -347,7 +347,7 @@ describe('md-metadata exempt-basename list', () => {
   })
 })
 
-describe('md-metadata registerGate wiring', () => {
+describe('md-metadata registration wiring', () => {
   it('registers a defer gate with a subagent fixer when the gates service is present', async () => {
     const gates = []
     const tools = []

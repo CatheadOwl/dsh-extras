@@ -6,7 +6,7 @@ description: markdown 模块的 doc-link gate——Markdown 内链完整性门�
 
 **价值**：装一次 `@catheadowl/dsh-extras`，该 profile 下所有工作区自动获得 Markdown 内链完整性门禁——轮末自动检查 + 手动 `/gates`、`gates_run` 可用，断链当轮即被定位并携带修复提示，无需每项目配置任何东西。
 
-**与宿主的关系**：dsh 会话轮末检查点上的一个插件级 gate，由 markdown 模块（extras 的一行）经 gates 模块的消费面 `@catheadowl/dsh-extras/gates/register` 注册；gates 模块缺席（或被单关）时 markdown 模块照常加载、只是不注册本 gate。
+**与宿主的关系**：dsh 会话轮末检查点上的一个插件级 gate，由 markdown 模块（extras 的一行）经 gates 模块的服务缝（`ctx.inject(['gates'], …)` 条件注入）注册；gates 模块缺席（或被单关）时 markdown 模块照常加载、只是不注册本 gate。
 
 ## 两种接入形态
 
@@ -22,7 +22,7 @@ description: markdown 模块的 doc-link gate——Markdown 内链完整性门�
 | 模块 | 职责 |
 |---|---|
 | `src/gate-check.ts` | 通用 gate 表面 `check(root, changes?, options?)`：形状适配 + 轮末归责谓词 + `frozen-dirs` 冻结豁免；由 `markdown/gate-check` 子路径导出，供 `gates.yml` `module:` 回退与测试复用 |
-| `src/index.ts` | 插件入口：`apply(ctx)` → `registerGate(ctx, { id: 'doc-link', … })`（硬导入消费面，软服务依赖——gates 缺席时本模块照常加载、不注册）；`md_rename` 工具从同一 `frozen-dirs` 声明构造只读谓词（单一策略源） |
+| `src/index.ts` | 插件入口：`apply(ctx)` → `ctx.inject(['gates'], …)` 条件注入注册 `{ id: 'doc-link', … }`（软服务依赖——gates 缺席时本模块照常加载、不注册）；`md_rename` 工具从同一 `frozen-dirs` 声明构造只读谓词（单一策略源） |
 
 > **机制归模块内 links 库，政策归本 gate 面。** 数据面（git 扫描 + mdast 解析 + 锚点校验）在 [links-lib](links-lib.md)（`src/links/`，与 `md_rename` 工具共享、同版本演进的单拷贝）；本 gate 面只持有政策——`rationale`、`level: blocking`、`relevantPath`（`*.md`）、轮末归责谓词。
 

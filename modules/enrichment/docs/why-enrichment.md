@@ -14,7 +14,7 @@ dsh 宿主在 user prompt 进入模型前提供 `agent/pre-step` 拦截点（wat
 
 ## 本模块提供什么
 
-enrichment 模块把 pre-step 上的 prompt enrichment 收束成一个 provider 注册表（`ctx.enrichment` + `registerRelatesProvider` 消费面）：
+enrichment 模块把 pre-step 上的 prompt enrichment 收束成一个 provider 注册表（`ctx.enrichment` 服务缝，插件经 `ctx.inject` 软依赖注册）：
 
 1. **注册面**：插件只写单 path 的 `resolve` + 稳定 `kind`，框架物化为完整 provider——第二个注入者的接入成本比手写低一个量级；
 2. **共存纪律**（不只是触发包装）：once ledger 按 `(sessionId, provider, key)` 记账、只记实际渲染幸存者、surface replace（compact 等）清账；渲染预算与记账脱钩（被截断的条目下轮重算）；多 provider 命中同一路径的合并与定序；失败降级不阻断轮次；
@@ -30,4 +30,4 @@ enrichment 模块把 pre-step 上的 prompt enrichment 收束成一个 provider 
 
 如果业务 provider 退回手写直挂、没有第三个注入者出现、或框架开始吸收领域逻辑（把「某类上下文怎么生成」写进承载层）——说明这层抽象价值不足，应收敛为单 provider 工具。
 
-深入：注入契约（once 记账 / 声明式 subjectOf / 定序 / 开关）见 [contract](contract.md)；注册面 API 见 [register](register.md)。
+深入：注入契约（once 记账 / 声明式 subjectOf / 定序 / 开关）见 [contract](contract.md)；注册配方见 [cookbook](cookbook.md)。

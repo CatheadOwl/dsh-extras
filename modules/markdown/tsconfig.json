@@ -11,10 +11,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
-    "paths": {
-      "@catheadowl/dsh-extras/gates/register": ["../gates/lib/register.d.ts"]
-    }
+    "types": ["node"]
   },
   "include": ["src"]
 }

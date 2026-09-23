@@ -1,7 +1,7 @@
 // Plugin-surface tests for md-links-gates: the doc-link gate check (shape
 // adaptation + turn-end attribution predicate over the md-links data plane;
 // cases ported from the archived scripts/doc-link-lib.test.mjs) and the
-// registerGate wiring with a soft-inject stub ctx.
+// registration wiring with a soft-inject stub ctx.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'

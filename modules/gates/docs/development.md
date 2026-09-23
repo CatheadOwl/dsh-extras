@@ -6,7 +6,7 @@ description: gates 插件维护指南——消费面变更、构建与测试阶�
 
 ## 消费面变更
 
-修改 `package.json` exports、root entry、`src/register.ts`、`gates_run` schema 或 client 入口时，先更新 [register.md](register.md) 与对应测试，再重建产物。root entry 只保留 `name`、`inject`、`Config`、`apply`；新增公共类型必须从 `src/register.ts` 导出并由 generated reference 覆盖。
+修改 `package.json` exports、root entry、`gates_run` schema 或 client 入口时，先更新对账表（包根 `docs/dependencies.md` §5）与对应测试，再重建产物。root entry 只保留 `name`、`inject`、`Config`、`apply`；插件消费正字是 `ctx.gates` 服务缝 + 软依赖仪式（见下「兼容与发布」与 [adding-a-plugin-gate](adding-a-plugin-gate.md)）。
 
 依据：宿主 package 入口与 NodeNext consumer 校验见开发仓库 `deepseek-harness/docs/development.md`；插件消费面规则见外部开发笔记（plugin-consumer-face，名称引用）。
 
@@ -20,7 +20,6 @@ Set-Location <extras-checkout>\modules\gates
 <host-checkout>\node_modules\.bin\tsdown.cmd   # Web 配置页 client bundle → lib/client.js
 # 单测清单以 extras 包根 package.json 的 scripts.test:gates 为准（SSOT），此处不复述
 node --test --test-isolation=none <package.json test 列出的文件>
-node scripts/register-reference.mjs --write
 ```
 
 组合测试（真实 agent-loop + mock adapter，验证 turn-stopping 驱动：defer 旁路 / blocking 续步）需要本机 host junction 与已构建的 extras markdown 模块（有用例 import 其 `lib/gate-check.js` 构建产物）。已挂在 `test:gates` 末尾，经包根 `scripts/run-composition.mjs`（不随包发布，名称引用）条件运行，三态：探测 `@deepseek-ai/dsh-agent-loop` 可解析且宿主已 build → 真实运行；本 checkout 无接线（新克隆 / 独立镜像形态）→ 输出一行 SKIPPED 后跳过；接线在场但不可运行 → **失败不跳过**。单独直跑（不经 runner）：
@@ -39,19 +38,18 @@ junction 解析层：**extras 包根 `node_modules/`**（全模块共享一份�
 
 ## 自举 gates
 
-自举 gates 声明在**包根** [`gates.yml`](../../../gates.yml)（2026-09-06 自各模块 gates.yml 整合而来；入口脚本按自身位置锚定，与加载它的会话根无关），共四个 module gates：
+自举 gates 声明在**包根** [`gates.yml`](../../../gates.yml)（2026-09-06 自各模块 gates.yml 整合而来；入口脚本按自身位置锚定，与加载它的会话根无关），共三个 module gates：
 
-- `register-face-boundary`：package/root/register 导出与禁止 import 模式；
-- `register-docs-fresh`：[register.md](register.md) 的 generated API region（入口在 `modules/gates/scripts/`）；
+- `register-face-boundary`：package/root 导出面与禁止自引用 import 模式；
 - `docs-nav`：全部 docs-owning 模块（gates / markdown / enrichment）的导航与 README 入口（包级遍历入口在 `scripts/verify-docs-nav.mjs`）；
 - `publish-readiness`：独立发布卫生（peer-only 宿主依赖、registry 版本范围、docs 与 scripts 不越出包根）。
 
-在 **extras 包根**打开 dsh 会话后，用 `/gates` 或 `gates_run` 执行。脚本源码在包根 `scripts/` 与 `modules/gates/scripts/`；它们是项目自举资产，不进入发布包运行时。
+在 **extras 包根**打开 dsh 会话后，用 `/gates` 或 `gates_run` 执行。脚本源码在包根 `scripts/`；它们是项目自举资产，不进入发布包运行时。
 
 ## 兼容与发布
 
-- `./gates/register` 是已承诺消费面；开发期也不随意重命名。
-- gate 契约类型变更必须同步 generated reference、quickstart 与消费者测试。
+- 插件消费正字是 `ctx.gates` 服务缝 + `ctx.inject` 软依赖（结构类型镜像）；历史上的 `./gates/register` 子路径已删除（0.3.2），不保留 alias。
+- gate 契约类型变更必须同步插件配方（adding-a-plugin-gate）、quickstart 与消费者测试。
 - `gates_run` 是模型可见公共面；schema、输出与描述按 agent tool 契约维护。
 - root implementation exports 已移除，不添加兼容 alias。
 
